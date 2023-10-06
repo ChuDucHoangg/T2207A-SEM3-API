@@ -4,19 +4,19 @@
     {
         public int id { get; set; }
 
-        public string student_code { get; set; } = null!;
+        public string student_code { get; set; }
 
-        public string fullname { get; set; } = null!;
+        public string fullname { get; set; }
 
         public DateTime birthday { get; set; }
 
-        public string email { get; set; } = null!;
+        public string email { get; set; }
 
-        public string phone { get; set; } = null!;
+        public string phone { get; set; }
 
         public int class_id { get; set; }
 
-        public string password { get; set; } = null!;
+        public string password { get; set; }
 
         public int role { get; set; }
 
