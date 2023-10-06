@@ -33,6 +33,7 @@ namespace T2207A_SEM3_API.Controllers
                     name = c.Name,
                     slug = c.Slug,
                     room = c.Room,
+                    teacher_id = c.TeacherId,
                     createdAt = c.CreatedAt,
                     updatedAt = c.UpdatedAt,
                     deletedAt = c.DeletedAt
@@ -56,6 +57,7 @@ namespace T2207A_SEM3_API.Controllers
                         name = c.Name,
                         slug = c.Slug,
                         room = c.Room,
+                        teacher_id = c.TeacherId,
                         createdAt = c.CreatedAt,
                         updatedAt = c.UpdatedAt,
                         deletedAt = c.DeletedAt
@@ -82,6 +84,7 @@ namespace T2207A_SEM3_API.Controllers
                         Name = model.name,
                         Slug = model.slug,
                         Room = model.room,
+                        TeacherId = model.teacher_id,
                         CreatedAt = DateTime.Now,
                         UpdatedAt = DateTime.Now,
                         DeletedAt = DateTime.Now,
@@ -94,6 +97,7 @@ namespace T2207A_SEM3_API.Controllers
                         name = data.Name,
                         slug = data.Slug,
                         room = data.Room,
+                        teacher_id = data.TeacherId,
                         createdAt = data.CreatedAt,
                         updatedAt = data.UpdatedAt,
                         deletedAt = data.DeletedAt
@@ -121,6 +125,7 @@ namespace T2207A_SEM3_API.Controllers
                         Name = model.name,
                         Slug = model.slug,
                         Room = model.room,
+                        TeacherId = model.teacher_id,
                         CreatedAt = model.createdAt,
                         UpdatedAt = model.updatedAt,
                         DeletedAt = model.deletedAt,

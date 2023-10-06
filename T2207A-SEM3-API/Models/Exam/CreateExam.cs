@@ -14,13 +14,16 @@ namespace T2207A_SEM3_API.Models.Exam
         [MaxLength(255, ErrorMessage = "Enter up to 255 characters")]
         public string slug { get; set; }
 
+        [Required(ErrorMessage = "Please enter teacher")]
+        public int course_id { get; set; }
+
         [Required(ErrorMessage = "Please enter start date")]
         [DataType(DataType.Date)]
         [DisplayFormat(DataFormatString = "{0:yyyy-MM-dd}", ApplyFormatInEditMode = true)]
         public DateTime start_date { get; set; }
 
         [Required(ErrorMessage = "Please enter teacher")]
-        public int teacher_id { get; set; }
+        public int created_by { get; set; }
 
         [DataType(DataType.Date, ErrorMessage = "Invalid creation date")]
         public DateTime createdAt { get; set; }

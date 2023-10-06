@@ -30,16 +30,18 @@ namespace T2207A_SEM3_API.Controllers
                     id = st.Id,
                     student_code = st.StudentCode,
                     fullname = st.Fullname,
+                    avatar = st.Avatar,
                     birthday = st.Birthday,
                     email = st.Email,
                     phone = st.Phone,
+                    gender = st.Gender,
+                    address = st.Address,
                     class_id = st.ClassId,
                     password = st.Password,
-                    role = st.Role,
                     status = st.Status,
                     createdAt = st.CreatedAt,
-                    updateAt = st.UpdateAt,
-                    deleteAt = st.DeleteAt
+                    updateAt = st.UpdatedAt,
+                    deleteAt = st.DeletedAt
                 });
             }
             return Ok(data);
@@ -59,16 +61,18 @@ namespace T2207A_SEM3_API.Controllers
                         id = st.Id,
                         student_code = st.StudentCode,
                         fullname = st.Fullname,
+                        avatar = st.Avatar,
                         birthday = st.Birthday,
                         email = st.Email,
                         phone = st.Phone,
+                        gender = st.Gender,
+                        address = st.Address,
                         class_id = st.ClassId,
                         password = st.Password,
-                        role = st.Role,
                         status = st.Status,
                         createdAt = st.CreatedAt,
-                        updateAt = st.UpdateAt,
-                        deleteAt = st.DeleteAt
+                        updateAt = st.UpdatedAt,
+                        deleteAt = st.DeletedAt
 
                     });
                 }
@@ -89,16 +93,18 @@ namespace T2207A_SEM3_API.Controllers
                     Student data = new Student {
                         StudentCode = model.student_code,
                         Fullname = model.fullname,
+                        Avatar = model.avatar,
                         Birthday = model.birthday,
                         Email = model.email,
                         Phone = model.phone,
+                        Gender = model.gender,
+                        Address = model.address,
                         ClassId = model.class_id,
                         Password = model.password,
-                        Role = model.role,
                         Status = model.status,
                         CreatedAt = DateTime.Now,
-                        UpdateAt = DateTime.Now,
-                        DeleteAt = DateTime.Now,
+                        UpdatedAt = DateTime.Now,
+                        DeletedAt = DateTime.Now,
                     };
                     _context.Students.Add(data);
                     _context.SaveChanges();
@@ -107,16 +113,18 @@ namespace T2207A_SEM3_API.Controllers
                         id = data.Id,
                         student_code = data.StudentCode,
                         fullname = data.Fullname,
+                        avatar = data.Avatar,
                         birthday = data.Birthday,
                         email = data.Email,
                         phone = data.Phone,
+                        gender = data.Gender,
+                        address = data.Address,
                         class_id = data.ClassId,
                         password = data.Password,
-                        role = data.Role,
                         status = data.Status,
                         createdAt = data.CreatedAt,
-                        updateAt = data.UpdateAt,
-                        deleteAt = data.DeleteAt,
+                        updateAt = data.UpdatedAt,
+                        deleteAt = data.DeletedAt,
                     });
                 } catch (Exception ex)
                 {
@@ -139,16 +147,18 @@ namespace T2207A_SEM3_API.Controllers
                         Id = model.id,
                         StudentCode = model.student_code,
                         Fullname = model.fullname,
+                        Avatar = model.avatar,
                         Birthday = model.birthday,
                         Email = model.email,
                         Phone = model.phone,
+                        Gender = model.gender,
+                        Address = model.address,
                         ClassId = model.class_id,
                         Password = model.password,
-                        Role = model.role,
                         Status = model.status,
                         CreatedAt = model.createdAt,
-                        UpdateAt = model.updatedAt,
-                        DeleteAt = model.deletedAt,
+                        UpdatedAt = model.updatedAt,
+                        DeletedAt = model.deletedAt,
                     };
 
                     if (student != null)

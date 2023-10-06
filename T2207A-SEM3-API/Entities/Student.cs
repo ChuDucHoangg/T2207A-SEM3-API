@@ -27,8 +27,6 @@ public partial class Student
 
     public string Password { get; set; } = null!;
 
-    public int Role { get; set; }
-
     public int Status { get; set; }
 
     public DateTime? CreatedAt { get; set; }

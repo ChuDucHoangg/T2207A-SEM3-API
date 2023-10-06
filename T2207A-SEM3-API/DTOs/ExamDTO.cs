@@ -6,11 +6,13 @@
 
         public string name { get; set; }
 
-        public string slug { get; set; } 
+        public string slug { get; set; }
+
+        public int course_id { get; set; }
 
         public DateTime start_date { get; set; }
 
-        public int? teacher_id { get; set; }
+        public int? created_by { get; set; }
 
         public DateTime? createdAt { get; set; }
 

@@ -10,6 +10,8 @@
 
         public string? room { get; set; }
 
+        public int teacher_id { get; set; }
+
         public DateTime? createdAt { get; set; }
 
         public DateTime? updatedAt { get; set; }

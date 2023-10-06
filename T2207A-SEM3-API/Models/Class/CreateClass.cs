@@ -20,6 +20,9 @@ namespace T2207A_SEM3_API.Models.Class
         [MaxLength(50, ErrorMessage = "Enter up to 50 characters")]
         public string room { get; set; }
 
+        [Required(ErrorMessage = "Please enter teacher")]
+        public int teacher_id { get; set; }
+
         [DataType(DataType.Date, ErrorMessage = "Invalid creation date")]
         public DateTime createdAt { get; set; }
 
