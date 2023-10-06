@@ -11,7 +11,9 @@ public partial class Class
 
     public string Slug { get; set; } = null!;
 
-    public string? Room { get; set; }
+    public string Room { get; set; } = null!;
+
+    public int TeacherId { get; set; }
 
     public DateTime? CreatedAt { get; set; }
 
@@ -22,4 +24,6 @@ public partial class Class
     public virtual ICollection<Course> Courses { get; set; } = new List<Course>();
 
     public virtual ICollection<Student> Students { get; set; } = new List<Student>();
+
+    public virtual Staff Teacher { get; set; } = null!;
 }

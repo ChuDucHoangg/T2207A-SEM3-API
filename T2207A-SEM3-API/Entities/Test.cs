@@ -19,13 +19,11 @@ public partial class Test
 
     public DateTime EndDate { get; set; }
 
-    public int TotalQuestion { get; set; }
+    public double PastMarks { get; set; }
 
-    public int PastMarks { get; set; }
+    public double TotalMarks { get; set; }
 
-    public int TotalMarks { get; set; }
-
-    public int TeacherId { get; set; }
+    public int CreatedBy { get; set; }
 
     public int Status { get; set; }
 
@@ -35,13 +33,15 @@ public partial class Test
 
     public DateTime? DeletedAt { get; set; }
 
+    public virtual Staff CreatedByNavigation { get; set; } = null!;
+
     public virtual Exam Exam { get; set; } = null!;
+
+    public virtual ICollection<ExamAgain> ExamAgains { get; set; } = new List<ExamAgain>();
 
     public virtual ICollection<Grade> Grades { get; set; } = new List<Grade>();
 
     public virtual ICollection<Question> Questions { get; set; } = new List<Question>();
 
     public virtual Student Student { get; set; } = null!;
-
-    public virtual Teacher Teacher { get; set; } = null!;
 }

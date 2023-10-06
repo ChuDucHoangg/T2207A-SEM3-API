@@ -9,11 +9,17 @@ public partial class Staff
 
     public string StaffCode { get; set; } = null!;
 
+    public string Avatar { get; set; } = null!;
+
     public string Fullname { get; set; } = null!;
 
     public DateTime Birthday { get; set; }
 
     public string Email { get; set; } = null!;
+
+    public string Gender { get; set; } = null!;
+
+    public string Address { get; set; } = null!;
 
     public string Phone { get; set; } = null!;
 
@@ -26,4 +32,12 @@ public partial class Staff
     public DateTime? UpdatedAt { get; set; }
 
     public DateTime? DeletedAt { get; set; }
+
+    public virtual ICollection<Class> Classes { get; set; } = new List<Class>();
+
+    public virtual ICollection<Course> Courses { get; set; } = new List<Course>();
+
+    public virtual ICollection<Exam> Exams { get; set; } = new List<Exam>();
+
+    public virtual ICollection<Test> Tests { get; set; } = new List<Test>();
 }

@@ -11,11 +11,17 @@ public partial class Student
 
     public string Fullname { get; set; } = null!;
 
+    public string Avatar { get; set; } = null!;
+
     public DateTime Birthday { get; set; }
 
     public string Email { get; set; } = null!;
 
     public string Phone { get; set; } = null!;
+
+    public string Gender { get; set; } = null!;
+
+    public string Address { get; set; } = null!;
 
     public int ClassId { get; set; }
 
@@ -25,11 +31,11 @@ public partial class Student
 
     public int Status { get; set; }
 
-    public DateTime CreatedAt { get; set; }
+    public DateTime? CreatedAt { get; set; }
 
-    public DateTime UpdateAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
 
-    public DateTime DeleteAt { get; set; }
+    public DateTime? DeletedAt { get; set; }
 
     public virtual ICollection<AnswersForStudent> AnswersForStudents { get; set; } = new List<AnswersForStudent>();
 

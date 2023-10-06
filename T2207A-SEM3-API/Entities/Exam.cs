@@ -11,9 +11,11 @@ public partial class Exam
 
     public string Slug { get; set; } = null!;
 
+    public int CourseId { get; set; }
+
     public DateTime StartDate { get; set; }
 
-    public int? TeacherId { get; set; }
+    public int? CreatedBy { get; set; }
 
     public DateTime? CreatedAt { get; set; }
 
@@ -21,11 +23,11 @@ public partial class Exam
 
     public DateTime? DeletedAt { get; set; }
 
-    public virtual ICollection<ExamAgain> ExamAgains { get; set; } = new List<ExamAgain>();
+    public virtual Course Course { get; set; } = null!;
+
+    public virtual Staff? CreatedByNavigation { get; set; }
 
     public virtual ICollection<RegisterExam> RegisterExams { get; set; } = new List<RegisterExam>();
-
-    public virtual Teacher? Teacher { get; set; }
 
     public virtual ICollection<Test> Tests { get; set; } = new List<Test>();
 }

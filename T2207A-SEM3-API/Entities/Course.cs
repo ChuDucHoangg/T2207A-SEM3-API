@@ -13,6 +13,8 @@ public partial class Course
 
     public int ClassId { get; set; }
 
+    public int CreatedBy { get; set; }
+
     public DateTime? CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
@@ -21,5 +23,7 @@ public partial class Course
 
     public virtual Class Class { get; set; } = null!;
 
-    public virtual ICollection<ExamAgain> ExamAgains { get; set; } = new List<ExamAgain>();
+    public virtual Staff CreatedByNavigation { get; set; } = null!;
+
+    public virtual ICollection<Exam> Exams { get; set; } = new List<Exam>();
 }

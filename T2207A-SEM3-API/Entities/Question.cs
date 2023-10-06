@@ -9,11 +9,9 @@ public partial class Question
 
     public string? Title { get; set; }
 
-    public string Slug { get; set; } = null!;
-
     public int? TestId { get; set; }
 
-    public int Status { get; set; }
+    public int Level { get; set; }
 
     public double Score { get; set; }
 

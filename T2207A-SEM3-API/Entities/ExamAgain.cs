@@ -9,11 +9,9 @@ public partial class ExamAgain
 
     public int StudentId { get; set; }
 
-    public int CourseId { get; set; }
+    public int TestId { get; set; }
 
-    public int ExamId { get; set; }
-
-    public int Score { get; set; }
+    public double Score { get; set; }
 
     public DateTime RetestDate { get; set; }
 
@@ -23,9 +21,7 @@ public partial class ExamAgain
 
     public DateTime? DeletedAt { get; set; }
 
-    public virtual Course Course { get; set; } = null!;
-
-    public virtual Exam Exam { get; set; } = null!;
-
     public virtual Student Student { get; set; } = null!;
+
+    public virtual Test Test { get; set; } = null!;
 }
