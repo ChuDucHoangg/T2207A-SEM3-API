@@ -1,0 +1,35 @@
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace T2207A_SEM3_API.Models.Question
+{
+    public class EditQuestion
+    {
+        [Required]
+        public int id { get; set; }
+
+        [Required(ErrorMessage = "Please enter title")]
+        [MinLength(3, ErrorMessage = "Enter at least 3 characters")]
+        [MaxLength(255, ErrorMessage = "Enter up to 255 characters")]
+        public string title { get; set; }
+
+        [Required(ErrorMessage = "Please enter test")]
+        public int test_id { get; set; }
+
+        [Required(ErrorMessage = "Please enter level")]
+        [Range(1, 3, ErrorMessage = "Please select a valid level")]
+        public int level { get; set; }
+
+        [Required(ErrorMessage = "Please enter score")]
+        [Range(0.0, 100.0, ErrorMessage = "Invalid value")]
+        public double score { get; set; }
+
+        [DataType(DataType.Date, ErrorMessage = "Invalid creation date")]
+        public DateTime createdAt { get; set; }
+
+        [DataType(DataType.Date, ErrorMessage = "Invalid edit date")]
+        public DateTime updatedAt { get; set; }
+
+        [DataType(DataType.Date, ErrorMessage = "Invalid delete date")]
+        public DateTime deletedAt { get; set; }
+    }
+}

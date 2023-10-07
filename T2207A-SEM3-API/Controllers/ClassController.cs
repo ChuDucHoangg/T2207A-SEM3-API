@@ -3,8 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using T2207A_SEM3_API.DTOs;
 using T2207A_SEM3_API.Entities;
 using T2207A_SEM3_API.Models.Class;
-using T2207A_SEM3_API.Models.Student;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace T2207A_SEM3_API.Controllers
 {

@@ -2,17 +2,17 @@
 using Microsoft.AspNetCore.Mvc;
 using T2207A_SEM3_API.DTOs;
 using T2207A_SEM3_API.Entities;
-using T2207A_SEM3_API.Models.Exam;
+using T2207A_SEM3_API.Models.Test;
 
 namespace T2207A_SEM3_API.Controllers
 {
-    [Route("api/exam")]
+    [Route("api/test")]
     [ApiController]
-    public class ExamController : Controller
+    public class TestController : Controller
     {
         private readonly ExamonimyContext _context;
 
-        public ExamController(ExamonimyContext context)
+        public TestController(ExamonimyContext context)
         {
             _context = context;
         }
@@ -20,22 +20,27 @@ namespace T2207A_SEM3_API.Controllers
         [HttpGet]
         public IActionResult Index()
         {
-            List<Exam> exams = _context.Exams.ToList();
+            List<Test> tests = _context.Tests.ToList();
 
-            List<ExamDTO> data = new List<ExamDTO>();
-            foreach (Exam e in exams)
+            List<TestDTO> data = new List<TestDTO>();
+            foreach (Test t in tests)
             {
-                data.Add(new ExamDTO
+                data.Add(new TestDTO
                 {
-                    id = e.Id,
-                    name = e.Name,
-                    slug = e.Slug,
-                    course_id = e.CourseId,
-                    start_date = e.StartDate,
-                    created_by = e.CreatedBy,
-                    createdAt = e.CreatedAt,
-                    updatedAt = e.UpdatedAt,
-                    deletedAt = e.DeletedAt
+                    id = t.Id,
+                    name = t.Name,
+                    slug = t.Slug,
+                    exam_id = t.ExamId,
+                    student_id = t.StudentId,
+                    startDate = t.StartDate,
+                    endDate = t.EndDate,
+                    past_marks = t.PastMarks,
+                    total_marks = t.TotalMarks,
+                    created_by = t.CreatedBy,
+                    status = t.Status,
+                    createdAt = t.CreatedAt,
+                    updatedAt = t.UpdatedAt,
+                    deletedAt = t.DeletedAt
                 });
             }
             return Ok(data);
@@ -47,20 +52,25 @@ namespace T2207A_SEM3_API.Controllers
         {
             try
             {
-                Exam c = _context.Exams.FirstOrDefault(x => x.Slug == slug);
-                if (c != null)
+                Test t = _context.Tests.FirstOrDefault(x => x.Slug == slug);
+                if (t != null)
                 {
-                    return Ok(new ExamDTO
+                    return Ok(new TestDTO
                     {
-                        id = c.Id,
-                        name = c.Name,
-                        slug = c.Slug,
-                        course_id = c.CourseId,
-                        start_date = c.StartDate,
-                        created_by = c.CreatedBy,
-                        createdAt = c.CreatedAt,
-                        updatedAt = c.UpdatedAt,
-                        deletedAt = c.DeletedAt
+                        id = t.Id,
+                        name = t.Name,
+                        slug = t.Slug,
+                        exam_id = t.ExamId,
+                        student_id = t.StudentId,
+                        startDate = t.StartDate,
+                        endDate = t.EndDate,
+                        past_marks = t.PastMarks,
+                        total_marks = t.TotalMarks,
+                        created_by = t.CreatedBy,
+                        status = t.Status,
+                        createdAt = t.CreatedAt,
+                        updatedAt = t.UpdatedAt,
+                        deletedAt = t.DeletedAt
 
                     });
                 }
@@ -73,33 +83,43 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpPost]
-        public IActionResult Create(CreateExam model)
+        public IActionResult Create(CreateTest model)
         {
             if (ModelState.IsValid)
             {
                 try
                 {
-                    Exam data = new Exam
+                    Test data = new Test
                     {
                         Name = model.name,
                         Slug = model.slug,
-                        CourseId = model.course_id,
-                        StartDate = model.start_date,
+                        ExamId = model.exam_id,
+                        StudentId = model.student_id,
+                        StartDate = model.startDate,
+                        EndDate = model.endDate,
+                        PastMarks = model.past_marks, 
+                        TotalMarks = model.total_marks,
                         CreatedBy = model.created_by,
+                        Status = model.status,
                         CreatedAt = DateTime.Now,
                         UpdatedAt = DateTime.Now,
                         DeletedAt = DateTime.Now,
                     };
-                    _context.Exams.Add(data);
+                    _context.Tests.Add(data);
                     _context.SaveChanges();
-                    return Created($"get-by-id?id={data.Id}", new ExamDTO
+                    return Created($"get-by-id?id={data.Id}", new TestDTO
                     {
                         id = data.Id,
                         name = data.Name,
                         slug = data.Slug,
-                        course_id = data.CourseId,
-                        start_date = data.StartDate,
+                        exam_id = data.ExamId,
+                        student_id = data.StudentId,
+                        startDate = data.StartDate,
+                        endDate = data.EndDate,
+                        past_marks = data.PastMarks,
+                        total_marks = data.TotalMarks,
                         created_by = data.CreatedBy,
+                        status = data.Status,
                         createdAt = data.CreatedAt,
                         updatedAt = data.UpdatedAt,
                         deletedAt = data.DeletedAt
@@ -115,28 +135,33 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpPut]
-        public IActionResult Update(EditExam model)
+        public IActionResult Update(EditTest model)
         {
             if (ModelState.IsValid)
             {
                 try
                 {
-                    Exam exam = new Exam
+                    Test test = new Test
                     {
                         Id = model.id,
                         Name = model.name,
                         Slug = model.slug,
-                        CourseId = model.course_id,
-                        StartDate = model.start_date,
+                        ExamId = model.exam_id,
+                        StudentId = model.student_id,
+                        StartDate = model.startDate,
+                        EndDate = model.endDate,
+                        PastMarks = model.past_marks,
+                        TotalMarks = model.total_marks,
                         CreatedBy = model.created_by,
+                        Status = model.status,
                         CreatedAt = model.createdAt,
                         UpdatedAt = model.updatedAt,
                         DeletedAt = model.deletedAt,
                     };
 
-                    if (exam != null)
+                    if (test != null)
                     {
-                        _context.Exams.Update(exam);
+                        _context.Tests.Update(test);
                         _context.SaveChanges();
                         return NoContent();
                     }
@@ -155,10 +180,10 @@ namespace T2207A_SEM3_API.Controllers
         {
             try
             {
-                Exam exam = _context.Exams.Find(id);
-                if (exam == null)
+                Test test = _context.Tests.Find(id);
+                if (test == null)
                     return NotFound();
-                _context.Exams.Remove(exam);
+                _context.Tests.Remove(test);
                 _context.SaveChanges();
                 return NoContent();
             }
@@ -169,22 +194,27 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpGet]
-        [Route("get-by-courseId")]
-        public IActionResult GetbyCategory(int courseId)
+        [Route("get-by-examId")]
+        public IActionResult GetbyCategory(int examId)
         {
             try
             {
-                List<Exam> exams = _context.Exams.Where(p => p.CourseId == courseId).ToList();
-                if (exams != null)
+                List<Test> tests = _context.Tests.Where(p => p.ExamId == examId).ToList();
+                if (tests != null)
                 {
-                    List<ExamDTO> data = exams.Select(c => new ExamDTO
+                    List<TestDTO> data = tests.Select(c => new TestDTO
                     {
                         id = c.Id,
                         name = c.Name,
                         slug = c.Slug,
-                        course_id = c.CourseId,
-                        start_date = c.StartDate,
+                        exam_id = c.ExamId,
+                        student_id = c.StudentId,
+                        startDate = c.StartDate,
+                        endDate = c.EndDate,
+                        past_marks = c.PastMarks,
+                        total_marks = c.TotalMarks,
                         created_by = c.CreatedBy,
+                        status = c.Status,
                         createdAt = c.CreatedAt,
                         updatedAt = c.UpdatedAt,
                         deletedAt = c.DeletedAt
