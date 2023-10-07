@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using T2207A_SEM3_API.DTOs;
 using T2207A_SEM3_API.Entities;
 using T2207A_SEM3_API.Models.Test;
@@ -89,10 +90,19 @@ namespace T2207A_SEM3_API.Controllers
             {
                 try
                 {
+                    // Kiểm tra xem name đã tồn tại trong cơ sở dữ liệu hay chưa
+                    bool nameExists = _context.Tests.Any(c => c.Name == model.name);
+
+                    if (nameExists)
+                    {
+                        // Nếu name đã tồn tại, trả về BadRequest hoặc thông báo lỗi tương tự
+                        return BadRequest("Class name already exists");
+                    }
+
                     Test data = new Test
                     {
                         Name = model.name,
-                        Slug = model.slug,
+                        Slug = model.name.ToLower().Replace(" ", "-"),
                         ExamId = model.exam_id,
                         StudentId = model.student_id,
                         StartDate = model.startDate,
@@ -100,10 +110,10 @@ namespace T2207A_SEM3_API.Controllers
                         PastMarks = model.past_marks, 
                         TotalMarks = model.total_marks,
                         CreatedBy = model.created_by,
-                        Status = model.status,
+                        Status = 0,
                         CreatedAt = DateTime.Now,
                         UpdatedAt = DateTime.Now,
-                        DeletedAt = DateTime.Now,
+                        DeletedAt = null,
                     };
                     _context.Tests.Add(data);
                     _context.SaveChanges();
@@ -141,30 +151,49 @@ namespace T2207A_SEM3_API.Controllers
             {
                 try
                 {
-                    Test test = new Test
-                    {
-                        Id = model.id,
-                        Name = model.name,
-                        Slug = model.slug,
-                        ExamId = model.exam_id,
-                        StudentId = model.student_id,
-                        StartDate = model.startDate,
-                        EndDate = model.endDate,
-                        PastMarks = model.past_marks,
-                        TotalMarks = model.total_marks,
-                        CreatedBy = model.created_by,
-                        Status = model.status,
-                        CreatedAt = model.createdAt,
-                        UpdatedAt = model.updatedAt,
-                        DeletedAt = model.deletedAt,
-                    };
+                    // Kiểm tra xem name đã tồn tại trong cơ sở dữ liệu hay chưa
+                    bool nameExists = _context.Tests.Any(c => c.Name == model.name);
 
-                    if (test != null)
+                    if (nameExists)
                     {
-                        _context.Tests.Update(test);
-                        _context.SaveChanges();
-                        return NoContent();
+                        // Nếu name đã tồn tại, trả về BadRequest hoặc thông báo lỗi tương tự
+                        return BadRequest("Class name already exists");
                     }
+
+                    Test existingTest = _context.Tests.AsNoTracking().FirstOrDefault(e => e.Id == model.id);
+                    if (existingTest != null)
+                    {
+                        Test test = new Test
+                        {
+                            Id = model.id,
+                            Name = model.name,
+                            Slug = model.name.ToLower().Replace(" ", "-"),
+                            ExamId = model.exam_id,
+                            StudentId = model.student_id,
+                            StartDate = model.startDate,
+                            EndDate = model.endDate,
+                            PastMarks = model.past_marks,
+                            TotalMarks = model.total_marks,
+                            CreatedBy = model.created_by,
+                            Status = existingTest.Status,
+                            CreatedAt = existingTest.CreatedAt,
+                            UpdatedAt = DateTime.Now,
+                            DeletedAt = null,
+                        };
+
+                        if (test != null)
+                        {
+                            _context.Tests.Update(test);
+                            _context.SaveChanges();
+                            return NoContent();
+                        }
+                    }
+                    else
+                    {
+                        return NotFound(); // Không tìm thấy lớp để cập nhật
+                    }
+
+
 
                 }
                 catch (Exception e)

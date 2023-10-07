@@ -47,17 +47,5 @@ namespace T2207A_SEM3_API.Models.Student
         [MaxLength(50, ErrorMessage = "Enter up to 255 characters")]
         public string password { get; set; }
 
-        [Required(ErrorMessage = "Please enter status")]
-        [Range(1, 3, ErrorMessage = "Please select a valid status")]
-        public int status { get; set; }
-
-        [DataType(DataType.Date, ErrorMessage = "Invalid creation date")]
-        public DateTime createdAt { get; set; }
-
-        [DataType(DataType.Date, ErrorMessage = "Invalid edit date")]
-        public DateTime updatedAt { get; set; }
-
-        [DataType(DataType.Date, ErrorMessage = "Invalid delete date")]
-        public DateTime deletedAt { get; set; }
     }
 }

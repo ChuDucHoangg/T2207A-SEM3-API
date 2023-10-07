@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using T2207A_SEM3_API.DTOs;
 using T2207A_SEM3_API.Entities;
 using T2207A_SEM3_API.Models.Student;
@@ -90,6 +91,15 @@ namespace T2207A_SEM3_API.Controllers
             {
                 try
                 {
+                    // Kiểm tra xem name đã tồn tại trong cơ sở dữ liệu hay chưa
+                    bool codeExists = _context.Students.Any(c => c.StudentCode == model.student_code);
+
+                    if (codeExists)
+                    {
+                        // Nếu name đã tồn tại, trả về BadRequest hoặc thông báo lỗi tương tự
+                        return BadRequest("Code student already exists");
+                    }
+
                     Student data = new Student {
                         StudentCode = model.student_code,
                         Fullname = model.fullname,
@@ -101,10 +111,10 @@ namespace T2207A_SEM3_API.Controllers
                         Address = model.address,
                         ClassId = model.class_id,
                         Password = model.password,
-                        Status = model.status,
+                        Status = 0,
                         CreatedAt = DateTime.Now,
                         UpdatedAt = DateTime.Now,
-                        DeletedAt = DateTime.Now,
+                        DeletedAt = null,
                     };
                     _context.Students.Add(data);
                     _context.SaveChanges();
@@ -142,32 +152,49 @@ namespace T2207A_SEM3_API.Controllers
             {
                 try
                 {
-                    Student student = new Student
-                    {
-                        Id = model.id,
-                        StudentCode = model.student_code,
-                        Fullname = model.fullname,
-                        Avatar = model.avatar,
-                        Birthday = model.birthday,
-                        Email = model.email,
-                        Phone = model.phone,
-                        Gender = model.gender,
-                        Address = model.address,
-                        ClassId = model.class_id,
-                        Password = model.password,
-                        Status = model.status,
-                        CreatedAt = model.createdAt,
-                        UpdatedAt = model.updatedAt,
-                        DeletedAt = model.deletedAt,
-                    };
+                    // Kiểm tra xem name đã tồn tại trong cơ sở dữ liệu hay chưa
+                    bool codeExists = _context.Students.Any(c => c.StudentCode == model.student_code);
 
-                    if (student != null)
+                    if (codeExists)
                     {
-                        _context.Students.Update(student);
-                        _context.SaveChanges();
-                        return NoContent();
+                        // Nếu name đã tồn tại, trả về BadRequest hoặc thông báo lỗi tương tự
+                        return BadRequest("Code student already exists");
                     }
 
+                    Student exexistingStudent = _context.Students.AsNoTracking().FirstOrDefault(e => e.Id == model.id);
+
+                    if (exexistingStudent != null)
+                    {
+                        Student student = new Student
+                        {
+                            Id = model.id,
+                            StudentCode = model.student_code,
+                            Fullname = model.fullname,
+                            Avatar = model.avatar,
+                            Birthday = model.birthday,
+                            Email = model.email,
+                            Phone = model.phone,
+                            Gender = model.gender,
+                            Address = model.address,
+                            ClassId = model.class_id,
+                            Password = model.password,
+                            Status = exexistingStudent.Status,
+                            CreatedAt = exexistingStudent.CreatedAt,
+                            UpdatedAt = DateTime.Now,
+                            DeletedAt = null,
+                        };
+
+                        if (student != null)
+                        {
+                            _context.Students.Update(student);
+                            _context.SaveChanges();
+                            return NoContent();
+                        }
+                    }
+                    else
+                    {
+                        return NotFound(); // Không tìm thấy lớp để cập nhật
+                    }
                 }
                 catch (Exception e)
                 {
@@ -192,6 +219,47 @@ namespace T2207A_SEM3_API.Controllers
             catch (Exception e)
             {
                 return BadRequest(e.Message);
+            }
+        }
+
+        [HttpGet]
+        [Route("get-by-classId")]
+        public IActionResult GetbyClass(int classId)
+        {
+            try
+            {
+                List<Student> students = _context.Students.Where(p => p.ClassId == classId).ToList();
+                if (students != null)
+                {
+                    List<StudentDTO> data = students.Select(c => new StudentDTO
+                    {
+                        id = c.Id,
+                        student_code = c.StudentCode,
+                        fullname = c.Fullname,
+                        avatar = c.Avatar,
+                        birthday = c.Birthday,
+                        email = c.Email,
+                        phone = c.Phone,
+                        gender = c.Gender,
+                        address = c.Address,
+                        class_id = c.ClassId,
+                        password = c.Password,
+                        status = c.Status,
+                        createdAt = c.CreatedAt,
+                        updateAt = c.UpdatedAt,
+                        deleteAt = c.DeletedAt
+                    }).ToList();
+
+                    return Ok(data);
+                }
+                else
+                {
+                    return NotFound("No student found in this class.");
+                }
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, e.Message);
             }
         }
     }

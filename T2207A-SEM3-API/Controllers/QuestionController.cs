@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using T2207A_SEM3_API.DTOs;
 using T2207A_SEM3_API.Entities;
 using T2207A_SEM3_API.Models.Question;
@@ -85,7 +86,7 @@ namespace T2207A_SEM3_API.Controllers
                         Score = model.score,
                         CreatedAt = DateTime.Now,
                         UpdatedAt = DateTime.Now,
-                        DeletedAt = DateTime.Now,
+                        DeletedAt = null,
                     };
                     _context.Questions.Add(data);
                     _context.SaveChanges();
@@ -117,25 +118,33 @@ namespace T2207A_SEM3_API.Controllers
             {
                 try
                 {
-                    Question question = new Question
-                    {
-                        Id = model.id,
-                        Title = model.title,
-                        TestId = model.test_id,
-                        Level = model.level,
-                        Score = model.score,
-                        CreatedAt = model.createdAt,
-                        UpdatedAt = model.updatedAt,
-                        DeletedAt = model.deletedAt,
-                    };
+                    Question existingQuestion = _context.Questions.AsNoTracking().FirstOrDefault(e => e.Id == model.id);
 
-                    if (question != null)
+                    if (existingQuestion != null)
                     {
-                        _context.Questions.Update(question);
-                        _context.SaveChanges();
-                        return NoContent();
+                        Question question = new Question
+                        {
+                            Id = model.id,
+                            Title = model.title,
+                            TestId = model.test_id,
+                            Level = model.level,
+                            Score = model.score,
+                            CreatedAt = existingQuestion.CreatedAt,
+                            UpdatedAt = DateTime.Now,
+                            DeletedAt = null,
+                        };
+
+                        if (question != null)
+                        {
+                            _context.Questions.Update(question);
+                            _context.SaveChanges();
+                            return NoContent();
+                        }
                     }
-
+                    else
+                    {
+                        return NotFound(); // Không tìm thấy lớp để cập nhật
+                    }
                 }
                 catch (Exception e)
                 {

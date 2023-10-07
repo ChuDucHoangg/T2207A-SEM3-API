@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using T2207A_SEM3_API.DTOs;
 using T2207A_SEM3_API.Entities;
 using T2207A_SEM3_API.Models.Class;
@@ -77,15 +78,24 @@ namespace T2207A_SEM3_API.Controllers
             {
                 try
                 {
+                    // Kiểm tra xem name đã tồn tại trong cơ sở dữ liệu hay chưa
+                    bool nameExists = _context.Classes.Any(c => c.Name == model.name);
+
+                    if (nameExists)
+                    {
+                        // Nếu name đã tồn tại, trả về BadRequest hoặc thông báo lỗi tương tự
+                        return BadRequest("Class name already exists");
+                    }
+
                     Class data = new Class
                     {
                         Name = model.name,
-                        Slug = model.slug,
+                        Slug = model.name.ToLower().Replace(" ", "-"),
                         Room = model.room,
                         TeacherId = model.teacher_id,
                         CreatedAt = DateTime.Now,
                         UpdatedAt = DateTime.Now,
-                        DeletedAt = DateTime.Now,
+                        DeletedAt = null,
                     };
                     _context.Classes.Add(data);
                     _context.SaveChanges();
@@ -117,24 +127,43 @@ namespace T2207A_SEM3_API.Controllers
             {
                 try
                 {
-                    Class classes = new Class
-                    {
-                        Id = model.id,
-                        Name = model.name,
-                        Slug = model.slug,
-                        Room = model.room,
-                        TeacherId = model.teacher_id,
-                        CreatedAt = model.createdAt,
-                        UpdatedAt = model.updatedAt,
-                        DeletedAt = model.deletedAt,
-                    };
+                    // Kiểm tra xem name đã tồn tại trong cơ sở dữ liệu hay chưa
+                    bool nameExists = _context.Classes.Any(c => c.Name == model.name);
 
-                    if (classes != null)
+                    if (nameExists)
                     {
-                        _context.Classes.Update(classes);
-                        _context.SaveChanges();
-                        return NoContent();
+                        // Nếu name đã tồn tại, trả về BadRequest hoặc thông báo lỗi tương tự
+                        return BadRequest("Class name already exists");
                     }
+
+                    Class existingClass = _context.Classes.AsNoTracking().FirstOrDefault(e => e.Id == model.id);
+                    if (existingClass != null)
+                    {
+                        Class classes = new Class
+                        {
+                            Id = model.id,
+                            Name = model.name,
+                            Slug = model.name.ToLower().Replace(" ", "-"),
+                            Room = model.room,
+                            TeacherId = model.teacher_id,
+                            CreatedAt = existingClass.CreatedAt,
+                            UpdatedAt = DateTime.Now,
+                            DeletedAt = null,
+                        };
+
+                        if (classes != null)
+                        {
+                            _context.Classes.Update(classes);
+                            _context.SaveChanges();
+                            return NoContent();
+                        }
+                    }
+                    else
+                    {
+                        return NotFound(); // Không tìm thấy lớp để cập nhật
+                    }
+
+                    
 
                 }
                 catch (Exception e)

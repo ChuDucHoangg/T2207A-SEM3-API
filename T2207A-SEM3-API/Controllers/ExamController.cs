@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using T2207A_SEM3_API.DTOs;
 using T2207A_SEM3_API.Entities;
 using T2207A_SEM3_API.Models.Exam;
@@ -79,16 +80,25 @@ namespace T2207A_SEM3_API.Controllers
             {
                 try
                 {
+                    // Kiểm tra xem name đã tồn tại trong cơ sở dữ liệu hay chưa
+                    bool nameExists = _context.Exams.Any(c => c.Name == model.name);
+
+                    if (nameExists)
+                    {
+                        // Nếu name đã tồn tại, trả về BadRequest hoặc thông báo lỗi tương tự
+                        return BadRequest("Exam name already exists");
+                    }
+
                     Exam data = new Exam
                     {
                         Name = model.name,
-                        Slug = model.slug,
+                        Slug = model.name.ToLower().Replace(" ", "-"),
                         CourseId = model.course_id,
                         StartDate = model.start_date,
                         CreatedBy = model.created_by,
                         CreatedAt = DateTime.Now,
                         UpdatedAt = DateTime.Now,
-                        DeletedAt = DateTime.Now,
+                        DeletedAt = null,
                     };
                     _context.Exams.Add(data);
                     _context.SaveChanges();
@@ -121,26 +131,43 @@ namespace T2207A_SEM3_API.Controllers
             {
                 try
                 {
-                    Exam exam = new Exam
-                    {
-                        Id = model.id,
-                        Name = model.name,
-                        Slug = model.slug,
-                        CourseId = model.course_id,
-                        StartDate = model.start_date,
-                        CreatedBy = model.created_by,
-                        CreatedAt = model.createdAt,
-                        UpdatedAt = model.updatedAt,
-                        DeletedAt = model.deletedAt,
-                    };
+                    // Kiểm tra xem name đã tồn tại trong cơ sở dữ liệu hay chưa
+                    bool nameExists = _context.Exams.Any(c => c.Name == model.name);
 
-                    if (exam != null)
+                    if (nameExists)
                     {
-                        _context.Exams.Update(exam);
-                        _context.SaveChanges();
-                        return NoContent();
+                        // Nếu name đã tồn tại, trả về BadRequest hoặc thông báo lỗi tương tự
+                        return BadRequest("Exam name already exists");
                     }
 
+                    Exam existingExam = _context.Exams.AsNoTracking().FirstOrDefault(e => e.Id == model.id);
+
+                    if (existingExam != null)
+                    {
+                        Exam exam = new Exam
+                        {
+                            Id = model.id,
+                            Name = model.name,
+                            Slug = model.name.ToLower().Replace(" ", "-"),
+                            CourseId = model.course_id,
+                            StartDate = model.start_date,
+                            CreatedBy = model.created_by,
+                            CreatedAt = existingExam.CreatedAt,
+                            UpdatedAt = DateTime.Now,
+                            DeletedAt = null,
+                        };
+
+                        if (exam != null)
+                        {
+                            _context.Exams.Update(exam);
+                            _context.SaveChanges();
+                            return NoContent();
+                        }
+                    }
+                    else
+                    {
+                        return NotFound(); // Không tìm thấy lớp để cập nhật
+                    }
                 }
                 catch (Exception e)
                 {
@@ -170,7 +197,7 @@ namespace T2207A_SEM3_API.Controllers
 
         [HttpGet]
         [Route("get-by-courseId")]
-        public IActionResult GetbyCategory(int courseId)
+        public IActionResult GetbyCourse(int courseId)
         {
             try
             {

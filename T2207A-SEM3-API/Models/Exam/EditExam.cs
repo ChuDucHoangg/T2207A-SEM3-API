@@ -12,10 +12,6 @@ namespace T2207A_SEM3_API.Models.Exam
         [MaxLength(255, ErrorMessage = "Enter up to 255 characters")]
         public string name { get; set; }
 
-        [Required(ErrorMessage = "Please enter slug")]
-        [MinLength(3, ErrorMessage = "Enter at least 3 characters")]
-        [MaxLength(255, ErrorMessage = "Enter up to 255 characters")]
-        public string slug { get; set; }
 
         [Required(ErrorMessage = "Please enter teacher")]
         public int course_id { get; set; }
@@ -28,13 +24,5 @@ namespace T2207A_SEM3_API.Models.Exam
         [Required(ErrorMessage = "Please enter teacher")]
         public int created_by { get; set; }
 
-        [DataType(DataType.Date, ErrorMessage = "Invalid creation date")]
-        public DateTime createdAt { get; set; }
-
-        [DataType(DataType.Date, ErrorMessage = "Invalid edit date")]
-        public DateTime updatedAt { get; set; }
-
-        [DataType(DataType.Date, ErrorMessage = "Invalid delete date")]
-        public DateTime deletedAt { get; set; }
     }
 }

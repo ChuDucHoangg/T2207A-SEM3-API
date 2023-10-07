@@ -22,14 +22,6 @@ namespace T2207A_SEM3_API.Models.Question
         [Required(ErrorMessage = "Please enter score")]
         [Range(0.0, 100.0, ErrorMessage = "Invalid value")]
         public double score { get; set; }
-
-        [DataType(DataType.Date, ErrorMessage = "Invalid creation date")]
-        public DateTime createdAt { get; set; }
-
-        [DataType(DataType.Date, ErrorMessage = "Invalid edit date")]
-        public DateTime updatedAt { get; set; }
-
-        [DataType(DataType.Date, ErrorMessage = "Invalid delete date")]
-        public DateTime deletedAt { get; set; }
+        
     }
 }

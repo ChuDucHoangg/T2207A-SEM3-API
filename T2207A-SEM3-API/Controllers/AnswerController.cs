@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using T2207A_SEM3_API.DTOs;
 using T2207A_SEM3_API.Entities;
 using T2207A_SEM3_API.Models.Answer;
@@ -82,7 +83,7 @@ namespace T2207A_SEM3_API.Controllers
                         QuestionId = model.question_id,
                         CreatedAt = DateTime.Now,
                         UpdatedAt = DateTime.Now,
-                        DeletedAt = DateTime.Now,
+                        DeletedAt = null,
                     };
                     _context.Answers.Add(data);
                     _context.SaveChanges();
@@ -113,23 +114,32 @@ namespace T2207A_SEM3_API.Controllers
             {
                 try
                 {
-                    Answer answer = new Answer
+                    Answer existingAnswer = _context.Answers.AsNoTracking().FirstOrDefault(e => e.Id == model.id);
+                    if (existingAnswer != null)
                     {
-                        Id = model.id,
-                        Content = model.content,
-                        Status = model.status,
-                        QuestionId = model.question_id,
-                        CreatedAt = model.createdAt,
-                        UpdatedAt = model.updatedAt,
-                        DeletedAt = model.deletedAt,
-                    };
+                        Answer answer = new Answer
+                        {
+                            Id = model.id,
+                            Content = model.content,
+                            Status = model.status,
+                            QuestionId = model.question_id,
+                            CreatedAt = existingAnswer.CreatedAt,
+                            UpdatedAt = DateTime.Now,
+                            DeletedAt = null,
+                        };
 
-                    if (answer != null)
-                    {
-                        _context.Answers.Update(answer);
-                        _context.SaveChanges();
-                        return NoContent();
+                        if (answer != null)
+                        {
+                            _context.Answers.Update(answer);
+                            _context.SaveChanges();
+                            return NoContent();
+                        }
                     }
+                    else
+                    {
+                        return NotFound(); // Không tìm thấy lớp để cập nhật
+                    }
+
 
                 }
                 catch (Exception e)
@@ -160,7 +170,7 @@ namespace T2207A_SEM3_API.Controllers
 
         [HttpGet]
         [Route("get-by-questionId")]
-        public IActionResult GetbyCategory(int questionId)
+        public IActionResult GetbyQuestion(int questionId)
         {
             try
             {
@@ -182,7 +192,7 @@ namespace T2207A_SEM3_API.Controllers
                 }
                 else
                 {
-                    return NotFound("No products found in this category.");
+                    return NotFound("No answer found in this question.");
                 }
             }
             catch (Exception e)
