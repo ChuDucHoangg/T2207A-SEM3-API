@@ -19,6 +19,9 @@ namespace T2207A_SEM3_API.Models.Course
         [Required(ErrorMessage = "Please enter class")]
         public int class_id { get; set; }
 
+        [Required(ErrorMessage = "Please enter creator")]
+        public int created_by { get; set; }
+
         [DataType(DataType.Date, ErrorMessage = "Invalid creation date")]
         public DateTime createdAt { get; set; }
 

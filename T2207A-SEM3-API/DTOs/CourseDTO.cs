@@ -10,6 +10,8 @@
 
         public int class_id { get; set; }
 
+        public int? created_by { get; set; }
+
         public DateTime? createdAt { get; set; }
 
         public DateTime? updateAt { get; set; }
