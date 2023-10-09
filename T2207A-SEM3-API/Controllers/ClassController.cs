@@ -177,6 +177,10 @@ namespace T2207A_SEM3_API.Controllers
         [HttpDelete]
         public IActionResult Delete(int id)
         {
+            bool hasStudents = _context.Students.Any(s => s.ClassId == id); 
+            if (hasStudents) { 
+                return BadRequest("The class cannot be deleted because this class currently has students"); 
+            }
             try
             {
                 Class classes = _context.Classes.Find(id);
