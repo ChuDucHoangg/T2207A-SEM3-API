@@ -19,34 +19,41 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpGet]
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            List<Answer> answers = _context.Answers.ToList();
-
-            List<AnswerDTO> data = new List<AnswerDTO>();
-            foreach (Answer a in answers)
+            try
             {
-                data.Add(new AnswerDTO
+                List<Answer> answers = await _context.Answers.ToListAsync();
+
+                List<AnswerDTO> data = new List<AnswerDTO>();
+                foreach (Answer a in answers)
                 {
-                    id = a.Id,
-                    content = a.Content,
-                    status = a.Status,
-                    question_id = a.QuestionId,
-                    createdAt = a.CreatedAt,
-                    updatedAt = a.UpdatedAt,
-                    deletedAt = a.DeletedAt
-                });
+                    data.Add(new AnswerDTO
+                    {
+                        id = a.Id,
+                        content = a.Content,
+                        status = a.Status,
+                        question_id = a.QuestionId,
+                        createdAt = a.CreatedAt,
+                        updatedAt = a.UpdatedAt,
+                        deletedAt = a.DeletedAt
+                    });
+                }
+                return Ok(data);
+            } 
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
             }
-            return Ok(data);
         }
 
         [HttpGet]
         [Route("get-by-id")]
-        public IActionResult Get(int id)
+        public async Task<IActionResult> Get(int id)
         {
             try
             {
-                Answer a = _context.Answers.FirstOrDefault(x => x.Id == id);
+                Answer a = await _context.Answers.FirstOrDefaultAsync(x => x.Id == id);
                 if (a != null)
                 {
                     return Ok(new AnswerDTO
@@ -70,7 +77,7 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpPost]
-        public IActionResult Create(CreateAnswer model)
+        public async Task<IActionResult> Create(CreateAnswer model)
         {
             if (ModelState.IsValid)
             {
@@ -86,7 +93,7 @@ namespace T2207A_SEM3_API.Controllers
                         DeletedAt = null,
                     };
                     _context.Answers.Add(data);
-                    _context.SaveChanges();
+                    await _context.SaveChangesAsync();
                     return Created($"get-by-id?id={data.Id}", new AnswerDTO
                     {
                         id = data.Id,
@@ -108,13 +115,13 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpPut]
-        public IActionResult Update(EditAnswer model)
+        public async Task<IActionResult> Update(EditAnswer model)
         {
             if (ModelState.IsValid)
             {
                 try
                 {
-                    Answer existingAnswer = _context.Answers.AsNoTracking().FirstOrDefault(e => e.Id == model.id);
+                    Answer existingAnswer = await _context.Answers.AsNoTracking().FirstOrDefaultAsync(e => e.Id == model.id);
                     if (existingAnswer != null)
                     {
                         Answer answer = new Answer
@@ -131,7 +138,7 @@ namespace T2207A_SEM3_API.Controllers
                         if (answer != null)
                         {
                             _context.Answers.Update(answer);
-                            _context.SaveChanges();
+                            await _context.SaveChangesAsync();
                             return NoContent();
                         }
                     }
@@ -151,15 +158,15 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpDelete]
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
             try
             {
-                Answer answer = _context.Answers.Find(id);
+                Answer answer = await _context.Answers.FindAsync(id);
                 if (answer == null)
                     return NotFound();
                 _context.Answers.Remove(answer);
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
                 return NoContent();
             }
             catch (Exception e)
@@ -170,11 +177,11 @@ namespace T2207A_SEM3_API.Controllers
 
         [HttpGet]
         [Route("get-by-questionId")]
-        public IActionResult GetbyQuestion(int questionId)
+        public async Task<IActionResult> GetbyQuestion(int questionId)
         {
             try
             {
-                List<Answer> answers = _context.Answers.Where(p => p.QuestionId == questionId).ToList();
+                List<Answer> answers = await _context.Answers.Where(p => p.QuestionId == questionId).ToListAsync();
                 if (answers != null)
                 {
                     List<AnswerDTO> data = answers.Select(q => new AnswerDTO

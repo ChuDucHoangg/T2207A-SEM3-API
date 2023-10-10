@@ -15,9 +15,7 @@ namespace T2207A_SEM3_API.Models.Student
         public string fullname { get; set; }
 
         [Required(ErrorMessage = "Please enter avatar")]
-        [MinLength(3, ErrorMessage = "Enter at least 3 characters")]
-        [MaxLength(255, ErrorMessage = "Enter up to 255 characters")]
-        public string avatar { get; set; }
+        public IFormFile avatar { get; set; }
 
         [Required(ErrorMessage = "Please enter birthday")]
         [DataType(DataType.Date)]

@@ -111,3 +111,4 @@ D:\SEM3\project-examonimy\SEM3-Examonimy-API\T2207A-SEM3-API\obj\Debug\net7.0\re
 D:\SEM3\project-examonimy\SEM3-Examonimy-API\T2207A-SEM3-API\obj\Debug\net7.0\T2207A-SEM3-API.pdb
 D:\SEM3\project-examonimy\SEM3-Examonimy-API\T2207A-SEM3-API\obj\Debug\net7.0\T2207A-SEM3-API.genruntimeconfig.cache
 D:\SEM3\project-examonimy\SEM3-Examonimy-API\T2207A-SEM3-API\obj\Debug\net7.0\ref\T2207A-SEM3-API.dll
+D:\SEM3\project-examonimy\SEM3-Examonimy-API\T2207A-SEM3-API\bin\Debug\net7.0\T2207A-SEM3-API.staticwebassets.runtime.json

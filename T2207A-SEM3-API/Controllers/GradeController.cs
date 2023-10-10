@@ -4,44 +4,46 @@ using Microsoft.EntityFrameworkCore;
 using T2207A_SEM3_API.DTOs;
 using T2207A_SEM3_API.Entities;
 using T2207A_SEM3_API.Models.Answer;
-using T2207A_SEM3_API.Models.AnswerForStudent;
+using T2207A_SEM3_API.Models.Grade;
 
 namespace T2207A_SEM3_API.Controllers
 {
-    [Route("api/answersForStudent")]
+    [Route("api/grade")]
     [ApiController]
-    public class AnswersForStudentController : Controller
+    public class GradeController : ControllerBase
     {
         private readonly ExamonimyContext _context;
 
-        public AnswersForStudentController(ExamonimyContext context)
+        public GradeController(ExamonimyContext context)
         {
             _context = context;
         }
 
         [HttpGet]
-        public  async Task<IActionResult> Index()
+        public async Task<IActionResult> Index()
         {
             try
             {
-                List<AnswersForStudent> answersForStudents = await _context.AnswersForStudents.ToListAsync();
+                List<Grade> grades = await _context.Grades.ToListAsync();
 
-                List<AnswerForStudentDTO> data = new List<AnswerForStudentDTO>();
-                foreach (AnswersForStudent a in answersForStudents)
+                List<GradeDTO> data = new List<GradeDTO>();
+                foreach (Grade g in grades)
                 {
-                    data.Add(new AnswerForStudentDTO
+                    data.Add(new GradeDTO
                     {
-                        id = a.Id,
-                        student_id = a.StudentId,
-                        content = a.Content,
-                        question_id = a.QuestionId,
-                        createdAt = a.CreatedAt,
-                        updatedAt = a.UpdatedAt,
-                        deletedAt = a.DeletedAt
+                        id = g.Id,
+                        student_id = g.StudentId,
+                        test_id = g.TestId,
+                        score = g.Score,
+                        status = g.Status,
+                        time_taken = g.TimeTaken,
+                        createdAt = g.CreatedAt,
+                        updatedAt = g.UpdatedAt,
+                        deletedAt = g.DeletedAt
                     });
                 }
                 return Ok(data);
-            } 
+            }
             catch (Exception ex)
             {
                 return BadRequest(ex.Message);
@@ -54,15 +56,17 @@ namespace T2207A_SEM3_API.Controllers
         {
             try
             {
-                AnswersForStudent a = await _context.AnswersForStudents.FirstOrDefaultAsync(x => x.Id == id);
+                Grade a = await _context.Grades.FirstOrDefaultAsync(x => x.Id == id);
                 if (a != null)
                 {
-                    return Ok(new AnswerForStudentDTO
+                    return Ok(new GradeDTO
                     {
                         id = a.Id,
-                        student_id=a.StudentId,
-                        content = a.Content,
-                        question_id = a.QuestionId,
+                        student_id = a.StudentId,
+                        test_id = a.TestId,
+                        score = a.Score,
+                        status = a.Status,
+                        time_taken = a.TimeTaken,
                         createdAt = a.CreatedAt,
                         updatedAt = a.UpdatedAt,
                         deletedAt = a.DeletedAt
@@ -78,29 +82,33 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(CreateAnswerForStudent model)
+        public async Task<IActionResult> Create(CreateGrade model)
         {
             if (ModelState.IsValid)
             {
                 try
                 {
-                    AnswersForStudent data = new AnswersForStudent
+                    Grade data = new Grade
                     {
                         StudentId = model.student_id,
-                        Content = model.content,
-                        QuestionId = model.question_id,
+                        TestId = model.test_id,
+                        Score = model.score,
+                        Status = model.status,
+                        TimeTaken = model.time_taken,
                         CreatedAt = DateTime.Now,
                         UpdatedAt = DateTime.Now,
                         DeletedAt = null,
                     };
-                    _context.AnswersForStudents.Add(data);
+                    _context.Grades.Add(data);
                     await _context.SaveChangesAsync();
-                    return Created($"get-by-id?id={data.Id}", new AnswerForStudentDTO
+                    return Created($"get-by-id?id={data.Id}", new GradeDTO
                     {
                         id = data.Id,
                         student_id = data.StudentId,
-                        content = data.Content,
-                        question_id = data.QuestionId,
+                        test_id = data.TestId,
+                        score = data.Score,
+                        status = data.Status,
+                        time_taken = data.TimeTaken,
                         createdAt = data.CreatedAt,
                         updatedAt = data.UpdatedAt,
                         deletedAt = data.DeletedAt
@@ -116,21 +124,23 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpPut]
-        public async Task<IActionResult> Update(EditAnswerForStudent model)
+        public async Task<IActionResult> Update(EditGrade model)
         {
             if (ModelState.IsValid)
             {
                 try
                 {
-                    AnswersForStudent existingAnswer = await _context.AnswersForStudents.AsNoTracking().FirstOrDefaultAsync(e => e.Id == model.id);
+                    Grade existingAnswer = await _context.Grades.AsNoTracking().FirstOrDefaultAsync(e => e.Id == model.id);
                     if (existingAnswer != null)
                     {
-                        AnswersForStudent answer = new AnswersForStudent
+                        Grade answer = new Grade
                         {
                             Id = model.id,
                             StudentId = model.student_id,
-                            Content = model.content,
-                            QuestionId = model.question_id,
+                            TestId = model.test_id,
+                            Score = model.score,
+                            Status = model.status,
+                            TimeTaken = model.time_taken,
                             CreatedAt = existingAnswer.CreatedAt,
                             UpdatedAt = DateTime.Now,
                             DeletedAt = null,
@@ -138,7 +148,7 @@ namespace T2207A_SEM3_API.Controllers
 
                         if (answer != null)
                         {
-                            _context.AnswersForStudents.Update(answer);
+                            _context.Grades.Update(answer);
                             await _context.SaveChangesAsync();
                             return NoContent();
                         }
@@ -147,7 +157,6 @@ namespace T2207A_SEM3_API.Controllers
                     {
                         return NotFound(); // Không tìm thấy lớp để cập nhật
                     }
-
 
 
                 }
@@ -164,10 +173,10 @@ namespace T2207A_SEM3_API.Controllers
         {
             try
             {
-                AnswersForStudent answer = await _context.AnswersForStudents.FindAsync(id);
-                if (answer == null)
+                Grade grade = await _context.Grades.FindAsync(id);
+                if (grade == null)
                     return NotFound();
-                _context.AnswersForStudents.Remove(answer);
+                _context.Grades.Remove(grade);
                 await _context.SaveChangesAsync();
                 return NoContent();
             }
@@ -183,14 +192,14 @@ namespace T2207A_SEM3_API.Controllers
         {
             try
             {
-                List<AnswersForStudent> answers = await _context.AnswersForStudents.Where(p => p.QuestionId == questionId).ToListAsync();
+                List<Answer> answers = await _context.Answers.Where(p => p.QuestionId == questionId).ToListAsync();
                 if (answers != null)
                 {
-                    List<AnswerForStudentDTO> data = answers.Select(q => new AnswerForStudentDTO
+                    List<AnswerDTO> data = answers.Select(q => new AnswerDTO
                     {
                         id = q.Id,
-                        student_id = q.StudentId,
                         content = q.Content,
+                        status = q.Status,
                         question_id = q.QuestionId,
                         createdAt = q.CreatedAt,
                         updatedAt = q.UpdatedAt,
@@ -210,37 +219,5 @@ namespace T2207A_SEM3_API.Controllers
             }
         }
 
-        [HttpGet]
-        [Route("get-by-testIdAndStudentId")]
-        public async Task<IActionResult> GetbyTestAndStudent(int testID, int studentID)
-        {
-            try
-            {
-                List<AnswersForStudent> answers = await _context.AnswersForStudents.Where(p => p.StudentId == studentID && p.Question.TestId == testID).ToListAsync();
-                if (answers != null)
-                {
-                    List<AnswerForStudentDTO> data = answers.Select(q => new AnswerForStudentDTO
-                    {
-                        id = q.Id,
-                        student_id = q.StudentId,
-                        content = q.Content,
-                        question_id = q.QuestionId,
-                        createdAt = q.CreatedAt,
-                        updatedAt = q.UpdatedAt,
-                        deletedAt = q.DeletedAt
-                    }).ToList();
-
-                    return Ok(data);
-                }
-                else
-                {
-                    return NotFound("No answer found in this Test.");
-                }
-            }
-            catch (Exception e)
-            {
-                return StatusCode(500, e.Message);
-            }
-        }
     }
 }

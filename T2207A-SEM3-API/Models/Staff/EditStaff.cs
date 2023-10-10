@@ -10,11 +10,7 @@ namespace T2207A_SEM3_API.Models.Staff
         [MinLength(3, ErrorMessage = "Enter at least 3 characters")]
         [MaxLength(100, ErrorMessage = "Enter up to 100 characters")]
         public string staff_code { get; set; }
-
-        [Required(ErrorMessage = "Please enter avatar")]
-        [MinLength(3, ErrorMessage = "Enter at least 3 characters")]
-        [MaxLength(255, ErrorMessage = "Enter up to 255 characters")]
-        public string avatar { get; set; }
+        public IFormFile? avatar { get; set; }
 
         [Required(ErrorMessage = "Please enter fullname")]
         [MinLength(3, ErrorMessage = "Enter at least 3 characters")]
@@ -48,6 +44,7 @@ namespace T2207A_SEM3_API.Models.Staff
         [MaxLength(50, ErrorMessage = "Enter up to 255 characters")]
         public string password { get; set; }
 
+        [Required(ErrorMessage = "Please enter role")]
         public int role { get; set; }
     }
 }

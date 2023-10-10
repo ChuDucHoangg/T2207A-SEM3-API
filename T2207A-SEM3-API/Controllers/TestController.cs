@@ -19,41 +19,48 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpGet]
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            List<Test> tests = _context.Tests.ToList();
-
-            List<TestDTO> data = new List<TestDTO>();
-            foreach (Test t in tests)
+            try
             {
-                data.Add(new TestDTO
+                List<Test> tests = await _context.Tests.ToListAsync();
+
+                List<TestDTO> data = new List<TestDTO>();
+                foreach (Test t in tests)
                 {
-                    id = t.Id,
-                    name = t.Name,
-                    slug = t.Slug,
-                    exam_id = t.ExamId,
-                    student_id = t.StudentId,
-                    startDate = t.StartDate,
-                    endDate = t.EndDate,
-                    past_marks = t.PastMarks,
-                    total_marks = t.TotalMarks,
-                    created_by = t.CreatedBy,
-                    status = t.Status,
-                    createdAt = t.CreatedAt,
-                    updatedAt = t.UpdatedAt,
-                    deletedAt = t.DeletedAt
-                });
+                    data.Add(new TestDTO
+                    {
+                        id = t.Id,
+                        name = t.Name,
+                        slug = t.Slug,
+                        exam_id = t.ExamId,
+                        student_id = t.StudentId,
+                        startDate = t.StartDate,
+                        endDate = t.EndDate,
+                        past_marks = t.PastMarks,
+                        total_marks = t.TotalMarks,
+                        created_by = t.CreatedBy,
+                        status = t.Status,
+                        createdAt = t.CreatedAt,
+                        updatedAt = t.UpdatedAt,
+                        deletedAt = t.DeletedAt
+                    });
+                }
+                return Ok(data);
+            } catch (Exception e)
+            {
+                return BadRequest($"An error occurred: {e.Message}");
             }
-            return Ok(data);
+            
         }
 
         [HttpGet]
         [Route("get-by-slug")]
-        public IActionResult Get(string slug)
+        public async Task<IActionResult> Get(string slug)
         {
             try
             {
-                Test t = _context.Tests.FirstOrDefault(x => x.Slug == slug);
+                Test t = await _context.Tests.FirstOrDefaultAsync(x => x.Slug == slug);
                 if (t != null)
                 {
                     return Ok(new TestDTO
@@ -84,14 +91,14 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpPost]
-        public IActionResult Create(CreateTest model)
+        public async Task<IActionResult> Create(CreateTest model)
         {
             if (ModelState.IsValid)
             {
                 try
                 {
                     // Kiểm tra xem name đã tồn tại trong cơ sở dữ liệu hay chưa
-                    bool nameExists = _context.Tests.Any(c => c.Name == model.name);
+                    bool nameExists = await _context.Tests.AnyAsync(c => c.Name == model.name);
 
                     if (nameExists)
                     {
@@ -116,7 +123,7 @@ namespace T2207A_SEM3_API.Controllers
                         DeletedAt = null,
                     };
                     _context.Tests.Add(data);
-                    _context.SaveChanges();
+                    await _context.SaveChangesAsync();
                     return Created($"get-by-id?id={data.Id}", new TestDTO
                     {
                         id = data.Id,
@@ -145,14 +152,14 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpPut]
-        public IActionResult Update(EditTest model)
+        public async Task<IActionResult> Update(EditTest model)
         {
             if (ModelState.IsValid)
             {
                 try
                 {
-                    // Kiểm tra xem name đã tồn tại trong cơ sở dữ liệu hay chưa
-                    bool nameExists = _context.Tests.Any(c => c.Name == model.name);
+                    // Kiểm tra xem name đã tồn tại trong cơ sở dữ liệu hay chưa (trừ trường hợp cùng name)
+                    bool nameExists = await _context.Tests.AnyAsync(c => c.Name == model.name && c.Id != model.id);
 
                     if (nameExists)
                     {
@@ -205,15 +212,15 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpDelete]
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
             try
             {
-                Test test = _context.Tests.Find(id);
+                Test test = await _context.Tests.FindAsync(id);
                 if (test == null)
                     return NotFound();
                 _context.Tests.Remove(test);
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
                 return NoContent();
             }
             catch (Exception e)
@@ -224,11 +231,11 @@ namespace T2207A_SEM3_API.Controllers
 
         [HttpGet]
         [Route("get-by-examId")]
-        public IActionResult GetbyCategory(int examId)
+        public async Task<IActionResult> GetbyCategory(int examId)
         {
             try
             {
-                List<Test> tests = _context.Tests.Where(p => p.ExamId == examId).ToList();
+                List<Test> tests = await _context.Tests.Where(p => p.ExamId == examId).ToListAsync();
                 if (tests != null)
                 {
                     List<TestDTO> data = tests.Select(c => new TestDTO

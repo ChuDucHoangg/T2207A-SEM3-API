@@ -12,7 +12,6 @@ namespace T2207A_SEM3_API.DTOs
         public string fullname { get; set; }
 
 
-
         public DateTime birthday { get; set; }
 
         public string gender { get; set; }
@@ -25,7 +24,7 @@ namespace T2207A_SEM3_API.DTOs
 
         public string password { get; set; }
 
-        public int Role { get; set; }
+        public int role { get; set; }
 
 
         public DateTime? createdAt { get; set; }

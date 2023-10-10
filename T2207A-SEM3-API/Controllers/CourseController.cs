@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using T2207A_SEM3_API.DTOs;
 using T2207A_SEM3_API.Entities;
 using T2207A_SEM3_API.Models.Course;
@@ -19,35 +20,42 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpGet]
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            List<Course> courses = _context.Courses.ToList();
-
-            List<CourseDTO> data = new List<CourseDTO>();
-            foreach (Course cr in courses)
+            try
             {
-                data.Add(new CourseDTO
+                List<Course> courses = await _context.Courses.ToListAsync();
+
+                List<CourseDTO> data = new List<CourseDTO>();
+                foreach (Course cr in courses)
                 {
-                    id = cr.Id,
-                    name = cr.Name,
-                    course_code = cr.CourseCode,
-                    class_id = cr.ClassId,
-                    created_by = cr.CreatedBy,
-                    createdAt = cr.CreatedAt,
-                    updateAt = cr.UpdatedAt,
-                    deleteAt = cr.DeletedAt
-                });
+                    data.Add(new CourseDTO
+                    {
+                        id = cr.Id,
+                        name = cr.Name,
+                        course_code = cr.CourseCode,
+                        class_id = cr.ClassId,
+                        created_by = cr.CreatedBy,
+                        createdAt = cr.CreatedAt,
+                        updateAt = cr.UpdatedAt,
+                        deleteAt = cr.DeletedAt
+                    });
+                }
+                return Ok(data);
             }
-            return Ok(data);
+            catch (Exception ex) 
+            { 
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpGet]
         [Route("get-by-codeCourse")]
-        public IActionResult Get(int id)
+        public async Task<IActionResult> Get(int id)
         {
             try
             {
-                Course cr = _context.Courses.Find(id);
+                Course cr = await _context.Courses.FindAsync(id);
                 if (cr != null)
                 {
                     return Ok(new CourseDTO
@@ -71,12 +79,20 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpPost]
-        public IActionResult Create(CreateCourse model)
+        public async Task<IActionResult> Create(CreateCourse model)
         {
             if (ModelState.IsValid)
             {
                 try
                 {
+                    // Kiểm tra xem student_code đã tồn tại trong cơ sở dữ liệu hay chưa
+                    bool codeExists = await _context.Courses.AnyAsync(c => c.CourseCode == model.course_code);
+
+                    if (codeExists)
+                    {
+                        return BadRequest("Student code already exists");
+                    }
+
                     Course data = new Course
                     {
                         Name = model.name,
@@ -88,7 +104,7 @@ namespace T2207A_SEM3_API.Controllers
                         DeletedAt = DateTime.Now,
                     };
                     _context.Courses.Add(data);
-                    _context.SaveChanges();
+                    await _context.SaveChangesAsync();
                     return Created($"get-by-id?id={data.Id}", new CourseDTO
                     {
                         id = data.Id,
@@ -111,12 +127,22 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpPut]
-        public IActionResult Update(EditCourse model)
+        public async Task<IActionResult> Update(EditCourse model)
         {
             if (ModelState.IsValid)
             {
                 try
                 {
+                    Course exexistingCourse = await _context.Courses.AsNoTracking().FirstOrDefaultAsync(e => e.Id == model.id);
+
+                    // Kiểm tra xem student_code đã tồn tại trong cơ sở dữ liệu hay chưa (trừ trường hợp cập nhật cùng mã)
+                    bool codeExists = await _context.Courses.AnyAsync(c => c.CourseCode == model.course_code && c.Id != model.id);
+
+                    if (codeExists)
+                    {
+                        return BadRequest("Student code already exists");
+                    }
+
                     Course course = new Course
                     {
                         Id = model.id,
@@ -124,15 +150,15 @@ namespace T2207A_SEM3_API.Controllers
                         CourseCode = model.course_code,
                         ClassId = model.class_id,
                         CreatedBy = model.created_by,
-                        CreatedAt = DateTime.Now,
+                        CreatedAt = exexistingCourse.CreatedAt,
                         UpdatedAt = DateTime.Now,
-                        DeletedAt = DateTime.Now,
+                        DeletedAt = null,
                     };
 
                     if (course != null)
                     {
                         _context.Courses.Update(course);
-                        _context.SaveChanges();
+                        await _context.SaveChangesAsync();
                         return NoContent();
                     }
 
@@ -146,20 +172,54 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpDelete]
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
             try
             {
-                Course course = _context.Courses.Find(id);
+                Course course = await _context.Courses.FindAsync(id);
                 if (course == null)
                     return NotFound();
                 _context.Courses.Remove(course);
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
                 return NoContent();
             }
             catch (Exception e)
             {
                 return BadRequest(e.Message);
+            }
+        }
+
+        [HttpGet]
+        [Route("get-by-classId")]
+        public async Task<IActionResult> GetbyClass(int classId)
+        {
+            try
+            {
+                List<Course> courses = await _context.Courses.Where(p => p.ClassId == classId).ToListAsync();
+                if (courses != null)
+                {
+                    List<CourseDTO> data = courses.Select(q => new CourseDTO
+                    {
+                        id = q.Id,
+                        name = q.Name,
+                        course_code = q.CourseCode,
+                        class_id = q.ClassId,
+                        created_by = q.CreatedBy,
+                        createdAt = q.CreatedAt,
+                        updateAt = q.UpdatedAt,
+                        deleteAt = q.DeletedAt
+                    }).ToList();
+
+                    return Ok(data);
+                }
+                else
+                {
+                    return NotFound("No course found in this class.");
+                }
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, e.Message);
             }
         }
     }

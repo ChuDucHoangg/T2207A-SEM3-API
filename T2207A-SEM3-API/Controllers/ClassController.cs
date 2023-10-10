@@ -19,35 +19,42 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpGet]
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            List<Class> classes = _context.Classes.ToList();
-
-            List<ClassDTO> data = new List<ClassDTO>();
-            foreach (Class c in classes)
+            try
             {
-                data.Add(new ClassDTO
+                List<Class> classes = await _context.Classes.ToListAsync();
+
+                List<ClassDTO> data = new List<ClassDTO>();
+                foreach (Class c in classes)
                 {
-                    id = c.Id,
-                    name = c.Name,
-                    slug = c.Slug,
-                    room = c.Room,
-                    teacher_id = c.TeacherId,
-                    createdAt = c.CreatedAt,
-                    updatedAt = c.UpdatedAt,
-                    deletedAt = c.DeletedAt
-                });
+                    data.Add(new ClassDTO
+                    {
+                        id = c.Id,
+                        name = c.Name,
+                        slug = c.Slug,
+                        room = c.Room,
+                        teacher_id = c.TeacherId,
+                        createdAt = c.CreatedAt,
+                        updatedAt = c.UpdatedAt,
+                        deletedAt = c.DeletedAt
+                    });
+                }
+                return Ok(data);
+            } 
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
             }
-            return Ok(data);
         }
 
         [HttpGet]
         [Route("get-by-slug")]
-        public IActionResult Get(string slug)
+        public async Task<IActionResult> Get(string slug)
         {
             try
             {
-                Class c = _context.Classes.FirstOrDefault(x => x.Slug == slug);
+                Class c = await _context.Classes.FirstOrDefaultAsync(x => x.Slug == slug);
                 if (c != null)
                 {
                     return Ok(new ClassDTO
@@ -72,14 +79,14 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpPost]
-        public IActionResult Create(CreateClass model)
+        public async Task<IActionResult> Create(CreateClass model)
         {
             if (ModelState.IsValid)
             {
                 try
                 {
                     // Kiểm tra xem name đã tồn tại trong cơ sở dữ liệu hay chưa
-                    bool nameExists = _context.Classes.Any(c => c.Name == model.name);
+                    bool nameExists = await _context.Classes.AnyAsync(c => c.Name == model.name);
 
                     if (nameExists)
                     {
@@ -98,7 +105,7 @@ namespace T2207A_SEM3_API.Controllers
                         DeletedAt = null,
                     };
                     _context.Classes.Add(data);
-                    _context.SaveChanges();
+                    await _context.SaveChangesAsync();
                     return Created($"get-by-id?id={data.Id}", new ClassDTO
                     {
                         id = data.Id,
@@ -121,24 +128,25 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpPut]
-        public IActionResult Update(EditClass model)
+        public async Task<IActionResult> Update(EditClass model)
         {
             if (ModelState.IsValid)
             {
                 try
                 {
-                    // Kiểm tra xem name đã tồn tại trong cơ sở dữ liệu hay chưa
-                    bool nameExists = _context.Classes.Any(c => c.Name == model.name);
+                    Class existingClass = await _context.Classes.AsNoTracking().FirstOrDefaultAsync(e => e.Id == model.id);
 
-                    if (nameExists)
-                    {
-                        // Nếu name đã tồn tại, trả về BadRequest hoặc thông báo lỗi tương tự
-                        return BadRequest("Class name already exists");
-                    }
-
-                    Class existingClass = _context.Classes.AsNoTracking().FirstOrDefault(e => e.Id == model.id);
                     if (existingClass != null)
                     {
+                        // Kiểm tra xem name đã tồn tại trong cơ sở dữ liệu hay chưa
+                        bool nameExists = _context.Classes.Any(c => c.Name == model.name && c.Id != model.id);
+
+                        if (nameExists)
+                        {
+                            // Nếu name đã tồn tại, trả về BadRequest hoặc thông báo lỗi tương tự
+                            return BadRequest("Class name already exists");
+                        }
+
                         Class classes = new Class
                         {
                             Id = model.id,
@@ -154,7 +162,7 @@ namespace T2207A_SEM3_API.Controllers
                         if (classes != null)
                         {
                             _context.Classes.Update(classes);
-                            _context.SaveChanges();
+                            await _context.SaveChangesAsync();
                             return NoContent();
                         }
                     }
@@ -175,24 +183,58 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpDelete]
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            bool hasStudents = _context.Students.Any(s => s.ClassId == id); 
+            bool hasStudents = await _context.Students.AnyAsync(s => s.ClassId == id); 
             if (hasStudents) { 
                 return BadRequest("The class cannot be deleted because this class currently has students"); 
             }
             try
             {
-                Class classes = _context.Classes.Find(id);
+                Class classes = await _context.Classes.FindAsync(id);
                 if (classes == null)
                     return NotFound();
                 _context.Classes.Remove(classes);
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
                 return NoContent();
             }
             catch (Exception e)
             {
                 return BadRequest(e.Message);
+            }
+        }
+
+        [HttpGet]
+        [Route("get-by-teacherId")]
+        public async Task<IActionResult> GetbyClass(int teacherId)
+        {
+            try
+            {
+                List<Class> classes = await _context.Classes.Where(p => p.TeacherId == teacherId).ToListAsync();
+                if (classes != null)
+                {
+                    List<ClassDTO> data = classes.Select(q => new ClassDTO
+                    {
+                        id = q.Id,
+                        name = q.Name,
+                        slug = q.Slug,
+                        room = q.Room,
+                        teacher_id = q.TeacherId,
+                        createdAt = q.CreatedAt,
+                        updatedAt = q.UpdatedAt,
+                        deletedAt = q.DeletedAt
+                    }).ToList();
+
+                    return Ok(data);
+                }
+                else
+                {
+                    return NotFound("No course found in this class.");
+                }
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, e.Message);
             }
         }
     }

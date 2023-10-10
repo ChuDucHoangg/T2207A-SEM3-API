@@ -43,11 +43,15 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors();
 
+
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
+app.UseStaticFiles();
+
 app.MapControllers();
+
 
 app.Run();
 

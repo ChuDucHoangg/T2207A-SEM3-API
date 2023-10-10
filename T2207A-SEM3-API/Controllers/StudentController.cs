@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using T2207A_SEM3_API.DTOs;
 using T2207A_SEM3_API.Entities;
 using T2207A_SEM3_API.Models.Student;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace T2207A_SEM3_API.Controllers
 {
@@ -19,43 +20,51 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpGet]
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            List<Student> students = _context.Students.ToList();
-
-            List<StudentDTO> data = new List<StudentDTO>();
-            foreach (Student st in students)
+            try
             {
-                data.Add(new StudentDTO
+                List<Student> students = await _context.Students.ToListAsync();
+
+                List<StudentDTO> data = new List<StudentDTO>();
+                foreach (Student st in students)
                 {
-                    id = st.Id,
-                    student_code = st.StudentCode,
-                    fullname = st.Fullname,
-                    avatar = st.Avatar,
-                    birthday = st.Birthday,
-                    email = st.Email,
-                    phone = st.Phone,
-                    gender = st.Gender,
-                    address = st.Address,
-                    class_id = st.ClassId,
-                    password = st.Password,
-                    status = st.Status,
-                    createdAt = st.CreatedAt,
-                    updateAt = st.UpdatedAt,
-                    deleteAt = st.DeletedAt
-                });
+                    data.Add(new StudentDTO
+                    {
+                        id = st.Id,
+                        student_code = st.StudentCode,
+                        fullname = st.Fullname,
+                        avatar = st.Avatar,
+                        birthday = st.Birthday,
+                        email = st.Email,
+                        phone = st.Phone,
+                        gender = st.Gender,
+                        address = st.Address,
+                        class_id = st.ClassId,
+                        password = st.Password,
+                        status = st.Status,
+                        createdAt = st.CreatedAt,
+                        updateAt = st.UpdatedAt,
+                        deleteAt = st.DeletedAt
+                    });
+                }
+                return Ok(data);
+            } 
+            catch (Exception e)
+            {
+                return BadRequest($"An error occurred: {e.Message}");
             }
-            return Ok(data);
+            
         }
 
         [HttpGet]
         [Route("get-by-codeStudent")]
-        public IActionResult Get(int id)
+        public async Task<IActionResult> Get(string code_student)
         {
             try
             {
-                Student st = _context.Students.Find(id);
-                if(st != null)
+                Student st = await _context.Students.AsNoTracking().FirstOrDefaultAsync(e => e.StudentCode == code_student);
+                if (st != null)
                 {
                     return Ok(new StudentDTO
                     {
@@ -85,25 +94,41 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpPost]
-        public IActionResult Create(CreateStudent model)
+        public async Task<IActionResult> Create([FromForm] CreateStudent model)
         {
-            if(ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                try
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(v => v.ErrorMessage);
+                return BadRequest(string.Join(" | ", errors));
+            }
+
+            try
+            {
+                // Kiểm tra xem student_code đã tồn tại trong cơ sở dữ liệu hay chưa
+                bool codeExists = await _context.Students.AnyAsync(c => c.StudentCode == model.student_code);
+
+                if (codeExists)
                 {
-                    // Kiểm tra xem name đã tồn tại trong cơ sở dữ liệu hay chưa
-                    bool codeExists = _context.Students.Any(c => c.StudentCode == model.student_code);
+                    return BadRequest("Student code already exists");
+                }
 
-                    if (codeExists)
+                // Kiểm tra xem email đã tồn tại trong cơ sở dữ liệu hay chưa
+                bool emailExists = await _context.Students.AnyAsync(c => c.Email == model.email);
+
+                if (emailExists)
+                {
+                    return BadRequest("Student email already exists");
+                }
+
+                string imageUrl = await UploadImageAsync(model.avatar);
+
+                if (imageUrl != null) 
+                {
+                    Student data = new Student
                     {
-                        // Nếu name đã tồn tại, trả về BadRequest hoặc thông báo lỗi tương tự
-                        return BadRequest("Code student already exists");
-                    }
-
-                    Student data = new Student {
                         StudentCode = model.student_code,
                         Fullname = model.fullname,
-                        Avatar = model.avatar,
+                        Avatar = imageUrl,
                         Birthday = model.birthday,
                         Email = model.email,
                         Phone = model.phone,
@@ -116,8 +141,10 @@ namespace T2207A_SEM3_API.Controllers
                         UpdatedAt = DateTime.Now,
                         DeletedAt = null,
                     };
+
                     _context.Students.Add(data);
-                    _context.SaveChanges();
+                    await _context.SaveChangesAsync();
+
                     return Created($"get-by-id?id={data.Id}", new StudentDTO
                     {
                         id = data.Id,
@@ -136,41 +163,76 @@ namespace T2207A_SEM3_API.Controllers
                         updateAt = data.UpdatedAt,
                         deleteAt = data.DeletedAt,
                     });
-                } catch (Exception ex)
-                {
-                    return BadRequest(ex.Message);
                 }
+                else
+                {
+                    return BadRequest("Please provide an avatar.");
+                }
+                
             }
-            var msgs = ModelState.Values.SelectMany(v => v.Errors).Select(v => v.ErrorMessage);
-            return BadRequest(string.Join(" | ", msgs));
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        private async Task<string> UploadImageAsync(IFormFile avatar)
+        {
+            if (avatar != null && avatar.Length > 0)
+            {
+                // Lấy tên tệp tin
+                string fileName = $"{Guid.NewGuid()}{Path.GetExtension(avatar.FileName)}";
+
+                // Đường dẫn lưu trữ tệp tin
+                string uploadDirectory = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+                string filePath = Path.Combine(uploadDirectory, fileName);
+
+                Directory.CreateDirectory(uploadDirectory);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await avatar.CopyToAsync(stream);
+                }
+
+                return $"{Request.Scheme}://{Request.Host}/uploads/{fileName}";
+            }
+
+            return null; // Trả về null nếu không có hình ảnh
         }
 
         [HttpPut]
-        public IActionResult Update(EditStudent model)
+        public async Task<IActionResult> Update([FromForm] EditStudent model)
         {
             if (ModelState.IsValid)
             {
                 try
                 {
-                    // Kiểm tra xem name đã tồn tại trong cơ sở dữ liệu hay chưa
-                    bool codeExists = _context.Students.Any(c => c.StudentCode == model.student_code);
-
-                    if (codeExists)
-                    {
-                        // Nếu name đã tồn tại, trả về BadRequest hoặc thông báo lỗi tương tự
-                        return BadRequest("Code student already exists");
-                    }
-
-                    Student exexistingStudent = _context.Students.AsNoTracking().FirstOrDefault(e => e.Id == model.id);
+                    Student exexistingStudent = await _context.Students.AsNoTracking().FirstOrDefaultAsync(e => e.Id == model.id);
 
                     if (exexistingStudent != null)
                     {
+                        
+                        // Kiểm tra xem name đã tồn tại trong cơ sở dữ liệu hay chưa (trừ trường hợp cập nhật cùng mã)
+                        bool codeExists = await _context.Students.AnyAsync(c => c.StudentCode == model.student_code && c.Id != model.id);
+
+                        if (codeExists)
+                        {
+                            // Nếu name đã tồn tại, trả về BadRequest hoặc thông báo lỗi tương tự
+                            return BadRequest("Code student already exists");
+                        }
+                        // Kiểm tra xem email đã tồn tại trong cơ sở dữ liệu hay chưa (trừ trường hợp cập nhật cùng email)
+                        bool emailExists = await _context.Students.AnyAsync(c => c.Email == model.email && c.Id != model.id);
+
+                        if (emailExists)
+                        {
+                            return BadRequest("Student email already exists");
+                        }
+
                         Student student = new Student
                         {
                             Id = model.id,
                             StudentCode = model.student_code,
                             Fullname = model.fullname,
-                            Avatar = model.avatar,
                             Birthday = model.birthday,
                             Email = model.email,
                             Phone = model.phone,
@@ -184,12 +246,26 @@ namespace T2207A_SEM3_API.Controllers
                             DeletedAt = null,
                         };
 
-                        if (student != null)
+                        if (model.avatar != null)
                         {
-                            _context.Students.Update(student);
-                            _context.SaveChanges();
-                            return NoContent();
+                            string imageUrl = await UploadImageAsync(model.avatar);
+
+                            if (imageUrl == null)
+                            {
+                                return BadRequest("Failed to upload avatar.");
+                            }
+
+                            student.Avatar = imageUrl;
                         }
+                        else
+                        {
+                            student.Avatar = exexistingStudent.Avatar;
+                        }
+
+                        _context.Students.Update(student);
+                        await _context.SaveChangesAsync();
+
+                        return NoContent();
                     }
                     else
                     {
@@ -205,15 +281,15 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpDelete]
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
             try
             {
-                Student student = _context.Students.Find(id);
+                Student student = await _context.Students.FindAsync(id);
                 if (student == null)
                     return NotFound();
                 _context.Students.Remove(student);
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
                 return NoContent();
             }
             catch (Exception e)
@@ -224,11 +300,11 @@ namespace T2207A_SEM3_API.Controllers
 
         [HttpGet]
         [Route("get-by-classId")]
-        public IActionResult GetbyClass(int classId)
+        public async Task<IActionResult> GetbyClass(int classId)
         {
             try
             {
-                List<Student> students = _context.Students.Where(p => p.ClassId == classId).ToList();
+                List<Student> students = await _context.Students.Where(p => p.ClassId == classId).ToListAsync();
                 if (students != null)
                 {
                     List<StudentDTO> data = students.Select(c => new StudentDTO
