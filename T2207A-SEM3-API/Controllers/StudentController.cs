@@ -321,7 +321,26 @@ namespace T2207A_SEM3_API.Controllers
                 return BadRequest(e.Message);
             }
         }
+        [HttpDelete]
+        [Route("permanently-delete/{id}")]
+        public async Task<IActionResult> PermanentlyDelete(int id)
+        {
+            try
+            {
+                Student student = await _context.Students.FindAsync(id);
+                if (student == null)
+                    return NotFound();
 
+                _context.Students.Remove(student); // Xóa bản ghi sinh viên hoàn toàn khỏi cơ sở dữ liệu
+
+                await _context.SaveChangesAsync();
+                return NoContent();
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
         [HttpGet]
         [Route("get-by-classId")]
         public async Task<IActionResult> GetbyClass(int classId)
