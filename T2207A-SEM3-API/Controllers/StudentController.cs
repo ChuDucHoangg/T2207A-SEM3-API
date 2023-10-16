@@ -288,7 +288,31 @@ namespace T2207A_SEM3_API.Controllers
                 Student student = await _context.Students.FindAsync(id);
                 if (student == null)
                     return NotFound();
-                _context.Students.Remove(student);
+
+                student.DeletedAt = DateTime.Now; // Đặt thời gian xóa mềm
+
+                _context.Students.Update(student);
+                await _context.SaveChangesAsync();
+                return NoContent();
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
+        [HttpPost]
+        [Route("restore/{id}")]
+        public async Task<IActionResult> Restore(int id)
+        {
+            try
+            {
+                Student student = await _context.Students.FindAsync(id);
+                if (student == null)
+                    return NotFound();
+
+                student.DeletedAt = null; // Đặt thời gian xóa mềm thành null để khôi phục sinh viên
+
+                _context.Students.Update(student);
                 await _context.SaveChangesAsync();
                 return NoContent();
             }
