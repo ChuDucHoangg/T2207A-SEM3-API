@@ -45,5 +45,5 @@ public partial class Student
 
     public virtual ICollection<RegisterExam> RegisterExams { get; set; } = new List<RegisterExam>();
 
-    public virtual ICollection<Test> Tests { get; set; } = new List<Test>();
+    public virtual ICollection<StudentTest> StudentTests { get; set; } = new List<StudentTest>();
 }

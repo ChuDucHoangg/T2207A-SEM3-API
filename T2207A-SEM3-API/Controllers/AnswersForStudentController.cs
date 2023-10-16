@@ -1,10 +1,12 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using T2207A_SEM3_API.DTOs;
 using T2207A_SEM3_API.Entities;
 using T2207A_SEM3_API.Models.Answer;
 using T2207A_SEM3_API.Models.AnswerForStudent;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace T2207A_SEM3_API.Controllers
 {
@@ -19,8 +21,108 @@ namespace T2207A_SEM3_API.Controllers
             _context = context;
         }
 
+        [HttpPost("submit-exam")]
+        public async Task<IActionResult> SubmitAnswer(List<CreateAnswerForStudent> answersForStudents, int test_id)
+        {
+            try
+            {
+                // danh sách câu hỏi
+                List<Question> questions = await _context.Questions.Where(p => p.TestId == test_id).ToListAsync();
+
+                // danh sách câu trả lời đúng
+                List<Answer> answerCorrect = await _context.Answers.Where(p => p.Question.TestId == test_id && p.Status == 1).ToListAsync();
+
+                // lưu câu trả lời của student
+                List<AnswersForStudent> answersForStudents1 = new List<AnswersForStudent>();
+
+                foreach (var answer in answersForStudents)
+                {
+                    AnswersForStudent answersForStudent = new AnswersForStudent
+                    {
+                        StudentId = answer.student_id,
+                        Content = answer.content,
+                        QuestionId = answer.question_id,
+                        CreatedAt = DateTime.Now,
+                        UpdatedAt = DateTime.Now,
+                        DeletedAt = null,
+                    };
+
+                    _context.AnswersForStudents.Add(answersForStudent);
+                    await _context.SaveChangesAsync();
+
+                    answersForStudents1.Add(answersForStudent);
+
+                }
+
+                // tính điểm
+                var score = CalculateScore(questions, answerCorrect, answersForStudents1);
+
+                var test = await _context.Tests.FindAsync(test_id);
+
+                // tạo điểm
+                var grade = new Grade
+                {
+                    StudentId = answersForStudents1[0].StudentId,
+                    Score = score,
+                    TestId = test_id,
+                    TimeTaken = 0,
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now,
+                    DeletedAt = null
+                };
+
+                // kiểm tra đỗ hay chưa
+                if (score > test.PastMarks)
+                {
+                    grade.Status = 1;
+                }
+                else
+                {
+                    grade.Status = 0;
+                }
+
+                _context.Add(grade);
+                await _context.SaveChangesAsync();
+
+                return Ok(grade);
+
+
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+
+        }
+
+        private double CalculateScore(List<Question> questions, List<Answer> correctAnswers, List<AnswersForStudent> studentAnswers)
+        {
+            double totalScore = 0;
+
+            foreach (var question in questions)
+            {
+                // Tìm câu trả lời đúng cho câu hỏi hiện tại
+                var correctAnswer = correctAnswers.FirstOrDefault(a => a.QuestionId == question.Id);
+
+                if (correctAnswer != null)
+                {
+                    // Tìm câu trả lời của sinh viên cho câu hỏi hiện tại
+                    var studentAnswer = studentAnswers.FirstOrDefault(sa => sa.QuestionId == question.Id);
+
+                    if (studentAnswer != null && studentAnswer.Content == correctAnswer.Content)
+                    {
+                        // Nếu câu trả lời của sinh viên giống với đáp án đúng, cộng thêm điểm
+                        totalScore += question.Score;
+                    }
+                }
+            }
+
+            return totalScore;
+        }
+
         [HttpGet]
-        public  async Task<IActionResult> Index()
+        public async Task<IActionResult> Index()
         {
             try
             {
@@ -41,7 +143,7 @@ namespace T2207A_SEM3_API.Controllers
                     });
                 }
                 return Ok(data);
-            } 
+            }
             catch (Exception ex)
             {
                 return BadRequest(ex.Message);
@@ -60,7 +162,7 @@ namespace T2207A_SEM3_API.Controllers
                     return Ok(new AnswerForStudentDTO
                     {
                         id = a.Id,
-                        student_id=a.StudentId,
+                        student_id = a.StudentId,
                         content = a.Content,
                         question_id = a.QuestionId,
                         createdAt = a.CreatedAt,
@@ -242,5 +344,7 @@ namespace T2207A_SEM3_API.Controllers
                 return StatusCode(500, e.Message);
             }
         }
+
+
     }
 }

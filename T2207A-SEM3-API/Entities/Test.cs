@@ -13,8 +13,6 @@ public partial class Test
 
     public int ExamId { get; set; }
 
-    public int StudentId { get; set; }
-
     public DateTime StartDate { get; set; }
 
     public DateTime EndDate { get; set; }
@@ -43,5 +41,5 @@ public partial class Test
 
     public virtual ICollection<Question> Questions { get; set; } = new List<Question>();
 
-    public virtual Student Student { get; set; } = null!;
+    public virtual ICollection<StudentTest> StudentTests { get; set; } = new List<StudentTest>();
 }
