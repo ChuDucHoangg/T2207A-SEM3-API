@@ -22,6 +22,8 @@ namespace T2207A_SEM3_API.Models.Grade
         public int status { get; set; }
 
         [Required(ErrorMessage = "Please enter time")]
-        public double time_taken { get; set; }
+        [DataType(DataType.Date)]
+        [DisplayFormat(DataFormatString = "{0:yyyy-MM-dd}", ApplyFormatInEditMode = true)]
+        public DateTime finished_at { get; set; }
     }
 }

@@ -26,6 +26,17 @@ namespace T2207A_SEM3_API.Controllers
         {
             try
             {
+                // đã làm bài
+                StudentTest studentTest = await _context.StudentTests.Where(st => st.TestId == test_id && st.StudentId == answersForStudents[0].student_id).FirstOrDefaultAsync();
+                if (studentTest.Status == 1)
+                {
+                    return BadRequest("The test has been taken before");
+                }
+                studentTest.Status = 1;
+                await _context.SaveChangesAsync();
+
+                var finish_at = DateTime.Now;
+
                 // danh sách câu hỏi
                 List<Question> questions = await _context.Questions.Where(p => p.TestId == test_id).ToListAsync();
 
@@ -59,20 +70,44 @@ namespace T2207A_SEM3_API.Controllers
 
                 var test = await _context.Tests.FindAsync(test_id);
 
+                // kiểm tra thời gian và trừ điểm
+                if (!(finish_at >= test.StartDate && finish_at <= test.EndDate))
+                {
+                    // finish_at không nằm trong khoảng startDate và andDate
+                    TimeSpan timeDifference = (finish_at > test.EndDate) ? finish_at - test.EndDate : test.EndDate - finish_at;
+
+                    if (timeDifference.TotalMinutes > 30)
+                    {
+                        // Khoảng thời gian lớn hơn 30 phút
+                        score = 0;
+                    }
+                    else if (timeDifference.TotalMinutes > 15)
+                    {
+                        // Khoảng thời gian lớn hơn 15 phút, nhưng không quá 30 phút
+                        score = score - 50;
+                    }
+                    else
+                    {
+                        // Khoảng thời gian không lớn hơn 15 phút
+                        score = score - 25;
+                    }
+                }
+
                 // tạo điểm
                 var grade = new Grade
                 {
                     StudentId = answersForStudents1[0].StudentId,
                     Score = score,
                     TestId = test_id,
-                    TimeTaken = 0,
+                    FinishedAt = finish_at,
                     CreatedAt = DateTime.Now,
                     UpdatedAt = DateTime.Now,
                     DeletedAt = null
                 };
 
+
                 // kiểm tra đỗ hay chưa
-                if (score > test.PastMarks)
+                if (score >= test.PastMarks)
                 {
                     grade.Status = 1;
                 }

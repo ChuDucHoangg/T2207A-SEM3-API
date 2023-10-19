@@ -254,7 +254,7 @@ public partial class ExamonimyContext : DbContext
 
         modelBuilder.Entity<Grade>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Grades__3213E83F5BF18516");
+            entity.HasKey(e => e.Id).HasName("PK__Grades__3213E83F1E077616");
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.CreatedAt)
@@ -263,11 +263,13 @@ public partial class ExamonimyContext : DbContext
             entity.Property(e => e.DeletedAt)
                 .HasColumnType("datetime")
                 .HasColumnName("deleted_at");
+            entity.Property(e => e.FinishedAt)
+                .HasColumnType("datetime")
+                .HasColumnName("finished_at");
             entity.Property(e => e.Score).HasColumnName("score");
             entity.Property(e => e.Status).HasColumnName("status");
             entity.Property(e => e.StudentId).HasColumnName("student_id");
             entity.Property(e => e.TestId).HasColumnName("test_id");
-            entity.Property(e => e.TimeTaken).HasColumnName("time_taken");
             entity.Property(e => e.UpdatedAt)
                 .HasColumnType("datetime")
                 .HasColumnName("updated_at");
@@ -275,12 +277,12 @@ public partial class ExamonimyContext : DbContext
             entity.HasOne(d => d.Student).WithMany(p => p.Grades)
                 .HasForeignKey(d => d.StudentId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Grades__student___39237A9A");
+                .HasConstraintName("FK__Grades__student___44952D46");
 
             entity.HasOne(d => d.Test).WithMany(p => p.Grades)
                 .HasForeignKey(d => d.TestId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Grades__test_id__3A179ED3");
+                .HasConstraintName("FK__Grades__test_id__4589517F");
         });
 
         modelBuilder.Entity<Question>(entity =>

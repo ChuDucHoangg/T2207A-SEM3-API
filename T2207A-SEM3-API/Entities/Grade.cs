@@ -15,7 +15,7 @@ public partial class Grade
 
     public int Status { get; set; }
 
-    public double TimeTaken { get; set; }
+    public DateTime FinishedAt { get; set; }
 
     public DateTime? CreatedAt { get; set; }
 
