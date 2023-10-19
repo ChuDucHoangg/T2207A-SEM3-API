@@ -8,7 +8,7 @@
 
         public int test_id { get; set; }
 
-        public double score { get; set; }
+        public double? score { get; set; }
 
         public int status { get; set; }
 

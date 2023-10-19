@@ -88,7 +88,6 @@ namespace T2207A_SEM3_API.Controllers
                     Question data = new Question
                     {
                         Title = model.title,
-                        TestId = model.test_id,
                         Level = model.level,
                         Score = model.score,
                         CreatedAt = DateTime.Now,

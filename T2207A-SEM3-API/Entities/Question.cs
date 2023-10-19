@@ -7,11 +7,13 @@ public partial class Question
 {
     public int Id { get; set; }
 
-    public string? Title { get; set; }
+    public string Title { get; set; } = null!;
 
-    public int? TestId { get; set; }
+    public int TestId { get; set; }
 
     public int Level { get; set; }
+
+    public int QuestionType { get; set; }
 
     public double Score { get; set; }
 
@@ -25,5 +27,5 @@ public partial class Question
 
     public virtual ICollection<AnswersForStudent> AnswersForStudents { get; set; } = new List<AnswersForStudent>();
 
-    public virtual Test? Test { get; set; }
+    public virtual Test Test { get; set; } = null!;
 }

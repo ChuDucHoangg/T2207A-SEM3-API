@@ -11,7 +11,7 @@ public partial class Grade
 
     public int TestId { get; set; }
 
-    public double Score { get; set; }
+    public double? Score { get; set; }
 
     public int Status { get; set; }
 

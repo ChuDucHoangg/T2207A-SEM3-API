@@ -10,6 +10,8 @@
 
         public int level { get; set; }
 
+        public int question_type { get; set; }
+
         public double score { get; set; }
 
         public DateTime? createdAt { get; set; }

@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using T2207A_SEM3_API.DTOs;
 using T2207A_SEM3_API.Entities;
+using T2207A_SEM3_API.Models.Answer;
+using T2207A_SEM3_API.Models.Question;
 using T2207A_SEM3_API.Models.Test;
 using static System.Net.Mime.MediaTypeNames;
 
@@ -90,8 +92,59 @@ namespace T2207A_SEM3_API.Controllers
             return NotFound();
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Create(CreateTest model)
+        [HttpGet("{testId}/details")]
+        public async Task<IActionResult> GetExamDetails(int testId, int studentId)
+        {
+            // kiểm tra bài thi có tồn tại hay không    
+            var test = await _context.Tests.Include(t => t.Questions).ThenInclude(q => q.Answers).SingleOrDefaultAsync(t => t.Id == testId);
+            if (test == null)
+            {
+                return BadRequest("Test does not exist");
+            }
+
+            // kiểm tra đã làm bài
+            StudentTest studentTest = await _context.StudentTests.Where(st => st.TestId == testId && st.StudentId == studentId).FirstOrDefaultAsync();
+            if (studentTest == null)
+            {
+                return BadRequest("Test does not exist");
+            }
+            if (studentTest.Status != 0)
+            {
+                return BadRequest("The test has been taken before");
+            }
+
+            // Kiểm tra thời gian bài thi
+            DateTime currentTime = DateTime.Now;
+            if (currentTime < test.StartDate || currentTime > test.EndDate)
+            {
+                return BadRequest("The test has ended or has not started yet");
+            }
+
+            // Chuyển đổi dữ liệu câu hỏi và đáp án thành định dạng phản hồi
+            var questionAnswerResponses = new List<QuestionAnswerResponse>();
+            foreach (var question in test.Questions)
+            {
+                var answerContentResponses = question.Answers.Select(answer => new AnswerContentResponse
+                {
+                    id = answer.Id,
+                    content = answer.Content
+                }).ToList();
+
+                var questionAnswerResponse = new QuestionAnswerResponse
+                {
+                    id = question.Id,
+                    title = question.Title,
+                    Answers = answerContentResponses
+                };
+
+                questionAnswerResponses.Add(questionAnswerResponse);
+
+            }
+            return Ok(questionAnswerResponses);
+        }
+
+        [HttpPost("multiple-choice")]
+        public async Task<IActionResult> CreateMultipleChoiceTest(CreateTest model)
         {
             if (ModelState.IsValid)
             {
@@ -149,6 +202,7 @@ namespace T2207A_SEM3_API.Controllers
                             Title = questionModel.title,
                             TestId = data.Id,
                             Level = questionModel.level,
+                            QuestionType = 0,
                             Score = questionModel.score,
                             CreatedAt = DateTime.UtcNow,
                             UpdatedAt = DateTime.UtcNow,
@@ -202,6 +256,102 @@ namespace T2207A_SEM3_API.Controllers
             }
             var msgs = ModelState.Values.SelectMany(v => v.Errors).Select(v => v.ErrorMessage);
             return BadRequest(string.Join(" | ", msgs));
+        }
+
+        [HttpPost("essay")]
+        public async Task<IActionResult> CreateEssayTest(CreateEssayTest model)
+        { 
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    // Kiểm tra xem name đã tồn tại trong cơ sở dữ liệu hay chưa
+                    bool nameExists = await _context.Tests.AnyAsync(c => c.Name == model.name);
+
+                    if (nameExists)
+                    {
+                        // Nếu name đã tồn tại, trả về BadRequest hoặc thông báo lỗi tương tự
+                        return BadRequest("Class name already exists");
+                    }
+
+                    Test data = new Test
+                    {
+                        Name = model.name,
+                        Slug = model.name.ToLower().Replace(" ", "-"),
+                        ExamId = model.exam_id,
+                        StartDate = model.startDate,
+                        EndDate = model.endDate,
+                        PastMarks = model.past_marks,
+                        TotalMarks = model.total_marks,
+                        CreatedBy = model.created_by,
+                        Status = 0,
+                        CreatedAt = DateTime.Now,
+                        UpdatedAt = DateTime.Now,
+                        DeletedAt = null,
+                    };
+                    _context.Tests.Add(data);
+                    await _context.SaveChangesAsync();
+
+                    // tạo danh sách thi
+                    foreach (var studentId in model.studentIds)
+                    {
+                        var studentTest = new StudentTest
+                        {
+                            TestId = data.Id,
+                            StudentId = studentId,
+                            Status = 0,
+                            CreatedAt = DateTime.Now,
+                            UpdatedAt = DateTime.Now,
+                            DeletedAt = null,
+                        };
+
+                        _context.StudentTests.Add(studentTest);
+                        await _context.SaveChangesAsync();
+                    }
+
+                    foreach (var questionModel in model.questions)
+                    {
+                        var question = new Question
+                        {
+                            Title = questionModel.title,
+                            TestId = data.Id,
+                            Level = questionModel.level,
+                            QuestionType = 1,
+                            Score = questionModel.score,
+                            CreatedAt = DateTime.UtcNow,
+                            UpdatedAt = DateTime.UtcNow,
+                            DeletedAt = null,
+                        };
+                        _context.Questions.Add(question);
+                        await _context.SaveChangesAsync();
+                    }
+
+                    return Created($"get-by-id?id={data.Id}", new TestDTO
+                    {
+                        id = data.Id,
+                        name = data.Name,
+                        slug = data.Slug,
+                        exam_id = data.ExamId,
+                        startDate = data.StartDate,
+                        endDate = data.EndDate,
+                        past_marks = data.PastMarks,
+                        total_marks = data.TotalMarks,
+                        created_by = data.CreatedBy,
+                        status = data.Status,
+                        createdAt = data.CreatedAt,
+                        updatedAt = data.UpdatedAt,
+                        deletedAt = data.DeletedAt
+                    });
+                }
+
+                catch (Exception ex)
+                {
+                    return BadRequest(ex.Message);
+                }
+            }
+
+            var msgs = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+            return BadRequest(msgs);
         }
 
         [HttpPut]
