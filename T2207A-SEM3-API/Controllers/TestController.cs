@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Azure.Core;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using T2207A_SEM3_API.DTOs;
 using T2207A_SEM3_API.Entities;
 using T2207A_SEM3_API.Models.Test;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace T2207A_SEM3_API.Controllers
 {
@@ -121,6 +123,61 @@ namespace T2207A_SEM3_API.Controllers
                     };
                     _context.Tests.Add(data);
                     await _context.SaveChangesAsync();
+
+                    // tạo danh sách thi
+                    foreach (var studentId in model.studentIds)
+                    {
+                        var studentTest = new StudentTest
+                        {
+                            TestId = data.Id,
+                            StudentId = studentId,
+                            Status = 0,
+                            CreatedAt = DateTime.Now,
+                            UpdatedAt = DateTime.Now,
+                            DeletedAt = null,
+                        };
+
+                        _context.StudentTests.Add(studentTest);
+                        await _context.SaveChangesAsync();
+
+                    }
+                    // tạo câu hỏi và trả lời
+                    foreach(var questionModel in model.questions)
+                    {
+                        var question = new Question
+                        {
+                            Title = questionModel.title,
+                            TestId = data.Id,
+                            Level = questionModel.level,
+                            Score = questionModel.score,
+                            CreatedAt = DateTime.UtcNow,
+                            UpdatedAt = DateTime.UtcNow,
+                            DeletedAt = null,
+                        };
+
+                        _context.Questions.Add(question);
+                        await _context.SaveChangesAsync();
+
+                        foreach (var answerModel in questionModel.answers)
+                        {
+                            var answer = new Answer
+                            {
+                                Content = answerModel.content,
+                                Status = answerModel.status,
+                                QuestionId = question.Id,
+                                CreatedAt = DateTime.UtcNow,
+                                UpdatedAt = DateTime.UtcNow,
+                                DeletedAt = null,
+                            };
+
+                            _context.Answers.Add(answer);
+                            await _context.SaveChangesAsync();
+                        }
+                    }
+
+                    await _context.SaveChangesAsync();
+
+
                     return Created($"get-by-id?id={data.Id}", new TestDTO
                     {
                         id = data.Id,

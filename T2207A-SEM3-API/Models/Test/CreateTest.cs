@@ -1,4 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using T2207A_SEM3_API.Entities;
+using T2207A_SEM3_API.Models.Question;
 
 namespace T2207A_SEM3_API.Models.Test
 {
@@ -11,9 +13,6 @@ namespace T2207A_SEM3_API.Models.Test
 
         [Required(ErrorMessage = "Please enter exam")]
         public int exam_id { get; set; }
-
-        [Required(ErrorMessage = "Please enter Student")]
-        public int student_id { get; set; }
 
         [Required(ErrorMessage = "Please enter StartDate")]
         [DataType(DataType.Date)]
@@ -35,6 +34,12 @@ namespace T2207A_SEM3_API.Models.Test
 
         [Required(ErrorMessage = "Please enter CreateBy")]
         public int created_by { get; set; }
+
+        [Required]
+        public List<int> studentIds { get; set; }
+
+        [Required]
+        public List<QuestionRequest> questions { get; set; }
 
     }
 }

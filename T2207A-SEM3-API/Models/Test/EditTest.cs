@@ -15,9 +15,6 @@ namespace T2207A_SEM3_API.Models.Test
         [Required(ErrorMessage = "Please enter exam")]
         public int exam_id { get; set; }
 
-        [Required(ErrorMessage = "Please enter Student")]
-        public int student_id { get; set; }
-
         [Required(ErrorMessage = "Please enter StartDate")]
         [DataType(DataType.Date)]
         [DisplayFormat(DataFormatString = "{0:yyyy-MM-dd}", ApplyFormatInEditMode = true)]
