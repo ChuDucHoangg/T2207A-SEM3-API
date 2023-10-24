@@ -96,7 +96,7 @@ namespace T2207A_SEM3_API.Controllers
         public async Task<IActionResult> GetExamDetails(int testId, int studentId)
         {
             // kiểm tra bài thi có tồn tại hay không    
-            var test = await _context.Tests.Include(t => t.Questions).ThenInclude(q => q.Answers).SingleOrDefaultAsync(t => t.Id == testId);
+            var test = await _context.Tests.Include(t => t.QuestionTests).ThenInclude(t => t.Question).ThenInclude(q => q.Answers).SingleOrDefaultAsync(t => t.Id == testId);
             if (test == null)
             {
                 return BadRequest("Test does not exist");
@@ -120,9 +120,21 @@ namespace T2207A_SEM3_API.Controllers
                 return BadRequest("The test has ended or has not started yet");
             }
 
+            // Lấy danh sách ID của các câu hỏi thuộc bài thi
+            var questionIds = await _context.QuestionTests
+                .Where(qt => qt.TestId == testId)
+                .OrderBy(qt => qt.Orders)
+                .Select(qt => qt.QuestionId)
+                .ToListAsync();
+
+            // Lấy danh sách câu hỏi dựa trên các ID câu hỏi
+            var questions = await _context.Questions
+                .Where(q => questionIds.Contains(q.Id))
+                .ToListAsync();
+
             // Chuyển đổi dữ liệu câu hỏi và đáp án thành định dạng phản hồi
             var questionAnswerResponses = new List<QuestionAnswerResponse>();
-            foreach (var question in test.Questions)
+            foreach (var question in questions)
             {
                 var answerContentResponses = question.Answers.Select(answer => new AnswerContentResponse
                 {
@@ -186,6 +198,7 @@ namespace T2207A_SEM3_API.Controllers
                         EndDate = model.endDate,
                         PastMarks = model.past_marks, 
                         TotalMarks = model.total_marks,
+                        NumberOfQuestionsInExam = 16,
                         CreatedBy = model.created_by,
                         Status = 0,
                         CreatedAt = DateTime.Now,
@@ -212,23 +225,63 @@ namespace T2207A_SEM3_API.Controllers
                         await _context.SaveChangesAsync();
 
                     }
-                    
+
+                    int order = 1;
+                    int testId = data.Id;
+                    var courseClassId = _context.Tests
+                        .Where(t => t.Id == testId)
+                        .Select(t => t.Exam.CourseClassId)
+                        .SingleOrDefault();
+
+                    var courseId = _context.ClassCourses
+                        .Where(cc => cc.Id == courseClassId)
+                        .Select(cc => cc.CourseId)
+                        .SingleOrDefault();
+
                     // tạo câu hỏi và trả lời
-                    foreach(var questionModel in model.questions)
+                    foreach (var questionModel in model.questions)
                     {
                         var question = new Question
                         {
                             Title = questionModel.title,
-                            TestId = data.Id,
                             Level = questionModel.level,
                             QuestionType = 0,
-                            Score = questionModel.score,
+                            CourseId = courseId,
                             CreatedAt = DateTime.UtcNow,
                             UpdatedAt = DateTime.UtcNow,
                             DeletedAt = null,
                         };
+                        // Thiết lập điểm (score) dựa trên mức độ (level)
+                        if (questionModel.level == 1)
+                        {
+                            question.Score = 3.85; // Điểm cho câu dễ
+                        }
+                        else if (questionModel.level == 2)
+                        {
+                            question.Score = 6.41; // Điểm cho câu trung bình
+                        }
+                        else if (questionModel.level == 3)
+                        {
+                            question.Score = 8.97; // Điểm cho câu khó
+                        }
+                        else
+                        {
+                            // Xử lý khi mức độ không xác định, có thể đặt điểm mặc định hoặc thông báo lỗi.
+                            question.Score = 0.0; // Điểm mặc định hoặc giá trị khác tùy bạn
+                        }
 
                         _context.Questions.Add(question);
+                        await _context.SaveChangesAsync();
+
+
+                        var question_test = new QuestionTest
+                        {
+                            TestId = data.Id,
+                            QuestionId = question.Id,
+                            Orders = order // Gán thứ tự cho câu hỏi
+                        };
+
+                        _context.QuestionTests.Add(question_test);
                         await _context.SaveChangesAsync();
 
                         foreach (var answerModel in questionModel.answers)
@@ -246,6 +299,8 @@ namespace T2207A_SEM3_API.Controllers
                             _context.Answers.Add(answer);
                             await _context.SaveChangesAsync();
                         }
+                        // Tăng thứ tự cho câu hỏi tiếp theo
+                        order++;
                     }
 
                     await _context.SaveChangesAsync();
@@ -302,6 +357,7 @@ namespace T2207A_SEM3_API.Controllers
                         EndDate = model.endDate,
                         PastMarks = model.past_marks,
                         TotalMarks = model.total_marks,
+                        NumberOfQuestionsInExam = 1,
                         CreatedBy = model.created_by,
                         Status = 0,
                         CreatedAt = DateTime.Now,
@@ -328,20 +384,43 @@ namespace T2207A_SEM3_API.Controllers
                         await _context.SaveChangesAsync();
                     }
 
+                    int testId = data.Id;
+                    var courseClassId = _context.Tests
+                        .Where(t => t.Id == testId)
+                        .Select(t => t.Exam.CourseClassId)
+                        .SingleOrDefault();
+
+                    var courseId = _context.ClassCourses
+                        .Where(cc => cc.Id == courseClassId)
+                        .Select(cc => cc.CourseId)
+                        .SingleOrDefault();
+
                     foreach (var questionModel in model.questions)
                     {
                         var question = new Question
                         {
                             Title = questionModel.title,
-                            TestId = data.Id,
                             Level = questionModel.level,
                             QuestionType = 1,
-                            Score = questionModel.score,
+                            CourseId = courseId,
+                            Score = 100,
                             CreatedAt = DateTime.UtcNow,
                             UpdatedAt = DateTime.UtcNow,
                             DeletedAt = null,
                         };
+
                         _context.Questions.Add(question);
+                        await _context.SaveChangesAsync();
+
+                        var question_test = new QuestionTest
+                        {
+                            TestId = data.Id,
+                            QuestionId = question.Id,
+                            Orders = 1 // Gán thứ tự cho câu hỏi
+                        };
+
+                        
+                        _context.QuestionTests.Add(question_test);
                         await _context.SaveChangesAsync();
                     }
 

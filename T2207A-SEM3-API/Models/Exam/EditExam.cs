@@ -14,7 +14,7 @@ namespace T2207A_SEM3_API.Models.Exam
 
 
         [Required(ErrorMessage = "Please enter teacher")]
-        public int course_id { get; set; }
+        public int courseClass_id { get; set; }
 
         [Required(ErrorMessage = "Please enter start date")]
         [DataType(DataType.Date)]

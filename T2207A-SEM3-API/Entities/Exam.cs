@@ -11,7 +11,7 @@ public partial class Exam
 
     public string Slug { get; set; } = null!;
 
-    public int CourseId { get; set; }
+    public int CourseClassId { get; set; }
 
     public DateTime StartDate { get; set; }
 
@@ -23,7 +23,7 @@ public partial class Exam
 
     public DateTime? DeletedAt { get; set; }
 
-    public virtual Course Course { get; set; } = null!;
+    public virtual ClassCourse CourseClass { get; set; } = null!;
 
     public virtual Staff? CreatedByNavigation { get; set; }
 

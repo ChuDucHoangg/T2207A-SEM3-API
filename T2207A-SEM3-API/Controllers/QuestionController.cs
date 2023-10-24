@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using T2207A_SEM3_API.DTOs;
 using T2207A_SEM3_API.Entities;
 using T2207A_SEM3_API.Models.Question;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace T2207A_SEM3_API.Controllers
 {
@@ -32,7 +33,6 @@ namespace T2207A_SEM3_API.Controllers
                     {
                         id = q.Id,
                         title = q.Title,
-                        test_id = q.TestId,
                         level = q.Level,
                         score = q.Score,
                         createdAt = q.CreatedAt,
@@ -61,7 +61,6 @@ namespace T2207A_SEM3_API.Controllers
                     {
                         id = q.Id,
                         title = q.Title,
-                        test_id = q.TestId,
                         level = q.Level,
                         score = q.Score,
                         createdAt = q.CreatedAt,
@@ -89,18 +88,42 @@ namespace T2207A_SEM3_API.Controllers
                     {
                         Title = model.title,
                         Level = model.level,
-                        Score = model.score,
+                        QuestionType = model.question_type,
                         CreatedAt = DateTime.Now,
                         UpdatedAt = DateTime.Now,
                         DeletedAt = null,
                     };
+                    // type là trắc nghiệm
+                    if (model.question_type == 0)
+                    {
+                        // Thiết lập điểm (score) dựa trên mức độ (level)
+                        if (model.level == 1)
+                        {
+                            data.Score = 3.85; // Điểm cho câu dễ
+                        }
+                        else if (model.level == 2)
+                        {
+                            data.Score = 6.41; // Điểm cho câu trung bình
+                        }
+                        else if (model.level == 3)
+                        {
+                            data.Score = 8.97; // Điểm cho câu khó
+                        }
+                        else
+                        {
+                            // Xử lý khi mức độ không xác định, có thể đặt điểm mặc định hoặc thông báo lỗi.
+                            data.Score = 0.0; // Điểm mặc định hoặc giá trị khác tùy bạn
+                        }
+                    }
+                    // type là tự luận
+                    data.Score = 100;
+
                     _context.Questions.Add(data);
                     await _context.SaveChangesAsync();
                     return Created($"get-by-id?id={data.Id}", new QuestionDTO
                     {
                         id = data.Id,
                         title = data.Title,
-                        test_id = data.TestId,
                         level = data.Level,
                         score = data.Score,
                         createdAt = data.CreatedAt,
@@ -132,13 +155,36 @@ namespace T2207A_SEM3_API.Controllers
                         {
                             Id = model.id,
                             Title = model.title,
-                            TestId = model.test_id,
                             Level = model.level,
-                            Score = model.score,
+                            QuestionType = model.question_type,
                             CreatedAt = existingQuestion.CreatedAt,
                             UpdatedAt = DateTime.Now,
                             DeletedAt = null,
                         };
+                        // type là trắc nghiệm
+                        if(model.question_type == 0)
+                        {
+                            // Thiết lập điểm (score) dựa trên mức độ (level)
+                            if (model.level == 1)
+                            {
+                                question.Score = 3.85; // Điểm cho câu dễ
+                            }
+                            else if (model.level == 2)
+                            {
+                                question.Score = 6.41; // Điểm cho câu trung bình
+                            }
+                            else if (model.level == 3)
+                            {
+                                question.Score = 8.97; // Điểm cho câu khó
+                            }
+                            else
+                            {
+                                // Xử lý khi mức độ không xác định, có thể đặt điểm mặc định hoặc thông báo lỗi.
+                                question.Score = 0.0; // Điểm mặc định hoặc giá trị khác tùy bạn
+                            }
+                        }
+                        question.Score = 100;
+                        
 
                         if (question != null)
                         {
@@ -184,14 +230,25 @@ namespace T2207A_SEM3_API.Controllers
         {
             try
             {
-                List<Question> questions = await _context.Questions.Where(p => p.TestId == testId).ToListAsync();
+                // Lấy danh sách ID của các câu hỏi thuộc bài thi
+                var questionIds = await _context.QuestionTests
+                    .Where(qt => qt.TestId == testId)
+                    .OrderBy(qt => qt.Orders)
+                    .Select(qt => qt.QuestionId)
+                    .ToListAsync();
+
+                // Lấy danh sách câu hỏi dựa trên các ID câu hỏi
+               
+
+                List<Question> questions = await _context.Questions
+                    .Where(q => questionIds.Contains(q.Id))
+                    .ToListAsync();
                 if (questions != null)
                 {
                     List<QuestionDTO> data = questions.Select(q => new QuestionDTO
                     {
                         id = q.Id,
                         title = q.Title,
-                        test_id = q.TestId,
                         level = q.Level,
                         score = q.Score,
                         createdAt = q.CreatedAt,

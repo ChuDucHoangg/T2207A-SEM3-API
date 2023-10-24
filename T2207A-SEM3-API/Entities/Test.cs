@@ -21,6 +21,8 @@ public partial class Test
 
     public double TotalMarks { get; set; }
 
+    public int NumberOfQuestionsInExam { get; set; }
+
     public int CreatedBy { get; set; }
 
     public int Status { get; set; }
@@ -39,7 +41,7 @@ public partial class Test
 
     public virtual ICollection<Grade> Grades { get; set; } = new List<Grade>();
 
-    public virtual ICollection<Question> Questions { get; set; } = new List<Question>();
+    public virtual ICollection<QuestionTest> QuestionTests { get; set; } = new List<QuestionTest>();
 
     public virtual ICollection<StudentTest> StudentTests { get; set; } = new List<StudentTest>();
 }

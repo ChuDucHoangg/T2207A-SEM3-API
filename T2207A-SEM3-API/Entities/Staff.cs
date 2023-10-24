@@ -33,9 +33,9 @@ public partial class Staff
 
     public DateTime? DeletedAt { get; set; }
 
-    public virtual ICollection<Class> Classes { get; set; } = new List<Class>();
+    public virtual ICollection<ClassCourse> ClassCourses { get; set; } = new List<ClassCourse>();
 
-    public virtual ICollection<Course> Courses { get; set; } = new List<Course>();
+    public virtual ICollection<Class> Classes { get; set; } = new List<Class>();
 
     public virtual ICollection<Exam> Exams { get; set; } = new List<Exam>();
 

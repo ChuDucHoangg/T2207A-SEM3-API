@@ -41,7 +41,19 @@ namespace T2207A_SEM3_API.Controllers
                 var finish_at = DateTime.Now;
 
                 // danh sách câu hỏi
-                List<Question> questions = await _context.Questions.Where(p => p.TestId == test_id).ToListAsync();
+                // Lấy danh sách ID của các câu hỏi thuộc bài thi
+                var questionIds = await _context.QuestionTests
+                    .Where(qt => qt.TestId == test_id)
+                    .OrderBy(qt => qt.Orders)
+                    .Select(qt => qt.QuestionId)
+                    .ToListAsync();
+
+                // Lấy danh sách câu hỏi dựa trên các ID câu hỏi
+
+
+                List<Question> questions = await _context.Questions
+                    .Where(q => questionIds.Contains(q.Id))
+                    .ToListAsync();
 
                 // lưu câu trả lời của student
                 List<AnswersForStudent> answersForStudents1 = new List<AnswersForStudent>();
@@ -71,10 +83,21 @@ namespace T2207A_SEM3_API.Controllers
                     studentTest.Status = 2;
                     await _context.SaveChangesAsync();
 
-                    // danh sách câu trả lời đúng
-                    List<Answer> answerCorrect = await _context.Answers.Where(p => p.Question.TestId == test_id && p.Status == 1).ToListAsync();
 
-                    
+                    foreach (var question in questions)
+                    {
+                        question.Answers = _context.Answers
+                            .Where(a => a.QuestionId == question.Id && a.Status == 1)
+                            .ToList();
+                    }
+
+                    //  bạn có thể lấy danh sách câu trả lời đúng 
+                    List<Answer> answerCorrect = questions
+                        .SelectMany(q => q.Answers)
+                        .Where(a => a.Status == 1)
+                        .ToList();
+
+
                     // tính điểm
                     var score = CalculateScore(questions, answerCorrect, answersForStudents1);
 
@@ -387,7 +410,7 @@ namespace T2207A_SEM3_API.Controllers
             }
         }
 
-        [HttpGet]
+        /*[HttpGet]
         [Route("get-by-testIdAndStudentId")]
         public async Task<IActionResult> GetbyTestAndStudent(int testID, int studentID)
         {
@@ -418,7 +441,7 @@ namespace T2207A_SEM3_API.Controllers
             {
                 return StatusCode(500, e.Message);
             }
-        }
+        }*/
 
 
     }

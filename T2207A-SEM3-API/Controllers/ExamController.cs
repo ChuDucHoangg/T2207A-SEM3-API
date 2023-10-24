@@ -33,7 +33,7 @@ namespace T2207A_SEM3_API.Controllers
                         id = e.Id,
                         name = e.Name,
                         slug = e.Slug,
-                        course_id = e.CourseId,
+                        courseClass_id = e.CourseClassId,
                         start_date = e.StartDate,
                         created_by = e.CreatedBy,
                         createdAt = e.CreatedAt,
@@ -63,7 +63,7 @@ namespace T2207A_SEM3_API.Controllers
                         id = c.Id,
                         name = c.Name,
                         slug = c.Slug,
-                        course_id = c.CourseId,
+                        courseClass_id = c.CourseClassId,
                         start_date = c.StartDate,
                         created_by = c.CreatedBy,
                         createdAt = c.CreatedAt,
@@ -100,7 +100,7 @@ namespace T2207A_SEM3_API.Controllers
                     {
                         Name = model.name,
                         Slug = model.name.ToLower().Replace(" ", "-"),
-                        CourseId = model.course_id,
+                        CourseClassId = model.courseClass_id,
                         StartDate = model.start_date,
                         CreatedBy = model.created_by,
                         CreatedAt = DateTime.Now,
@@ -114,7 +114,7 @@ namespace T2207A_SEM3_API.Controllers
                         id = data.Id,
                         name = data.Name,
                         slug = data.Slug,
-                        course_id = data.CourseId,
+                        courseClass_id = data.CourseClassId,
                         start_date = data.StartDate,
                         created_by = data.CreatedBy,
                         createdAt = data.CreatedAt,
@@ -156,7 +156,7 @@ namespace T2207A_SEM3_API.Controllers
                             Id = model.id,
                             Name = model.name,
                             Slug = model.name.ToLower().Replace(" ", "-"),
-                            CourseId = model.course_id,
+                            CourseClassId = model.courseClass_id,
                             StartDate = model.start_date,
                             CreatedBy = model.created_by,
                             CreatedAt = existingExam.CreatedAt,
@@ -208,7 +208,7 @@ namespace T2207A_SEM3_API.Controllers
         {
             try
             {
-                List<Exam> exams = await _context.Exams.Where(p => p.CourseId == courseId).ToListAsync();
+                List<Exam> exams = await _context.Exams.Where(p => p.CourseClassId == courseId).ToListAsync();
                 if (exams != null)
                 {
                     List<ExamDTO> data = exams.Select(c => new ExamDTO
@@ -216,7 +216,7 @@ namespace T2207A_SEM3_API.Controllers
                         id = c.Id,
                         name = c.Name,
                         slug = c.Slug,
-                        course_id = c.CourseId,
+                        courseClass_id = c.CourseClassId,
                         start_date = c.StartDate,
                         created_by = c.CreatedBy,
                         createdAt = c.CreatedAt,

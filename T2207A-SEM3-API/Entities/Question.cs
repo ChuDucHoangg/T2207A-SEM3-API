@@ -9,7 +9,7 @@ public partial class Question
 
     public string Title { get; set; } = null!;
 
-    public int TestId { get; set; }
+    public int CourseId { get; set; }
 
     public int Level { get; set; }
 
@@ -27,5 +27,7 @@ public partial class Question
 
     public virtual ICollection<AnswersForStudent> AnswersForStudents { get; set; } = new List<AnswersForStudent>();
 
-    public virtual Test Test { get; set; } = null!;
+    public virtual Course Course { get; set; } = null!;
+
+    public virtual ICollection<QuestionTest> QuestionTests { get; set; } = new List<QuestionTest>();
 }

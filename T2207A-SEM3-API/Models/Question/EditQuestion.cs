@@ -12,16 +12,13 @@ namespace T2207A_SEM3_API.Models.Question
         [MaxLength(255, ErrorMessage = "Enter up to 255 characters")]
         public string title { get; set; }
 
-        [Required(ErrorMessage = "Please enter test")]
-        public int test_id { get; set; }
-
         [Required(ErrorMessage = "Please enter level")]
         [Range(1, 3, ErrorMessage = "Please select a valid level")]
         public int level { get; set; }
 
-        [Required(ErrorMessage = "Please enter score")]
-        [Range(0.0, 100.0, ErrorMessage = "Invalid value")]
-        public double score { get; set; }
-        
+        [Required(ErrorMessage = "Please enter type")]
+        [Range(1, 2, ErrorMessage = "Please select a valid type")]
+        public int question_type { get; set; }
+
     }
 }

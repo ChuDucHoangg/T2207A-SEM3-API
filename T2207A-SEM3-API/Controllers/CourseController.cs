@@ -35,7 +35,6 @@ namespace T2207A_SEM3_API.Controllers
                         name = cr.Name,
                         course_code = cr.CourseCode,
                         class_id = cr.ClassId,
-                        created_by = cr.CreatedBy,
                         createdAt = cr.CreatedAt,
                         updateAt = cr.UpdatedAt,
                         deleteAt = cr.DeletedAt
@@ -64,7 +63,6 @@ namespace T2207A_SEM3_API.Controllers
                         name = cr.Name,
                         course_code = cr.CourseCode,
                         class_id = cr.ClassId,
-                        created_by = cr.CreatedBy,
                         createdAt = cr.CreatedAt,
                         updateAt = cr.UpdatedAt,
                         deleteAt = cr.DeletedAt
@@ -98,7 +96,6 @@ namespace T2207A_SEM3_API.Controllers
                         Name = model.name,
                         CourseCode = model.course_code,
                         ClassId = model.class_id,
-                        CreatedBy = model.created_by,
                         CreatedAt = DateTime.Now,
                         UpdatedAt = DateTime.Now,
                         DeletedAt = DateTime.Now,
@@ -111,7 +108,6 @@ namespace T2207A_SEM3_API.Controllers
                         course_code = data.CourseCode,
                         name = data.Name,
                         class_id = data.ClassId,
-                        created_by = data.CreatedBy,
                         createdAt = data.CreatedAt,
                         updateAt = data.UpdatedAt,
                         deleteAt = data.DeletedAt,
@@ -149,7 +145,6 @@ namespace T2207A_SEM3_API.Controllers
                         Name = model.name,
                         CourseCode = model.course_code,
                         ClassId = model.class_id,
-                        CreatedBy = model.created_by,
                         CreatedAt = exexistingCourse.CreatedAt,
                         UpdatedAt = DateTime.Now,
                         DeletedAt = null,
@@ -204,7 +199,6 @@ namespace T2207A_SEM3_API.Controllers
                         name = q.Name,
                         course_code = q.CourseCode,
                         class_id = q.ClassId,
-                        created_by = q.CreatedBy,
                         createdAt = q.CreatedAt,
                         updateAt = q.UpdatedAt,
                         deleteAt = q.DeletedAt

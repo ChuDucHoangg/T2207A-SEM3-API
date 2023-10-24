@@ -8,7 +8,7 @@
 
         public string slug { get; set; }
 
-        public int course_id { get; set; }
+        public int courseClass_id { get; set; }
 
         public DateTime start_date { get; set; }
 
