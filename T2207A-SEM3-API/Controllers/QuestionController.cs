@@ -77,8 +77,8 @@ namespace T2207A_SEM3_API.Controllers
             return NotFound();
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Create(CreateQuestion model)
+        [HttpPost("multiple-choice")]
+        public async Task<IActionResult> CreateMultipleChoice(CreateQuestionMultipleChoice model)
         {
             if (ModelState.IsValid)
             {
@@ -88,38 +88,96 @@ namespace T2207A_SEM3_API.Controllers
                     {
                         Title = model.title,
                         Level = model.level,
-                        QuestionType = model.question_type,
+                        QuestionType = 0,
+                        CourseId = model.course_id,
                         CreatedAt = DateTime.Now,
                         UpdatedAt = DateTime.Now,
                         DeletedAt = null,
                     };
-                    // type là trắc nghiệm
-                    if (model.question_type == 0)
-                    {
-                        // Thiết lập điểm (score) dựa trên mức độ (level)
-                        if (model.level == 1)
-                        {
-                            data.Score = 3.85; // Điểm cho câu dễ
-                        }
-                        else if (model.level == 2)
-                        {
-                            data.Score = 6.41; // Điểm cho câu trung bình
-                        }
-                        else if (model.level == 3)
-                        {
-                            data.Score = 8.97; // Điểm cho câu khó
-                        }
-                        else
-                        {
-                            // Xử lý khi mức độ không xác định, có thể đặt điểm mặc định hoặc thông báo lỗi.
-                            data.Score = 0.0; // Điểm mặc định hoặc giá trị khác tùy bạn
-                        }
-                    }
-                    // type là tự luận
-                    data.Score = 100;
+                    
+                     // Thiết lập điểm (score) dựa trên mức độ (level)
+                     if (model.level == 1)
+                     {
+                         data.Score = 3.85; // Điểm cho câu dễ
+                     }
+                     else if(model.level == 2)
+                     {
+                         data.Score = 6.41; // Điểm cho câu trung bình
+                     }
+                     else if (model.level == 3)
+                     {
+                         data.Score = 8.97; // Điểm cho câu khó
+                     }
+                     else
+                     {
+                        // Xử lý khi mức độ không xác định, có thể đặt điểm mặc định hoặc thông báo lỗi.
+                         data.Score = 0.0; // Điểm mặc định hoặc giá trị khác tùy bạn
+                     }
 
                     _context.Questions.Add(data);
                     await _context.SaveChangesAsync();
+
+                    foreach (var answerModel in model.answers)
+                    {
+                        var answer = new Answer
+                        {
+                            Content = answerModel.content,
+                            Status = answerModel.status,
+                            QuestionId = data.Id,
+                            CreatedAt = DateTime.UtcNow,
+                            UpdatedAt = DateTime.UtcNow,
+                            DeletedAt = null,
+                        };
+
+                        _context.Answers.Add(answer);
+                        await _context.SaveChangesAsync();
+                    }
+
+
+                    return Created($"get-by-id?id={data.Id}", new QuestionDTO
+                    {
+                        id = data.Id,
+                        title = data.Title,
+                        level = data.Level,
+                        score = data.Score,
+                        createdAt = data.CreatedAt,
+                        updatedAt = data.UpdatedAt,
+                        deletedAt = data.DeletedAt
+                    });
+                }
+                catch (Exception ex)
+                {
+                    return BadRequest(ex.Message);
+                }
+            }
+            var msgs = ModelState.Values.SelectMany(v => v.Errors).Select(v => v.ErrorMessage);
+            return BadRequest(string.Join(" | ", msgs));
+        }
+
+        [HttpPost("essay")]
+        public async Task<IActionResult> CreateEssay(CreateQuestionEssay model)
+        {
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    Question data = new Question
+                    {
+                        Title = model.title,
+                        Level = 3,
+                        QuestionType = 1,
+                        CourseId = model.course_id,
+                        Score = 100,
+                        CreatedAt = DateTime.Now,
+                        UpdatedAt = DateTime.Now,
+                        DeletedAt = null,
+                    };
+
+
+                    _context.Questions.Add(data);
+                    await _context.SaveChangesAsync();
+
+
                     return Created($"get-by-id?id={data.Id}", new QuestionDTO
                     {
                         id = data.Id,
@@ -156,6 +214,7 @@ namespace T2207A_SEM3_API.Controllers
                             Id = model.id,
                             Title = model.title,
                             Level = model.level,
+                            CourseId = model.course_id,
                             QuestionType = model.question_type,
                             CreatedAt = existingQuestion.CreatedAt,
                             UpdatedAt = DateTime.Now,

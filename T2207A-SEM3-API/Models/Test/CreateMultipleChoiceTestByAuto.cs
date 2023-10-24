@@ -1,9 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using T2207A_SEM3_API.Models.Question;
 
 namespace T2207A_SEM3_API.Models.Test
 {
-    public class CreateEssayTest
+    public class CreateMultipleChoiceTestByAuto
     {
         [Required(ErrorMessage = "Please enter fullname")]
         [MinLength(3, ErrorMessage = "Enter at least 3 characters")]
@@ -36,8 +35,5 @@ namespace T2207A_SEM3_API.Models.Test
 
         [Required]
         public List<int> studentIds { get; set; }
-
-        [Required]
-        public List<CreateQuestion> questions { get; set; }
     }
 }
