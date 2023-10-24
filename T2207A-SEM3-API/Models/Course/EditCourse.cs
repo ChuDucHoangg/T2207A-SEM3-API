@@ -22,14 +22,6 @@ namespace T2207A_SEM3_API.Models.Course
         [Required(ErrorMessage = "Please enter creator")]
         public int created_by { get; set; }
 
-        [DataType(DataType.Date, ErrorMessage = "Invalid creation date")]
-        public DateTime createdAt { get; set; }
-
-        [DataType(DataType.Date, ErrorMessage = "Invalid edit date")]
-        public DateTime updatedAt { get; set; }
-
-        [DataType(DataType.Date, ErrorMessage = "Invalid delete date")]
-        public DateTime deletedAt { get; set; }
     }
 }
 

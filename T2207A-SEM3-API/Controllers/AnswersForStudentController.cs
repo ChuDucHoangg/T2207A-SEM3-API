@@ -225,7 +225,7 @@ namespace T2207A_SEM3_API.Controllers
             }
         }
 
-        [HttpGet]
+        /*[HttpGet]
         [Route("get-by-id")]
         public async Task<IActionResult> Get(int id)
         {
@@ -352,7 +352,7 @@ namespace T2207A_SEM3_API.Controllers
             {
                 return BadRequest(e.Message);
             }
-        }
+        }*/
 
         [HttpGet]
         [Route("get-by-questionId")]

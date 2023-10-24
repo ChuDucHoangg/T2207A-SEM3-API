@@ -47,7 +47,7 @@ namespace T2207A_SEM3_API.Controllers
             }
         }
 
-        [HttpGet]
+        /*[HttpGet]
         [Route("get-by-id")]
         public async Task<IActionResult> Get(int id)
         {
@@ -74,9 +74,9 @@ namespace T2207A_SEM3_API.Controllers
                 return BadRequest(ex.Message);
             }
             return NotFound();
-        }
+        }*/
 
-        [HttpPost]
+        /*[HttpPost]
         public async Task<IActionResult> Create(CreateAnswer model)
         {
             if (ModelState.IsValid)
@@ -112,7 +112,7 @@ namespace T2207A_SEM3_API.Controllers
             }
             var msgs = ModelState.Values.SelectMany(v => v.Errors).Select(v => v.ErrorMessage);
             return BadRequest(string.Join(" | ", msgs));
-        }
+        }*/
 
         [HttpPut]
         public async Task<IActionResult> Update(EditAnswer model)

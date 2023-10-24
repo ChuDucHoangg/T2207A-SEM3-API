@@ -159,6 +159,24 @@ namespace T2207A_SEM3_API.Controllers
                         return BadRequest("Class name already exists");
                     }
 
+                    // kiểm tra số câu hỏi 
+                    var result = model.questions.Count();
+                    if (result > 16 || result < 16)
+                    {
+                        return BadRequest("The number of questions is redundant or missing");
+                    }
+
+                    // Kiểm tra số câu hỏi
+                    int easyCount = model.questions.Count(q => q.level == 1);
+                    int mediumCount = model.questions.Count(q => q.level == 2);
+                    int hardCount = model.questions.Count(q => q.level == 3);
+
+                    if (easyCount != 6 || mediumCount != 5 || hardCount != 5)
+                    {
+                        return BadRequest(new { error = "The number of questions is incorrect" });
+                    }
+
+
                     Test data = new Test
                     {
                         Name = model.name,
@@ -194,6 +212,7 @@ namespace T2207A_SEM3_API.Controllers
                         await _context.SaveChangesAsync();
 
                     }
+                    
                     // tạo câu hỏi và trả lời
                     foreach(var questionModel in model.questions)
                     {
