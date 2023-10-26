@@ -39,7 +39,7 @@ builder.Services.AddDbContext<T2207A_SEM3_API.Entities.ExamonimyContext>(
 var secretKey = builder.Configuration["JWT:Key"];
 var secretKeyBytes = Encoding.UTF8.GetBytes(secretKey);
 
-/*builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(opt =>
                 {
                     opt.TokenValidationParameters = new TokenValidationParameters
@@ -54,7 +54,7 @@ var secretKeyBytes = Encoding.UTF8.GetBytes(secretKey);
 
                         ClockSkew = TimeSpan.Zero
                     };
-                });*/
+                });
 
 builder.Services.AddSwaggerGen(c =>
 {
