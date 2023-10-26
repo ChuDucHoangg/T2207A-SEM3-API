@@ -25,7 +25,7 @@ public partial class Staff
 
     public string Password { get; set; } = null!;
 
-    public int Role { get; set; }
+    public string Role { get; set; } = null!;
 
     public DateTime? CreatedAt { get; set; }
 

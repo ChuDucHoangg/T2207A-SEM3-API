@@ -45,6 +45,6 @@ namespace T2207A_SEM3_API.Models.Staff
         public string password { get; set; }
 
         [Required(ErrorMessage = "Please enter role")]
-        public int role { get; set; }
+        public string role { get; set; }
     }
 }

@@ -11,15 +11,11 @@ public partial class Course
 
     public string CourseCode { get; set; } = null!;
 
-    public int ClassId { get; set; }
-
     public DateTime? CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
 
     public DateTime? DeletedAt { get; set; }
-
-    public virtual Class Class { get; set; } = null!;
 
     public virtual ICollection<ClassCourse> ClassCourses { get; set; } = new List<ClassCourse>();
 

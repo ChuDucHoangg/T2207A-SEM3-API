@@ -355,3 +355,5 @@ D:\SEM3\project-examonimy\SEM-Examonimy-API2\T2207A-SEM3-API\obj\Debug\net7.0\sc
 D:\SEM3\project-examonimy\SEM-Examonimy-API2\T2207A-SEM3-API\obj\Debug\net7.0\T2207A-SEM3-API.csproj.CopyComplete
 D:\SEM3\project-examonimy\SEM-Examonimy-API2\T2207A-SEM3-API\obj\Debug\net7.0\T2207A-SEM3-API.genruntimeconfig.cache
 D:\SEM3\project-examonimy\SEM-Examonimy-API2\T2207A-SEM3-API\obj\Debug\net7.0\ref\T2207A-SEM3-API.dll
+D:\SEM3\project-examonimy\SEM-Examonimy-API2\T2207A-SEM3-API\bin\Debug\net7.0\BCrypt.Net-Next.dll
+D:\SEM3\project-examonimy\SEM-Examonimy-API2\T2207A-SEM3-API\bin\Debug\net7.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll

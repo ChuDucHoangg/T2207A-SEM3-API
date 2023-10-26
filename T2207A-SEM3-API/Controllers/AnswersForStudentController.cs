@@ -2,10 +2,13 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Drawing;
 using T2207A_SEM3_API.DTOs;
 using T2207A_SEM3_API.Entities;
 using T2207A_SEM3_API.Models.Answer;
 using T2207A_SEM3_API.Models.AnswerForStudent;
+using T2207A_SEM3_API.Models.Test;
+using static System.Net.Mime.MediaTypeNames;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace T2207A_SEM3_API.Controllers
@@ -192,6 +195,101 @@ namespace T2207A_SEM3_API.Controllers
                 return BadRequest(ex.Message);
             }
 
+        }
+
+        [HttpPost("scoring-essay")]
+        public async Task<IActionResult> ScoringEssay(CreateScore model)
+        {
+            try
+            {
+                // đã làm bài
+                StudentTest studentTest = await _context.StudentTests.Where(st => st.TestId == model.test_id && st.StudentId == model.student_id).FirstOrDefaultAsync();
+                if (studentTest == null)
+                {
+                    return BadRequest("The test has not found");
+                }
+                if (studentTest.Status != 0)
+                {
+                    return BadRequest("The test has been taken before");
+                }
+                if(studentTest.Status == 2)
+                {
+                    return BadRequest("The test has been graded");
+                }
+
+                var test = await _context.Tests.FindAsync(model.test_id);
+                if(test == null)
+                {
+                    return BadRequest("Test is not found");
+                }
+
+
+                var grade = await _context.Grades.Where(g => g.StudentId == model.student_id && g.TestId == model.test_id).FirstOrDefaultAsync();
+                if (grade == null)
+                {
+                    return BadRequest("Test is not found");
+                }
+
+                // Kiểm tra xem điểm có nằm trong phạm vi hợp lệ (vd: từ 0 đến 100)
+                if (model.score < 0 || model.score > 100)
+                {
+                    return BadRequest("Invalid score range");
+                }
+
+                var current_score = model.score;
+
+                if (grade.Score == null)
+                {
+                    if (!(grade.FinishedAt >= test.StartDate && grade.FinishedAt <= test.EndDate))
+                    {
+                        // finish_at không nằm trong khoảng startDate và andDate
+                        TimeSpan timeDifference = (grade.FinishedAt > test.EndDate) ? grade.FinishedAt - test.EndDate : test.EndDate - grade.FinishedAt;
+
+                        if (timeDifference.TotalMinutes > 30)
+                        {
+                            // Khoảng thời gian lớn hơn 30 phút
+                            current_score = 0;
+                        }
+                        else if (timeDifference.TotalMinutes > 15)
+                        {
+                            // Khoảng thời gian lớn hơn 15 phút, nhưng không quá 30 phút
+                            current_score = current_score - 50;
+                        }
+                        else
+                        {
+                            // Khoảng thời gian không lớn hơn 15 phút
+                            current_score = current_score - 25;
+                        }
+                    }
+
+                    if (current_score < 0)
+                    {
+                        current_score = 0;
+                    }
+
+                    // kiểm tra đỗ hay chưa
+                    if (current_score >= test.PastMarks)
+                    {
+                        grade.Status = 1;
+                    }
+                    else
+                    {
+                        grade.Status = 0;
+                    }
+
+                    // Cập nhật điểm và lưu vào cơ sở dữ liệu
+                    grade.Score = current_score;
+                    grade.UpdatedAt = DateTime.Now;
+                    await _context.SaveChangesAsync();
+                    return Ok("Scoring completed successfully");
+                }
+
+                return Ok("The test has been graded");
+
+            } catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         private double CalculateScore(List<Question> questions, List<Answer> correctAnswers, List<AnswersForStudent> studentAnswers)

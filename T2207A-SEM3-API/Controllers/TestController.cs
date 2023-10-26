@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using T2207A_SEM3_API.DTOs;
 using T2207A_SEM3_API.Entities;
 using T2207A_SEM3_API.Models.Answer;
@@ -713,6 +714,154 @@ namespace T2207A_SEM3_API.Controllers
             var msgs = ModelState.Values.SelectMany(v => v.Errors).Select(v => v.ErrorMessage);
             return BadRequest(string.Join(" | ", msgs));
         }
+
+        [HttpGet("student-test/{testId}/details")]
+        public async Task<IActionResult> GetTestDetails(int testId, int studentId)
+        {
+            // kiểm tra bài thi có tồn tại hay không    
+            var test = await _context.Tests.Include(t => t.QuestionTests).ThenInclude(t => t.Question).ThenInclude(q => q.Answers).SingleOrDefaultAsync(t => t.Id == testId);
+            if (test == null)
+            {
+                return BadRequest("Test does not exist");
+            }
+
+            // kiểm tra đã làm bài
+            StudentTest studentTest = await _context.StudentTests.Where(st => st.TestId == testId && st.StudentId == studentId).FirstOrDefaultAsync();
+            if (studentTest == null)
+            {
+                return BadRequest("Test does not exist");
+            }
+            if (studentTest.Status == 0)
+            {
+                return BadRequest("The test has not been done yet");
+            }
+
+
+            // Lấy danh sách ID của các câu hỏi thuộc bài thi
+            var questionIds = await _context.QuestionTests
+                .Where(qt => qt.TestId == testId)
+                .OrderBy(qt => qt.Orders)
+                .Select(qt => new { qt.QuestionId, qt.Orders })
+                .ToListAsync();
+
+            // Lấy danh sách câu hỏi dựa trên các ID câu hỏi
+            var questions = new List<Question>();
+            foreach (var item in questionIds)
+            {
+                var question = await _context.Questions
+                    .Where(q => q.Id == item.QuestionId)
+                    .FirstOrDefaultAsync();
+
+                if (question != null)
+                {
+                    questions.Add(question);
+                }
+            }
+            // trắc nghiệm
+            if (questions[0].QuestionType == 0)
+            {
+                // Chuyển đổi dữ liệu câu hỏi và đáp án thành định dạng phản hồi
+
+                var questionAnswerResponses = new List<QuestionAnswerToTestMultipleChoiceDetailResponse>();
+
+                foreach (var question in questions)
+                {
+                    var answersForStudent = await _context.AnswersForStudents.Where(a => a.QuestionId == question.Id && a.StudentId == studentId).FirstOrDefaultAsync();
+                    if (answersForStudent == null)
+                    {
+                        return BadRequest("The test has not been done yet");
+                    }
+
+                    var answerContentResponses = question.Answers.Select(answer => new AnswerContentResponse
+                    {
+                        id = answer.Id,
+                        content = answer.Content
+                    }).ToList();
+
+                    var questionAnswerResponse = new QuestionAnswerToTestMultipleChoiceDetailResponse
+                    {
+                        id = question.Id,
+                        title = question.Title,
+                        Answers = answerContentResponses,
+                        answerForStudent = answersForStudent.Content
+                    };
+
+                    questionAnswerResponses.Add(questionAnswerResponse);
+
+                }
+                // Lấy ra câu trả lời của student
+                var grade = await _context.Grades.Where(g => g.TestId == testId && g.StudentId == studentId).FirstOrDefaultAsync();
+                if (grade == null)
+                {
+                    return BadRequest("The test has not been done yet");
+                }
+
+                var testDetail = new TestDetailMultipleChoiceResponse
+                {
+                    name = test.Name,
+                    startDate = test.StartDate,
+                    endDate = test.EndDate,
+                    finished_at = grade.FinishedAt,
+                    NumberOfQuestionsInExam = test.NumberOfQuestionsInExam,
+                    past_marks = test.PastMarks,
+                    total_marks = test.TotalMarks,
+                    status = grade.Status,
+                    score = grade.Score,
+                    questions = questionAnswerResponses,
+
+                };
+                return Ok(testDetail);
+            }
+            // tự luận
+            else
+            {
+                // Chuyển đổi dữ liệu câu hỏi và đáp án thành định dạng phản hồi
+
+                var questionAnswerResponses = new List<QuestionAnswerToTestEssayDetailResponse>();
+
+                foreach (var question in questions)
+                {
+                    var answersForStudent = await _context.AnswersForStudents.Where(a => a.QuestionId == question.Id && a.StudentId == studentId).FirstOrDefaultAsync();
+                    if (answersForStudent == null)
+                    {
+                        return BadRequest("The test has not been done yet");
+                    }
+
+                    var questionAnswerResponse = new QuestionAnswerToTestEssayDetailResponse
+                    {
+                        id = question.Id,
+                        title = question.Title,
+                        answerForStudent = answersForStudent.Content
+                    };
+
+                    questionAnswerResponses.Add(questionAnswerResponse);
+
+                }
+                // Lấy ra câu trả lời của student
+                var grade = await _context.Grades.Where(g => g.TestId == testId && g.StudentId == studentId).FirstOrDefaultAsync();
+                if (grade == null)
+                {
+                    return BadRequest("The test has not been done yet");
+                }
+
+                var testDetail = new TestDetailEssayResponse
+                {
+                    name = test.Name,
+                    startDate = test.StartDate,
+                    endDate = test.EndDate,
+                    finished_at = grade.FinishedAt,
+                    NumberOfQuestionsInExam = test.NumberOfQuestionsInExam,
+                    past_marks = test.PastMarks,
+                    total_marks = test.TotalMarks,
+                    status = grade.Status,
+                    score = grade.Score,
+                    questions = questionAnswerResponses,
+
+                };
+                return Ok(testDetail);
+            }
+        }
+
 
         [HttpPut]
         public async Task<IActionResult> Update(EditTest model)

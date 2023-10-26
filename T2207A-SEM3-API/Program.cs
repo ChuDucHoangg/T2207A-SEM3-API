@@ -1,4 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,6 +36,31 @@ builder.Services.AddDbContext<T2207A_SEM3_API.Entities.ExamonimyContext>(
 
 // end connect db
 
+var secretKey = builder.Configuration["JWT:Key"];
+var secretKeyBytes = Encoding.UTF8.GetBytes(secretKey);
+
+/*builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(opt =>
+                {
+                    opt.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        //tự cấp token
+                        ValidateIssuer = false,
+                        ValidateAudience = false,
+
+                        //ký vào token
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(secretKeyBytes),
+
+                        ClockSkew = TimeSpan.Zero
+                    };
+                });*/
+
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "MyWebApiApp", Version = "v1" });
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -45,6 +74,8 @@ app.UseCors();
 
 
 app.UseHttpsRedirection();
+
+app.UseAuthentication();
 
 app.UseAuthorization();
 

@@ -24,7 +24,7 @@ namespace T2207A_SEM3_API.DTOs
 
         public string password { get; set; }
 
-        public int role { get; set; }
+        public string role { get; set; }
 
 
         public DateTime? createdAt { get; set; }

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using T2207A_SEM3_API.DTOs;
@@ -19,7 +20,7 @@ namespace T2207A_SEM3_API.Controllers
             _context = context;
         }
 
-        [HttpGet]
+        [HttpGet, Authorize(Roles ="Teacher")]
         public async Task<IActionResult> Index()
         {
             try
@@ -34,7 +35,6 @@ namespace T2207A_SEM3_API.Controllers
                         id = cr.Id,
                         name = cr.Name,
                         course_code = cr.CourseCode,
-                        class_id = cr.ClassId,
                         createdAt = cr.CreatedAt,
                         updateAt = cr.UpdatedAt,
                         deleteAt = cr.DeletedAt
@@ -62,7 +62,6 @@ namespace T2207A_SEM3_API.Controllers
                         id = cr.Id,
                         name = cr.Name,
                         course_code = cr.CourseCode,
-                        class_id = cr.ClassId,
                         createdAt = cr.CreatedAt,
                         updateAt = cr.UpdatedAt,
                         deleteAt = cr.DeletedAt
@@ -95,7 +94,6 @@ namespace T2207A_SEM3_API.Controllers
                     {
                         Name = model.name,
                         CourseCode = model.course_code,
-                        ClassId = model.class_id,
                         CreatedAt = DateTime.Now,
                         UpdatedAt = DateTime.Now,
                         DeletedAt = DateTime.Now,
@@ -107,7 +105,6 @@ namespace T2207A_SEM3_API.Controllers
                         id = data.Id,
                         course_code = data.CourseCode,
                         name = data.Name,
-                        class_id = data.ClassId,
                         createdAt = data.CreatedAt,
                         updateAt = data.UpdatedAt,
                         deleteAt = data.DeletedAt,
@@ -144,7 +141,6 @@ namespace T2207A_SEM3_API.Controllers
                         Id = model.id,
                         Name = model.name,
                         CourseCode = model.course_code,
-                        ClassId = model.class_id,
                         CreatedAt = exexistingCourse.CreatedAt,
                         UpdatedAt = DateTime.Now,
                         DeletedAt = null,
@@ -181,39 +177,6 @@ namespace T2207A_SEM3_API.Controllers
             catch (Exception e)
             {
                 return BadRequest(e.Message);
-            }
-        }
-
-        [HttpGet]
-        [Route("get-by-classId")]
-        public async Task<IActionResult> GetbyClass(int classId)
-        {
-            try
-            {
-                List<Course> courses = await _context.Courses.Where(p => p.ClassId == classId).ToListAsync();
-                if (courses != null)
-                {
-                    List<CourseDTO> data = courses.Select(q => new CourseDTO
-                    {
-                        id = q.Id,
-                        name = q.Name,
-                        course_code = q.CourseCode,
-                        class_id = q.ClassId,
-                        createdAt = q.CreatedAt,
-                        updateAt = q.UpdatedAt,
-                        deleteAt = q.DeletedAt
-                    }).ToList();
-
-                    return Ok(data);
-                }
-                else
-                {
-                    return NotFound("No course found in this class.");
-                }
-            }
-            catch (Exception e)
-            {
-                return StatusCode(500, e.Message);
             }
         }
     }

@@ -297,7 +297,7 @@ namespace T2207A_SEM3_API.Controllers
 
         [HttpGet]
         [Route("get-by-role")]
-        public async Task<IActionResult> GetbyRole(int role)
+        public async Task<IActionResult> GetbyRole(string role)
         {
             try
             {

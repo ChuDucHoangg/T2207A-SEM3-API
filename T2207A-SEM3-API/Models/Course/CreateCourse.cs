@@ -13,10 +13,6 @@ namespace T2207A_SEM3_API.Models.Course
         [MaxLength(100, ErrorMessage = "Enter up to 100 characters")]
         public string course_code { get; set; }
 
-        [Required(ErrorMessage = "Please enter class")]
-        public int class_id { get; set; }
-
-
     }
 }
 
