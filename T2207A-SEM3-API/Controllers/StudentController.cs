@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using T2207A_SEM3_API.DTOs;
 using T2207A_SEM3_API.Entities;
+using T2207A_SEM3_API.Helper.Password;
 using T2207A_SEM3_API.Models.Student;
 using static System.Net.Mime.MediaTypeNames;
 
@@ -93,6 +94,7 @@ namespace T2207A_SEM3_API.Controllers
             return NotFound();
         }
 
+
         [HttpPost]
         public async Task<IActionResult> Create([FromForm] CreateStudent model)
         {
@@ -135,7 +137,7 @@ namespace T2207A_SEM3_API.Controllers
                         Gender = model.gender,
                         Address = model.address,
                         ClassId = model.class_id,
-                        Password = model.password,
+                        Password = AutoGeneratorPassword.passwordGenerator(7, 2, 2, 2),
                         Status = 0,
                         CreatedAt = DateTime.Now,
                         UpdatedAt = DateTime.Now,

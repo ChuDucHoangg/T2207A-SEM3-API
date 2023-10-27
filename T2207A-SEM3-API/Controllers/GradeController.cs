@@ -81,47 +81,7 @@ namespace T2207A_SEM3_API.Controllers
             return NotFound();
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Create(CreateGrade model)
-        {
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    Grade data = new Grade
-                    {
-                        StudentId = model.student_id,
-                        TestId = model.test_id,
-                        Score = model.score,
-                        Status = model.status,
-                        FinishedAt = model.finished_at,
-                        CreatedAt = DateTime.Now,
-                        UpdatedAt = DateTime.Now,
-                        DeletedAt = null,
-                    };
-                    _context.Grades.Add(data);
-                    await _context.SaveChangesAsync();
-                    return Created($"get-by-id?id={data.Id}", new GradeDTO
-                    {
-                        id = data.Id,
-                        student_id = data.StudentId,
-                        test_id = data.TestId,
-                        score = data.Score,
-                        status = data.Status,
-                        finishedAt = data.FinishedAt,
-                        createdAt = data.CreatedAt,
-                        updatedAt = data.UpdatedAt,
-                        deletedAt = data.DeletedAt
-                    });
-                }
-                catch (Exception ex)
-                {
-                    return BadRequest(ex.Message);
-                }
-            }
-            var msgs = ModelState.Values.SelectMany(v => v.Errors).Select(v => v.ErrorMessage);
-            return BadRequest(string.Join(" | ", msgs));
-        }
+        
 
         [HttpPut]
         public async Task<IActionResult> Update(EditGrade model)
@@ -185,39 +145,5 @@ namespace T2207A_SEM3_API.Controllers
                 return BadRequest(e.Message);
             }
         }
-
-        [HttpGet]
-        [Route("get-by-questionId")]
-        public async Task<IActionResult> GetbyQuestion(int questionId)
-        {
-            try
-            {
-                List<Answer> answers = await _context.Answers.Where(p => p.QuestionId == questionId).ToListAsync();
-                if (answers != null)
-                {
-                    List<AnswerDTO> data = answers.Select(q => new AnswerDTO
-                    {
-                        id = q.Id,
-                        content = q.Content,
-                        status = q.Status,
-                        question_id = q.QuestionId,
-                        createdAt = q.CreatedAt,
-                        updatedAt = q.UpdatedAt,
-                        deletedAt = q.DeletedAt
-                    }).ToList();
-
-                    return Ok(data);
-                }
-                else
-                {
-                    return NotFound("No answer found in this question.");
-                }
-            }
-            catch (Exception e)
-            {
-                return StatusCode(500, e.Message);
-            }
-        }
-
     }
 }

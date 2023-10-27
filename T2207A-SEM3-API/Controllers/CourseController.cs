@@ -5,7 +5,9 @@ using Microsoft.EntityFrameworkCore;
 using T2207A_SEM3_API.DTOs;
 using T2207A_SEM3_API.Entities;
 using T2207A_SEM3_API.Models.Course;
+using T2207A_SEM3_API.Models.General;
 using T2207A_SEM3_API.Models.Student;
+using T2207A_SEM3_API.Service.Courses;
 
 namespace T2207A_SEM3_API.Controllers
 {
@@ -15,36 +17,39 @@ namespace T2207A_SEM3_API.Controllers
     {
         private readonly ExamonimyContext _context;
 
-        public CourseController(ExamonimyContext context)
+        private readonly ICourseService _courseService;
+
+        public CourseController(ExamonimyContext context, ICourseService courseService)
         {
             _context = context;
+            _courseService = courseService;
         }
 
-        [HttpGet, Authorize(Roles ="Teacher")]
+        [HttpGet]
         public async Task<IActionResult> Index()
         {
             try
             {
-                List<Course> courses = await _context.Courses.ToListAsync();
-
-                List<CourseDTO> data = new List<CourseDTO>();
-                foreach (Course cr in courses)
+                List<CourseDTO> courses = await _courseService.GetAllCoursesAsync();
+                return Ok(new GeneralServiceResponse
                 {
-                    data.Add(new CourseDTO
-                    {
-                        id = cr.Id,
-                        name = cr.Name,
-                        course_code = cr.CourseCode,
-                        createdAt = cr.CreatedAt,
-                        updateAt = cr.UpdatedAt,
-                        deleteAt = cr.DeletedAt
-                    });
-                }
-                return Ok(data);
+                    Success = true,
+                    StatusCode = 200,
+                    Message = "Success",
+                    Data = courses
+                });
             }
             catch (Exception ex) 
-            { 
-                return BadRequest(ex.Message);
+            {
+                var response = new GeneralServiceResponse
+                {
+                    Success = false,
+                    StatusCode = 500,
+                    Message = ex.Message,
+                    Data = null
+                };
+
+                return BadRequest(response);
             }
         }
 
@@ -54,23 +59,29 @@ namespace T2207A_SEM3_API.Controllers
         {
             try
             {
-                Course cr = await _context.Courses.FindAsync(id);
-                if (cr != null)
+                CourseDTO course = await _courseService.GetCourseByIdAsync(id);
+                if (course != null)
                 {
-                    return Ok(new CourseDTO
+                    return Ok(new GeneralServiceResponse
                     {
-                        id = cr.Id,
-                        name = cr.Name,
-                        course_code = cr.CourseCode,
-                        createdAt = cr.CreatedAt,
-                        updateAt = cr.UpdatedAt,
-                        deleteAt = cr.DeletedAt
+                        Success = true,
+                        StatusCode = 200,
+                        Message = "Success",
+                        Data = course
                     });
                 }
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                var response = new GeneralServiceResponse
+                {
+                    Success = false,
+                    StatusCode = 500,
+                    Message = ex.Message,
+                    Data = null
+                };
+
+                return BadRequest(response);
             }
             return NotFound();
         }
@@ -82,41 +93,42 @@ namespace T2207A_SEM3_API.Controllers
             {
                 try
                 {
-                    // Kiểm tra xem student_code đã tồn tại trong cơ sở dữ liệu hay chưa
-                    bool codeExists = await _context.Courses.AnyAsync(c => c.CourseCode == model.course_code);
+                    CourseDTO createdCourse = await _courseService.CreateCourseAsync(model);
 
-                    if (codeExists)
+                    var response = new GeneralServiceResponse
                     {
-                        return BadRequest("Student code already exists");
-                    }
-
-                    Course data = new Course
-                    {
-                        Name = model.name,
-                        CourseCode = model.course_code,
-                        CreatedAt = DateTime.Now,
-                        UpdatedAt = DateTime.Now,
-                        DeletedAt = DateTime.Now,
+                        Success = true,
+                        StatusCode = 201, // Sử dụng 201 Created
+                        Message = "Course created successfully",
+                        Data = createdCourse
                     };
-                    _context.Courses.Add(data);
-                    await _context.SaveChangesAsync();
-                    return Created($"get-by-id?id={data.Id}", new CourseDTO
-                    {
-                        id = data.Id,
-                        course_code = data.CourseCode,
-                        name = data.Name,
-                        createdAt = data.CreatedAt,
-                        updateAt = data.UpdatedAt,
-                        deleteAt = data.DeletedAt,
-                    });
+
+                    return Created($"get-by-id?id={createdCourse.id}", response);
                 }
                 catch (Exception ex)
                 {
-                    return BadRequest(ex.Message);
+                    var response = new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 500,
+                        Message = ex.Message,
+                        Data = null
+                    };
+
+                    return BadRequest(response);
                 }
             }
-            var msgs = ModelState.Values.SelectMany(v => v.Errors).Select(v => v.ErrorMessage);
-            return BadRequest(string.Join(" | ", msgs));
+            var validationErrors = ModelState.Values.SelectMany(v => v.Errors).Select(v => v.ErrorMessage);
+
+            var validationResponse = new GeneralServiceResponse
+            {
+                Success = false,
+                StatusCode = 400,
+                Message = "Validation errors",
+                Data = string.Join(" | ", validationErrors)
+            };
+
+            return BadRequest(validationResponse);
         }
 
         [HttpPut]
@@ -126,40 +138,58 @@ namespace T2207A_SEM3_API.Controllers
             {
                 try
                 {
-                    Course exexistingCourse = await _context.Courses.AsNoTracking().FirstOrDefaultAsync(e => e.Id == model.id);
+                    bool updated = await _courseService.UpdateCourseAsync(model);
 
-                    // Kiểm tra xem student_code đã tồn tại trong cơ sở dữ liệu hay chưa (trừ trường hợp cập nhật cùng mã)
-                    bool codeExists = await _context.Courses.AnyAsync(c => c.CourseCode == model.course_code && c.Id != model.id);
-
-                    if (codeExists)
+                    if (updated)
                     {
-                        return BadRequest("Student code already exists");
-                    }
+                        var response = new GeneralServiceResponse
+                        {
+                            Success = true,
+                            StatusCode = 204, // Sử dụng 204 No Content
+                            Message = "Course updated successfully",
+                            Data = null
+                        };
 
-                    Course course = new Course
-                    {
-                        Id = model.id,
-                        Name = model.name,
-                        CourseCode = model.course_code,
-                        CreatedAt = exexistingCourse.CreatedAt,
-                        UpdatedAt = DateTime.Now,
-                        DeletedAt = null,
-                    };
-
-                    if (course != null)
-                    {
-                        _context.Courses.Update(course);
-                        await _context.SaveChangesAsync();
                         return NoContent();
                     }
+                    else
+                    {
+                        var notFoundResponse = new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 404,
+                            Message = "Course not found",
+                            Data = null
+                        };
 
+                        return NotFound(notFoundResponse);
+                    }
                 }
-                catch (Exception e)
+                catch (Exception ex)
                 {
-                    return BadRequest(e.Message);
+                    var response = new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 500,
+                        Message = ex.Message,
+                        Data = null
+                    };
+
+                    return BadRequest(response);
                 }
             }
-            return BadRequest();
+
+            var validationErrors = ModelState.Values.SelectMany(v => v.Errors).Select(v => v.ErrorMessage);
+
+            var validationResponse = new GeneralServiceResponse
+            {
+                Success = false,
+                StatusCode = 400,
+                Message = "Validation errors",
+                Data = string.Join(" | ", validationErrors)
+            };
+
+            return BadRequest(validationResponse);
         }
 
         [HttpDelete]
@@ -167,16 +197,44 @@ namespace T2207A_SEM3_API.Controllers
         {
             try
             {
-                Course course = await _context.Courses.FindAsync(id);
-                if (course == null)
-                    return NotFound();
-                _context.Courses.Remove(course);
-                await _context.SaveChangesAsync();
-                return NoContent();
+                bool deleted = await _courseService.DeleteCourseAsync(id);
+
+                if (deleted)
+                {
+                    var response = new GeneralServiceResponse
+                    {
+                        Success = true,
+                        StatusCode = 204, // Sử dụng 204 No Content
+                        Message = "Course deleted successfully",
+                        Data = null
+                    };
+
+                    return NoContent();
+                }
+                else
+                {
+                    var notFoundResponse = new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 404,
+                        Message = "Course not found",
+                        Data = null
+                    };
+
+                    return NotFound(notFoundResponse);
+                }
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                return BadRequest(e.Message);
+                var response = new GeneralServiceResponse
+                {
+                    Success = false,
+                    StatusCode = 500,
+                    Message = ex.Message,
+                    Data = null
+                };
+
+                return BadRequest(response);
             }
         }
     }
