@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using T2207A_SEM3_API.Service.CourseClass;
 using T2207A_SEM3_API.Service.Courses;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -30,6 +31,7 @@ builder.Services.AddControllers().AddNewtonsoftJson(options =>
 builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddScoped<ICourseService, CourseService>();
+builder.Services.AddScoped<IClassCourseService,  ClassCourseService>();
 
 builder.Services.AddSwaggerGen();
 

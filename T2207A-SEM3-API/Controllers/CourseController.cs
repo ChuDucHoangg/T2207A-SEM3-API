@@ -76,7 +76,7 @@ namespace T2207A_SEM3_API.Controllers
                 var response = new GeneralServiceResponse
                 {
                     Success = false,
-                    StatusCode = 500,
+                    StatusCode = 400,
                     Message = ex.Message,
                     Data = null
                 };
@@ -110,7 +110,7 @@ namespace T2207A_SEM3_API.Controllers
                     var response = new GeneralServiceResponse
                     {
                         Success = false,
-                        StatusCode = 500,
+                        StatusCode = 400,
                         Message = ex.Message,
                         Data = null
                     };
@@ -170,7 +170,7 @@ namespace T2207A_SEM3_API.Controllers
                     var response = new GeneralServiceResponse
                     {
                         Success = false,
-                        StatusCode = 500,
+                        StatusCode = 400,
                         Message = ex.Message,
                         Data = null
                     };
@@ -229,7 +229,7 @@ namespace T2207A_SEM3_API.Controllers
                 var response = new GeneralServiceResponse
                 {
                     Success = false,
-                    StatusCode = 500,
+                    StatusCode = 400,
                     Message = ex.Message,
                     Data = null
                 };
