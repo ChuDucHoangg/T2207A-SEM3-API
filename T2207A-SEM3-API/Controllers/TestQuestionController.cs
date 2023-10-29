@@ -5,6 +5,8 @@ using T2207A_SEM3_API.Entities;
 using T2207A_SEM3_API.Models.Answer;
 using T2207A_SEM3_API.Models.Question;
 using T2207A_SEM3_API.Models.Test;
+using T2207A_SEM3_API.Service.ClassCourses;
+using T2207A_SEM3_API.Service.CourseClass;
 
 namespace T2207A_SEM3_API.Controllers
 {
@@ -13,24 +15,26 @@ namespace T2207A_SEM3_API.Controllers
     public class TestQuestionController : ControllerBase
     {
         private readonly ExamonimyContext _context;
+        private readonly ITestQuestionService _testQuestionService;
 
-        public TestQuestionController(ExamonimyContext context)
+        public TestQuestionController(ExamonimyContext context, ITestQuestionService testQuestionService)
         {
             _context = context;
+            _testQuestionService = testQuestionService;
         }
 
-        [HttpGet("{testId}/details")]
-        public async Task<IActionResult> GetExamDetails(int testId, int studentId)
+        [HttpGet("take-test/{testId}/details/{studentId}")]
+        public async Task<IActionResult> GetTestQuestionsForTestDetail(int testId, int studentId)
         {
             // kiểm tra bài thi có tồn tại hay không    
-            var test = await _context.Tests.Include(t => t.QuestionTests).ThenInclude(t => t.Question).ThenInclude(q => q.Answers).SingleOrDefaultAsync(t => t.Id == testId);
+            var test = await _testQuestionService.TestExists(testId);
             if (test == null)
             {
                 return BadRequest("Test does not exist");
             }
 
             // kiểm tra đã làm bài
-            StudentTest studentTest = await _context.StudentTests.Where(st => st.TestId == testId && st.StudentId == studentId).FirstOrDefaultAsync();
+            var studentTest = await _testQuestionService.IsTestNotTaken(testId, studentId);
             if (studentTest == null)
             {
                 return BadRequest("Test does not exist");
@@ -47,71 +51,31 @@ namespace T2207A_SEM3_API.Controllers
                 return BadRequest("The test has ended or has not started yet");
             }
 
-            // Lấy danh sách ID của các câu hỏi thuộc bài thi
-            var questionIds = await _context.QuestionTests
-                .Where(qt => qt.TestId == testId)
-                .OrderBy(qt => qt.Orders)
-                .Select(qt => new { qt.QuestionId, qt.Orders })
-                .ToListAsync();
+            var quequestionAnswerResponses = await _testQuestionService.GetTestQuestionsForTestDetail(testId);
 
-            // Lấy danh sách câu hỏi dựa trên các ID câu hỏi
-            var questions = new List<Question>();
-            foreach (var item in questionIds)
-            {
-                var question = await _context.Questions
-                    .Where(q => q.Id == item.QuestionId)
-                    .FirstOrDefaultAsync();
-
-                if (question != null)
-                {
-                    questions.Add(question);
-                }
-            }
-
-            // Chuyển đổi dữ liệu câu hỏi và đáp án thành định dạng phản hồi
-            var questionAnswerResponses = new List<QuestionAnswerResponse>();
-            foreach (var question in questions)
-            {
-                var answerContentResponses = question.Answers.Select(answer => new AnswerContentResponse
-                {
-                    id = answer.Id,
-                    content = answer.Content
-                }).ToList();
-
-                var questionAnswerResponse = new QuestionAnswerResponse
-                {
-                    id = question.Id,
-                    title = question.Title,
-                    Answers = answerContentResponses
-                };
-
-                questionAnswerResponses.Add(questionAnswerResponse);
-
-            }
-            return Ok(questionAnswerResponses);
+            return Ok(quequestionAnswerResponses);
         }
 
-        [HttpGet("student-test/{testId}/details")]
-        public async Task<IActionResult> GetTestDetails(int testId, int studentId)
+        [HttpGet("result-test/{testId}/details/{studentId}")]
+        public async Task<IActionResult> GetTestQuestionsAndAnswerStudent(int testId, int studentId)
         {
             // kiểm tra bài thi có tồn tại hay không    
-            var test = await _context.Tests.Include(t => t.QuestionTests).ThenInclude(t => t.Question).ThenInclude(q => q.Answers).SingleOrDefaultAsync(t => t.Id == testId);
+            var test = await _testQuestionService.TestExists(testId);
             if (test == null)
             {
                 return BadRequest("Test does not exist");
             }
 
             // kiểm tra đã làm bài
-            StudentTest studentTest = await _context.StudentTests.Where(st => st.TestId == testId && st.StudentId == studentId).FirstOrDefaultAsync();
+            var studentTest = await _testQuestionService.IsTestNotTaken(testId, studentId);
             if (studentTest == null)
             {
                 return BadRequest("Test does not exist");
             }
-            if (studentTest.Status == 0)
+            if (studentTest.Status != 0)
             {
-                return BadRequest("The test has not been done yet");
+                return BadRequest("The test has been taken before");
             }
-
 
             // Lấy danh sách ID của các câu hỏi thuộc bài thi
             var questionIds = await _context.QuestionTests
@@ -235,6 +199,27 @@ namespace T2207A_SEM3_API.Controllers
 
                 };
                 return Ok(testDetail);
+            }
+        }
+
+        [HttpGet("{testId}")]
+        public async Task<IActionResult> GetTestQuestion(int testId)
+        {
+            try
+            {
+                // kiểm tra bài thi có tồn tại hay không    
+                var test = await _testQuestionService.TestExists(testId);
+                if (test == null)
+                {
+                    return BadRequest("Test does not exist");
+                }
+
+                var quequestionAnswerResponses = await _testQuestionService.GetTestQuestionsForTestDetail(testId);
+
+                return Ok(quequestionAnswerResponses);
+            } catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
             }
         }
     }

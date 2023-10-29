@@ -15,12 +15,12 @@ namespace T2207A_SEM3_API.Models.Test
 
         [Required(ErrorMessage = "Please enter StartDate")]
         [DataType(DataType.Date)]
-        [DisplayFormat(DataFormatString = "{0:yyyy-MM-dd}", ApplyFormatInEditMode = true)]
+        [DisplayFormat(DataFormatString = "{0:yyyy-MM-dd HH:mm:ss}", ApplyFormatInEditMode = true)]
         public DateTime startDate { get; set; }
 
         [Required(ErrorMessage = "Please enter EndDate")]
         [DataType(DataType.Date)]
-        [DisplayFormat(DataFormatString = "{0:yyyy-MM-dd}", ApplyFormatInEditMode = true)]
+        [DisplayFormat(DataFormatString = "{0:yyyy-MM-dd HH:mm:ss}", ApplyFormatInEditMode = true)]
         public DateTime endDate { get; set; }
 
         [Required(ErrorMessage = "Please enter past marks")]

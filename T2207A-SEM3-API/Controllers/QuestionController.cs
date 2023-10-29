@@ -283,49 +283,5 @@ namespace T2207A_SEM3_API.Controllers
             }
         }
 
-        [HttpGet]
-        [Route("get-by-testId")]
-        public async Task<IActionResult> GetbyCategory(int testId)
-        {
-            try
-            {
-                // Lấy danh sách ID của các câu hỏi thuộc bài thi
-                var questionIds = await _context.QuestionTests
-                    .Where(qt => qt.TestId == testId)
-                    .OrderBy(qt => qt.Orders)
-                    .Select(qt => qt.QuestionId)
-                    .ToListAsync();
-
-                // Lấy danh sách câu hỏi dựa trên các ID câu hỏi
-               
-
-                List<Question> questions = await _context.Questions
-                    .Where(q => questionIds.Contains(q.Id))
-                    .ToListAsync();
-                if (questions != null)
-                {
-                    List<QuestionDTO> data = questions.Select(q => new QuestionDTO
-                    {
-                        id = q.Id,
-                        title = q.Title,
-                        level = q.Level,
-                        score = q.Score,
-                        createdAt = q.CreatedAt,
-                        updatedAt = q.UpdatedAt,
-                        deletedAt = q.DeletedAt
-                    }).ToList();
-
-                    return Ok(data);
-                }
-                else
-                {
-                    return NotFound("No products found in this category.");
-                }
-            }
-            catch (Exception e)
-            {
-                return StatusCode(500, e.Message);
-            }
-        }
     }
 }

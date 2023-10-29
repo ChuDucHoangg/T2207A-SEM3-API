@@ -426,6 +426,13 @@ namespace T2207A_SEM3_API.Controllers
                         return BadRequest("Class name already exists");
                     }
 
+                    // kiểm tra số câu hỏi 
+                    var result = model.questions.Count();
+                    if (result > 1 || result < 1)
+                    {
+                        return BadRequest("The number of questions is redundant or missing");
+                    }
+
                     Test data = new Test
                     {
                         Name = model.name,
@@ -478,7 +485,7 @@ namespace T2207A_SEM3_API.Controllers
                         var question = new Question
                         {
                             Title = questionModel.title,
-                            Level = questionModel.level,
+                            Level = 3,
                             QuestionType = 1,
                             CourseId = courseId,
                             Score = 100,
