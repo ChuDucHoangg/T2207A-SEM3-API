@@ -23,7 +23,7 @@ namespace T2207A_SEM3_API.Controllers
             _config = config;
         }
 
-        private string GenerateToken(Staff user)
+        private string GenerateTokenStaff(Staff user)
         {
             var secretKey = new SymmetricSecurityKey(
                     Encoding.UTF8.GetBytes(_config["JWT:Key"]));
@@ -46,9 +46,31 @@ namespace T2207A_SEM3_API.Controllers
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
+        private string GenerateTokenStudent(Student user)
+        {
+            var secretKey = new SymmetricSecurityKey(
+                    Encoding.UTF8.GetBytes(_config["JWT:Key"]));
+            var signatureKey = new SigningCredentials(secretKey,
+                                    SecurityAlgorithms.HmacSha256);
+            var payload = new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier,user.Id.ToString()),
+                new Claim(ClaimTypes.Email,user.Email),
+                new Claim(ClaimTypes.Name,user.Fullname),
+            };
+            var token = new JwtSecurityToken(
+                    _config["JWT:Issuer"],
+                    _config["JWT:Audience"],
+                    payload,
+                    expires: DateTime.Now.AddMinutes(60),
+                    signingCredentials: signatureKey
+                );
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
         [HttpPost]
-        [Route("login")]
-        public async Task<IActionResult> Login(LoginModel model)
+        [Route("staff-login")]
+        public async Task<IActionResult> LoginWithStaff(LoginModel model)
         {
             try
             {
@@ -67,9 +89,39 @@ namespace T2207A_SEM3_API.Controllers
                 {
                     Success = true,
                     Message = "Authenticate success",
-                    Data = GenerateToken(user)
+                    Data = GenerateTokenStaff(user)
                 });
             } catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPost]
+        [Route("student-login")]
+        public async Task<IActionResult> LoginWithStudent(LoginModel model)
+        {
+            try
+            {
+                var user = _context.Students.SingleOrDefault(p => p.Email == model.email && p.Password == model.password);
+                if (user == null)
+                {
+                    return Ok(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 404,
+                        Message = "Invalid username/password"
+                    });
+                }
+
+                return Ok(new GeneralServiceResponse
+                {
+                    Success = true,
+                    Message = "Authenticate success",
+                    Data = GenerateTokenStudent(user)
+                });
+            }
+            catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }
