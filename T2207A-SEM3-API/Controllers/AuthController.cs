@@ -32,6 +32,7 @@ namespace T2207A_SEM3_API.Controllers
             var payload = new[]
             {
                 new Claim(ClaimTypes.NameIdentifier,user.Id.ToString()),
+                new Claim("Staff-Code", user.StaffCode),
                 new Claim(ClaimTypes.Email,user.Email),
                 new Claim(ClaimTypes.Name,user.Fullname),
                 new Claim(ClaimTypes.Role,user.Role)
@@ -55,6 +56,7 @@ namespace T2207A_SEM3_API.Controllers
             var payload = new[]
             {
                 new Claim(ClaimTypes.NameIdentifier,user.Id.ToString()),
+                new Claim("Student-Code", user.StudentCode),
                 new Claim(ClaimTypes.Email,user.Email),
                 new Claim(ClaimTypes.Name,user.Fullname),
             };

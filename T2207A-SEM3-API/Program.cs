@@ -52,15 +52,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 {
                     opt.TokenValidationParameters = new TokenValidationParameters
                     {
-                        //tự cấp token
-                        ValidateIssuer = false,
-                        ValidateAudience = false,
-
-                        //ký vào token
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidateLifetime = true,
                         ValidateIssuerSigningKey = true,
+                        ValidAudience = builder.Configuration["JWT:Audience"],
+                        ValidIssuer = builder.Configuration["JWT:Issuer"],
                         IssuerSigningKey = new SymmetricSecurityKey(secretKeyBytes),
-
-                        ClockSkew = TimeSpan.Zero
                     };
                 });
 

@@ -3,11 +3,13 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.IdentityModel.Tokens;
 using T2207A_SEM3_API.DTOs;
 using T2207A_SEM3_API.Entities;
 using T2207A_SEM3_API.Models.Answer;
 using T2207A_SEM3_API.Models.Question;
 using T2207A_SEM3_API.Models.Test;
+using T2207A_SEM3_API.Service.ClassCourses;
 using static System.Net.Mime.MediaTypeNames;
 
 namespace T2207A_SEM3_API.Controllers
@@ -758,6 +760,70 @@ namespace T2207A_SEM3_API.Controllers
                 else
                 {
                     return NotFound("No products found in this category.");
+                }
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, e.Message);
+            }
+        }
+
+        [HttpGet]
+        [Route("get-by-student/{student_code}")]
+        public async Task<IActionResult> GetTestByStudentId(string student_code)
+        {
+            try
+            {
+                var student = await _context.Students.Where(st => st.StudentCode.Equals(student_code)).SingleOrDefaultAsync();
+                if (student == null)
+                {
+                    return NotFound("No student found");
+                }
+
+                // Lấy danh sách ID của các test
+                var testIds = await _context.StudentTests
+                    .Where(qt => qt.StudentId == student.Id)
+                    .Select(qt => qt.TestId)
+                    .ToListAsync();
+
+                // Lấy danh sách câu hỏi dựa trên các ID test
+                var tests = new List<Test>();
+                foreach (var item in testIds)
+                {
+                    var test = await _context.Tests
+                        .Where(q => q.Id == item)
+                        .FirstOrDefaultAsync();
+
+                    if (test != null)
+                    {
+                        tests.Add(test);
+                    }
+                }
+
+                if (tests.Count() != 0)
+                {
+                    List<TestDTO> data = tests.Select(c => new TestDTO
+                    {
+                        id = c.Id,
+                        name = c.Name,
+                        slug = c.Slug,
+                        exam_id = c.ExamId,
+                        startDate = c.StartDate,
+                        endDate = c.EndDate,
+                        past_marks = c.PastMarks,
+                        total_marks = c.TotalMarks,
+                        created_by = c.CreatedBy,
+                        status = c.Status,
+                        createdAt = c.CreatedAt,
+                        updatedAt = c.UpdatedAt,
+                        deletedAt = c.DeletedAt
+                    }).ToList();
+
+                    return Ok(data);
+                }
+                else
+                {
+                    return NotFound("No tests found");
                 }
             }
             catch (Exception e)
