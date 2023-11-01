@@ -93,7 +93,8 @@ namespace T2207A_SEM3_API.Controllers
                     Message = "Authenticate success",
                     Data = GenerateTokenStaff(user)
                 });
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }
@@ -105,15 +106,20 @@ namespace T2207A_SEM3_API.Controllers
         {
             try
             {
-                var user = _context.Students.SingleOrDefault(p => p.Email == model.email && p.Password == model.password);
+                var user = _context.Students.Where(st => st.Email.Equals(model.email)).First();
                 if (user == null)
                 {
-                    return Ok(new GeneralServiceResponse
+                    return BadRequest(new GeneralServiceResponse
                     {
                         Success = false,
                         StatusCode = 404,
                         Message = "Invalid username/password"
                     });
+                }
+                bool verified = BCrypt.Net.BCrypt.Verify(model.password, user.Password);
+                if (!verified)
+                {
+                    throw new Exception("email or pass is not corect");
                 }
 
                 return Ok(new GeneralServiceResponse
@@ -122,6 +128,74 @@ namespace T2207A_SEM3_API.Controllers
                     Message = "Authenticate success",
                     Data = GenerateTokenStudent(user)
                 });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPost]
+        [Route("student/change-password")]
+        public async Task<IActionResult> StudentChangePassword(ChangePasswordModel model)
+        {
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+
+            if (!identity.IsAuthenticated)
+            {
+                return Unauthorized("Not Authorized");
+            }
+
+            try
+            {
+
+                var userClaims = identity.Claims;
+                var userId = userClaims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+                var user = _context.Students.Find(Convert.ToInt32(userId));
+                if (user != null)
+                {
+                    bool verified = BCrypt.Net.BCrypt.Verify(model.CurrentPassword, user.Password);
+
+                    // Kiểm tra mật khẩu hiện tại
+                    if (verified)
+                    {
+                        // hash password
+                        var salt = BCrypt.Net.BCrypt.GenerateSalt(10);
+                        var hassNewPassword = BCrypt.Net.BCrypt.HashPassword(model.NewPassword, salt);
+                        // Thực hiện thay đổi mật khẩu
+                        user.Password = hassNewPassword;
+                        _context.SaveChanges();
+                        return Ok(new GeneralServiceResponse
+                        {
+                            Success = true,
+                            StatusCode = 200,
+                            Message = "Password changed successfully",
+                            Data = null
+                        });
+                    }
+                    else
+                    {
+                        return BadRequest(new GeneralServiceResponse
+                        {
+                            Success = true,
+                            StatusCode = 400,
+                            Message = "Incorrect current password",
+                            Data = null
+                        });
+                    }
+                }
+                else
+                {
+                    return NotFound(new GeneralServiceResponse
+                    {
+                        Success = true,
+                        StatusCode = 404,
+                        Message = "Incorrect current password",
+                        Data = null
+                    });
+                }
+
             }
             catch (Exception ex)
             {

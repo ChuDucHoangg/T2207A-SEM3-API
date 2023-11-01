@@ -1,8 +1,24 @@
 {
   "Files": [
     {
+      "Id": "D:\\SEM3\\project-examonimy\\SEM-Examonimy-API2\\T2207A-SEM3-API\\wwwroot\\excels\\Book1.xlsx",
+      "PackagePath": "staticwebassets\\excels\\Book1.xlsx"
+    },
+    {
       "Id": "D:\\SEM3\\project-examonimy\\SEM-Examonimy-API2\\T2207A-SEM3-API\\wwwroot\\uploads\\092e005d-1c35-4ad7-a79d-0f4eccffcd78.jpg",
       "PackagePath": "staticwebassets\\uploads\\092e005d-1c35-4ad7-a79d-0f4eccffcd78.jpg"
+    },
+    {
+      "Id": "D:\\SEM3\\project-examonimy\\SEM-Examonimy-API2\\T2207A-SEM3-API\\wwwroot\\uploads\\42091ce9-d544-438e-80a5-aaed532ce39c.jpg",
+      "PackagePath": "staticwebassets\\uploads\\42091ce9-d544-438e-80a5-aaed532ce39c.jpg"
+    },
+    {
+      "Id": "D:\\SEM3\\project-examonimy\\SEM-Examonimy-API2\\T2207A-SEM3-API\\wwwroot\\uploads\\52d4187b-73a4-4df0-b4dc-36972ed235bf.jpg",
+      "PackagePath": "staticwebassets\\uploads\\52d4187b-73a4-4df0-b4dc-36972ed235bf.jpg"
+    },
+    {
+      "Id": "D:\\SEM3\\project-examonimy\\SEM-Examonimy-API2\\T2207A-SEM3-API\\wwwroot\\uploads\\bc69902a-68e5-4e1c-bb75-db1779a2bd7d.jpg",
+      "PackagePath": "staticwebassets\\uploads\\bc69902a-68e5-4e1c-bb75-db1779a2bd7d.jpg"
     },
     {
       "Id": "obj\\Debug\\net7.0\\staticwebassets\\msbuild.T2207A-SEM3-API.Microsoft.AspNetCore.StaticWebAssets.props",

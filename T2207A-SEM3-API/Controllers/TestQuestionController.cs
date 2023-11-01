@@ -72,9 +72,9 @@ namespace T2207A_SEM3_API.Controllers
             {
                 return BadRequest("Test does not exist");
             }
-            if (studentTest.Status != 0)
+            if (studentTest.Status == 0)
             {
-                return BadRequest("The test has been taken before");
+                return BadRequest("This test has not been done yet");
             }
 
             // Lấy danh sách ID của các câu hỏi thuộc bài thi
@@ -115,7 +115,9 @@ namespace T2207A_SEM3_API.Controllers
                     var answerContentResponses = question.Answers.Select(answer => new AnswerContentResponse
                     {
                         id = answer.Id,
-                        content = answer.Content
+                        content = answer.Content,
+                        status = answer.Status
+                        
                     }).ToList();
 
                     var questionAnswerResponse = new QuestionAnswerToTestMultipleChoiceDetailResponse

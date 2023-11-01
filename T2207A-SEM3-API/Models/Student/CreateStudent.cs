@@ -4,10 +4,6 @@ namespace T2207A_SEM3_API.Models.Student
 {
     public class CreateStudent
     {
-        [Required(ErrorMessage = "Please enter student code")]
-        [MinLength(3, ErrorMessage = "Enter at least 3 characters")]
-        [MaxLength(100, ErrorMessage = "Enter up to 100 characters")]
-        public string student_code { get; set; }
 
         [Required(ErrorMessage = "Please enter fullname")]
         [MinLength(3, ErrorMessage = "Enter at least 3 characters")]
@@ -40,10 +36,10 @@ namespace T2207A_SEM3_API.Models.Student
         [Required(ErrorMessage = "Please enter class")]
         public int class_id { get; set; }
 
-        /*[Required(ErrorMessage = "Please enter password")]
+        [Required(ErrorMessage = "Please enter password")]
         [MinLength(6, ErrorMessage = "Enter at least 6 characters")]
         [MaxLength(50, ErrorMessage = "Enter up to 255 characters")]
-        public string password { get; set; }*/
+        public string password { get; set; }
 
     }
 }

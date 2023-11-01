@@ -1,9 +1,13 @@
 ﻿using Azure.Core;
+using ExcelDataReader;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.IdentityModel.Tokens;
+using OfficeOpenXml;
+using System.Reflection.PortableExecutable;
+using System.Text;
 using T2207A_SEM3_API.DTOs;
 using T2207A_SEM3_API.Entities;
 using T2207A_SEM3_API.Models.Answer;
@@ -93,6 +97,261 @@ namespace T2207A_SEM3_API.Controllers
                 return BadRequest(ex.Message);
             }
             return NotFound();
+        }
+
+        [HttpPost("multiple-choice-by-excel-file")]
+        public async Task<IActionResult> CreateMultipleChoiceTestByExcelFile([FromForm]CreateMultipleChoiceTestByExcelFile model)
+        {
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    // Kiểm tra xem name đã tồn tại trong cơ sở dữ liệu hay chưa
+                    bool nameExists = await _context.Tests.AnyAsync(c => c.Name == model.name);
+
+                    if (nameExists)
+                    {
+                        // Nếu name đã tồn tại, trả về BadRequest hoặc thông báo lỗi tương tự
+                        return BadRequest("Class name already exists");
+                    }
+
+                    // kiểm tra số câu hỏi 
+
+
+                    // Kiểm tra số câu hỏi
+
+                    Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+                    var file = model.excelFile;
+
+                    if (file != null || file.Length > 0)
+                    {
+                        var fileExtension = Path.GetExtension(file.FileName).ToLower(); // Lấy phần mở rộng của tên tệp và chuyển thành chữ thường
+
+                        // Kiểm tra xem tệp có đúng định dạng Excel (ví dụ: .xlsx) hay không
+                        if (fileExtension == ".xlsx" || fileExtension == ".xlsx")
+                        {
+                            var uploadDirectory = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "excels");
+
+                            if (!Directory.Exists(uploadDirectory))
+                            {
+                                Directory.CreateDirectory(uploadDirectory);
+                            }
+
+                            var filePath = Path.Combine(uploadDirectory, file.FileName);
+
+                            using (var stream = new FileStream(filePath, FileMode.Create))
+                            {
+                                await file.CopyToAsync(stream);
+                            }
+
+                            using (var stream = System.IO.File.Open(filePath, FileMode.Open, FileAccess.Read))
+                            {
+                                using (var reader = ExcelReaderFactory.CreateReader(stream))
+                                {
+                                    int totalQuestions = 0;
+                                    int easyCount = 0;
+                                    int mediumCount = 0;
+                                    int hardCount = 0;
+                                    do
+                                    {
+                                        bool isHeaderSkipped = false;
+
+                                        while (reader.Read())
+                                        {
+                                            if (!isHeaderSkipped)
+                                            {
+                                                isHeaderSkipped = true;
+                                                continue;
+                                            }
+
+                                            int level = Convert.ToInt32(reader.GetValue(6).ToString());  // Assumed column 7 contains the difficulty level
+                                                                                                         // Kiểm tra mức độ và tăng đếm cho từng loại
+                                            switch (level)
+                                            {
+                                                case 1:
+                                                    easyCount++;
+                                                    break;
+                                                case 2:
+                                                    mediumCount++;
+                                                    break;
+                                                case 3:
+                                                    hardCount++;
+                                                    break;
+                                                default:  // Xử lý nếu mức độ không hợp lệ
+                                                    break;
+                                            }  // Tăng tổng số câu hỏi
+                                            totalQuestions++;
+                                        }
+                                    } while (reader.NextResult());
+                                    reader.Close();
+
+                                    if (totalQuestions == 16 && easyCount == 6 && mediumCount == 5 && hardCount == 5)
+                                    {
+                                        Test data = new Test
+                                        {
+                                            Name = model.name,
+                                            Slug = model.name.ToLower().Replace(" ", "-"),
+                                            ExamId = model.exam_id,
+                                            StartDate = model.startDate,
+                                            EndDate = model.endDate,
+                                            PastMarks = model.past_marks,
+                                            TotalMarks = model.total_marks,
+                                            NumberOfQuestionsInExam = 16,
+                                            CreatedBy = model.created_by,
+                                            Status = 0,
+                                            CreatedAt = DateTime.Now,
+                                            UpdatedAt = DateTime.Now,
+                                            DeletedAt = null,
+                                        };
+                                        _context.Tests.Add(data);
+                                        await _context.SaveChangesAsync();  // tạo danh sách thi
+                                        foreach (var studentId in model.studentIds)
+                                        {
+                                            var studentTest = new StudentTest
+                                            {
+                                                TestId = data.Id,
+                                                StudentId = studentId,
+                                                Status = 0,
+                                                CreatedAt = DateTime.Now,
+                                                UpdatedAt = DateTime.Now,
+                                                DeletedAt = null,
+                                            };
+                                            _context.StudentTests.Add(studentTest);
+                                            await _context.SaveChangesAsync();
+                                        }
+                                        int order = 1;
+                                        int testId = data.Id;
+                                        var courseClassId = _context.Tests.Where(t => t.Id == testId)
+                                                                .Select(t => t.Exam.CourseClassId)
+                                                                .SingleOrDefault();
+                                        var courseId = _context.ClassCourses.Where(cc => cc.Id == courseClassId)
+                                                           .Select(cc => cc.CourseId)
+                                                           .SingleOrDefault();
+                                        using (var newStream = System.IO.File.Open(filePath, FileMode.Open, FileAccess.Read))
+                                        {
+                                            using (var newReader = ExcelReaderFactory.CreateReader(newStream))
+                                            {
+                                                do
+                                                {
+                                                    bool isHeaderSkipped1 = false;
+
+                                                    while (newReader.Read())
+                                                    {
+                                                        if (!isHeaderSkipped1)
+                                                        {
+                                                            isHeaderSkipped1 = true;
+                                                            continue;
+                                                        }
+
+                                                        string questionText = newReader.GetValue(1).ToString();
+                                                        int level = Convert.ToInt32(newReader.GetValue(6).ToString());
+                                                        var question = new Question
+                                                        {
+                                                            Title = questionText,
+                                                            CourseId = courseId,
+                                                            Level = level,
+                                                            QuestionType = 0,
+                                                            CreatedAt = DateTime.UtcNow,
+                                                            UpdatedAt = DateTime.UtcNow,
+                                                            DeletedAt = null,
+                                                        };  // Thiết lập điểm (score) dựa trên mức độ (level)
+                                                        if (level == 1)
+                                                        {
+                                                            question.Score = 3.85;  // Điểm cho câu dễ
+                                                        }
+                                                        else if (level == 2)
+                                                        {
+                                                            question.Score = 6.41;  // Điểm cho câu trung bình
+                                                        }
+                                                        else if (level == 3)
+                                                        {
+                                                            question.Score = 8.97;  // Điểm cho câu khó
+                                                        }
+                                                        else
+                                                        {  // Xử lý khi mức độ không xác định, có thể đặt điểm mặc định
+                                                           // hoặc thông báo lỗi.
+                                                            question.Score = 0.0;  // Điểm mặc định hoặc giá trị khác tùy bạn
+                                                        }
+                                                        _context.Questions.Add(question);
+                                                        await _context.SaveChangesAsync();
+                                                        var question_test = new QuestionTest
+                                                        {
+                                                            TestId = data.Id,
+                                                            QuestionId = question.Id,
+                                                            Orders = order  // Gán thứ tự cho câu hỏi
+                                                        };
+                                                        _context.QuestionTests.Add(question_test);
+                                                        await _context.SaveChangesAsync();
+                                                        string answerCorrect =
+                                                            newReader.GetValue(7).ToString();  // Tạo câu trả lời
+                                                        for (int i = 0; i < 4; i++)
+                                                        {
+                                                            string answerText = newReader.GetValue(2 + i).ToString();
+                                                            var answer = new Answer
+                                                            {
+                                                                Content = answerText,
+                                                                QuestionId = question.Id,
+                                                                CreatedAt = DateTime.UtcNow,
+                                                                UpdatedAt = DateTime.UtcNow,
+                                                                DeletedAt = null,
+                                                            };  // Đặt câu trả lời đúng
+                                                            if (answer.Content.Trim() == answerCorrect.Trim())
+                                                            {
+                                                                answer.Status = 1;
+                                                            }
+                                                            else
+                                                            {
+                                                                answer.Status = 0;
+                                                            }
+                                                            _context.Answers.Add(answer);
+                                                            await _context.SaveChangesAsync();
+                                                        }
+                                                        order++;
+
+                                                    }
+                                                } while (newReader.NextResult());
+                                            }
+                                        }
+
+                                        return Created($"get-by-id?id={data.Id}", new TestDTO
+                                        {
+                                            id = data.Id,
+                                            name = data.Name,
+                                            slug = data.Slug,
+                                            exam_id = data.ExamId,
+                                            startDate = data.StartDate,
+                                            endDate = data.EndDate,
+                                            past_marks = data.PastMarks,
+                                            total_marks = data.TotalMarks,
+                                            created_by = data.CreatedBy,
+                                            status = data.Status,
+                                            createdAt = data.CreatedAt,
+                                            updatedAt = data.UpdatedAt,
+                                            deletedAt = data.DeletedAt
+                                        });
+                                    }
+                                    else
+                                    {
+                                        return BadRequest("Số lượng câu hỏi hoặc mức độ không hợp lệ");
+                                    }
+                                }
+                            }
+
+                        }
+                        else
+                        {
+                            return BadRequest("định dạng sai");
+                        }
+
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return BadRequest(ex.Message);
+                }
+            }
+            var msgs = ModelState.Values.SelectMany(v => v.Errors).Select(v => v.ErrorMessage);
+            return BadRequest(string.Join(" | ", msgs));
         }
 
         [HttpPost("multiple-choice-by-hand")]

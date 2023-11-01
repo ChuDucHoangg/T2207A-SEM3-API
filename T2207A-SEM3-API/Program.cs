@@ -3,9 +3,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using T2207A_SEM3_API.Helper.Email;
 using T2207A_SEM3_API.Service.ClassCourses;
 using T2207A_SEM3_API.Service.CourseClass;
 using T2207A_SEM3_API.Service.Courses;
+using T2207A_SEM3_API.Service.Email;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,11 +33,14 @@ builder.Services.AddControllers().AddNewtonsoftJson(options =>
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 
-builder.Services.AddScoped<ICourseService, CourseService>();
-builder.Services.AddScoped<IClassCourseService,  ClassCourseService>();
-builder.Services.AddScoped<ITestQuestionService, TestQuestionService>();
-
 builder.Services.AddSwaggerGen();
+
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+
+builder.Services.AddScoped<ICourseService, CourseService>();
+builder.Services.AddScoped<IClassCourseService, ClassCourseService>();
+builder.Services.AddScoped<ITestQuestionService, TestQuestionService>();
+builder.Services.AddTransient<IEmailService, EmailService>();
 
 // start connect db
 string connectionString = builder.Configuration.GetConnectionString("API");
