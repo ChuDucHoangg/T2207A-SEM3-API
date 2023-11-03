@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -57,6 +58,7 @@ namespace T2207A_SEM3_API.Controllers
             {
                 new Claim(ClaimTypes.NameIdentifier,user.Id.ToString()),
                 new Claim("Student-Code", user.StudentCode),
+                new Claim("Class-Id", user.ClassId.ToString()),
                 new Claim(ClaimTypes.Email,user.Email),
                 new Claim(ClaimTypes.Name,user.Fullname),
             };
@@ -76,14 +78,24 @@ namespace T2207A_SEM3_API.Controllers
         {
             try
             {
-                var user = _context.Staffs.SingleOrDefault(p => p.Email == model.email && p.Password == model.password);
+                var user = await _context.Staffs.Where(st => st.Email.Equals(model.email)).FirstOrDefaultAsync();
                 if (user == null)
                 {
-                    return Ok(new GeneralServiceResponse
+                    return BadRequest(new GeneralServiceResponse
                     {
                         Success = false,
                         StatusCode = 404,
-                        Message = "Invalid username/password"
+                        Message = "Invalid email/password"
+                    });
+                }
+                bool verified = BCrypt.Net.BCrypt.Verify(model.password, user.Password);
+                if (!verified)
+                {
+                    return BadRequest(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 404,
+                        Message = "Invalid email/password"
                     });
                 }
 
@@ -106,32 +118,43 @@ namespace T2207A_SEM3_API.Controllers
         {
             try
             {
-                var user = _context.Students.Where(st => st.Email.Equals(model.email)).First();
+                var user = await _context.Students.Where(st => st.Email.Equals(model.email)).FirstOrDefaultAsync();
                 if (user == null)
                 {
                     return BadRequest(new GeneralServiceResponse
                     {
                         Success = false,
                         StatusCode = 404,
-                        Message = "Invalid username/password"
+                        Message = "Invalid email/password"
                     });
                 }
                 bool verified = BCrypt.Net.BCrypt.Verify(model.password, user.Password);
                 if (!verified)
                 {
-                    throw new Exception("email or pass is not corect");
+                    return BadRequest(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 404,
+                        Message = "Invalid email/password"
+                    });
                 }
 
                 return Ok(new GeneralServiceResponse
                 {
                     Success = true,
+                    StatusCode = 200,
                     Message = "Authenticate success",
                     Data = GenerateTokenStudent(user)
                 });
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest(new GeneralServiceResponse
+                {
+                    Success = false,
+                    StatusCode = 404,
+                    Message = ex.Message
+                });
             }
         }
 
@@ -171,17 +194,91 @@ namespace T2207A_SEM3_API.Controllers
                             Success = true,
                             StatusCode = 200,
                             Message = "Password changed successfully",
-                            Data = null
+                            Data = ""
                         });
                     }
                     else
                     {
                         return BadRequest(new GeneralServiceResponse
                         {
-                            Success = true,
+                            Success = false,
                             StatusCode = 400,
                             Message = "Incorrect current password",
-                            Data = null
+                            Data = ""
+                        }); 
+                    }
+                }
+                else
+                {
+                    return NotFound(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 404,
+                        Message = "Incorrect current password",
+                        Data = ""
+                    });
+                }
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new GeneralServiceResponse
+                {
+                    Success = false,
+                    StatusCode = 400,
+                    Message = ex.Message,
+                    Data = ""
+                });
+            }
+        }
+
+        [HttpPost]
+        [Route("staff/change-password")]
+        public async Task<IActionResult> StaffChangePassword(ChangePasswordModel model)
+        {
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+
+            if (!identity.IsAuthenticated)
+            {
+                return Unauthorized("Not Authorized");
+            }
+
+            try
+            {
+
+                var userClaims = identity.Claims;
+                var userId = userClaims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+                var user = _context.Staffs.Find(Convert.ToInt32(userId));
+                if (user != null)
+                {
+                    bool verified = BCrypt.Net.BCrypt.Verify(model.CurrentPassword, user.Password);
+
+                    // Kiểm tra mật khẩu hiện tại
+                    if (verified)
+                    {
+                        // hash password
+                        var salt = BCrypt.Net.BCrypt.GenerateSalt(10);
+                        var hassNewPassword = BCrypt.Net.BCrypt.HashPassword(model.NewPassword, salt);
+                        // Thực hiện thay đổi mật khẩu
+                        user.Password = hassNewPassword;
+                        _context.SaveChanges();
+                        return Ok(new GeneralServiceResponse
+                        {
+                            Success = true,
+                            StatusCode = 200,
+                            Message = "Password changed successfully",
+                            Data = ""
+                        }); 
+                    }
+                    else
+                    {
+                        return BadRequest(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 400,
+                            Message = "Incorrect current password",
+                            Data = ""
                         });
                     }
                 }
@@ -189,10 +286,10 @@ namespace T2207A_SEM3_API.Controllers
                 {
                     return NotFound(new GeneralServiceResponse
                     {
-                        Success = true,
+                        Success = false,
                         StatusCode = 404,
                         Message = "Incorrect current password",
-                        Data = null
+                        Data = ""
                     });
                 }
 

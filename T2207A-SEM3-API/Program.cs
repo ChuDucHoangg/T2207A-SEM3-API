@@ -4,10 +4,15 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
 using T2207A_SEM3_API.Helper.Email;
+using T2207A_SEM3_API.Service.Answers;
 using T2207A_SEM3_API.Service.ClassCourses;
 using T2207A_SEM3_API.Service.CourseClass;
 using T2207A_SEM3_API.Service.Courses;
 using T2207A_SEM3_API.Service.Email;
+using T2207A_SEM3_API.Service.Questions;
+using T2207A_SEM3_API.Service.RegisterExams;
+using T2207A_SEM3_API.Service.Student;
+using T2207A_SEM3_API.Service.UploadFiles;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -41,6 +46,12 @@ builder.Services.AddScoped<ICourseService, CourseService>();
 builder.Services.AddScoped<IClassCourseService, ClassCourseService>();
 builder.Services.AddScoped<ITestQuestionService, TestQuestionService>();
 builder.Services.AddTransient<IEmailService, EmailService>();
+builder.Services.AddScoped<IImgService, ImgService>();
+builder.Services.AddScoped<IStudentService, StudentService>();
+builder.Services.AddScoped<IQuestionService, QuestionService>();
+builder.Services.AddScoped<IAnswerService,  AnswerService>();
+builder.Services.AddScoped<IRegisterExamService, RegisterExamService>();
+
 
 // start connect db
 string connectionString = builder.Configuration.GetConnectionString("API");

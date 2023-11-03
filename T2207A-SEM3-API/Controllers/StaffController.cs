@@ -116,6 +116,36 @@ namespace T2207A_SEM3_API.Controllers
             return null; // Trả về null nếu không có hình ảnh
         }
 
+        private async Task<string> GenerateStaffCode()
+        {
+            // Lấy năm hiện tại dưới dạng chuỗi (ví dụ: "2022")
+            string currentYear = DateTime.Now.ToString("yy");
+
+            // Lấy tháng hiện tại dưới dạng chuỗi (ví dụ: "04" cho tháng 4)
+            string currentMonth = DateTime.Now.ToString("MM");
+
+            var codePrefix = $"TV{currentYear}{currentMonth:D2}";
+
+            var lastStudent = await _context.Staffs
+            .Where(s => s.StaffCode.StartsWith(codePrefix))
+            .OrderByDescending(s => s.CreatedAt)
+            .FirstOrDefaultAsync();
+
+            int newSequenceNumber;
+            if (lastStudent != null)
+            {
+                var lastSequenceNumber = int.Parse(lastStudent.StaffCode.Substring(8));
+                newSequenceNumber = lastSequenceNumber + 1;
+            }
+            else
+            {
+                newSequenceNumber = 1;
+            }
+
+            string studentCode = $"{codePrefix}{newSequenceNumber:D3}";
+
+            return studentCode;
+        }
 
         [HttpPost]
         public async Task<IActionResult> Create([FromForm] CreateStaff model)
@@ -124,14 +154,6 @@ namespace T2207A_SEM3_API.Controllers
             {
                 try
                 {
-                    // Kiểm tra xem name đã tồn tại trong cơ sở dữ liệu hay chưa
-                    bool codeExists = await _context.Staffs.AnyAsync(c => c.StaffCode == model.staff_code);
-
-                    if (codeExists)
-                    {
-                        // Nếu name đã tồn tại, trả về BadRequest hoặc thông báo lỗi tương tự
-                        return BadRequest("Code Staff already exists");
-                    }
 
                     // Kiểm tra xem email đã tồn tại trong cơ sở dữ liệu hay chưa
                     bool emailExists = await _context.Staffs.AnyAsync(c => c.Email == model.email);
@@ -143,11 +165,15 @@ namespace T2207A_SEM3_API.Controllers
 
                     string imageUrl = await UploadImageAsync(model.avatar);
 
+                    // hash password
+                    var salt = BCrypt.Net.BCrypt.GenerateSalt(10);
+                    var hassPassword = BCrypt.Net.BCrypt.HashPassword(model.password, salt);
+
                     if (imageUrl != null)
                     {
                         Staff data = new Staff
                         {
-                            StaffCode = model.staff_code,
+                            StaffCode = await GenerateStaffCode(),
                             Fullname = model.fullname,
                             Avatar = imageUrl,
                             Birthday = model.birthday,
@@ -155,7 +181,7 @@ namespace T2207A_SEM3_API.Controllers
                             Phone = model.phone,
                             Gender = model.gender,
                             Address = model.address,
-                            Password = model.password,
+                            Password = hassPassword,
                             Role = model.role,
                             CreatedAt = DateTime.Now,
                             UpdatedAt = DateTime.Now,

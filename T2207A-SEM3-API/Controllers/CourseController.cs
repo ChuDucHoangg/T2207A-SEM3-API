@@ -46,7 +46,7 @@ namespace T2207A_SEM3_API.Controllers
                     Success = false,
                     StatusCode = 500,
                     Message = ex.Message,
-                    Data = null
+                    Data = ""
                 };
 
                 return BadRequest(response);
@@ -78,7 +78,7 @@ namespace T2207A_SEM3_API.Controllers
                     Success = false,
                     StatusCode = 400,
                     Message = ex.Message,
-                    Data = null
+                    Data = ""
                 };
 
                 return BadRequest(response);
@@ -112,7 +112,7 @@ namespace T2207A_SEM3_API.Controllers
                         Success = false,
                         StatusCode = 400,
                         Message = ex.Message,
-                        Data = null
+                        Data = ""
                     };
 
                     return BadRequest(response);
@@ -147,7 +147,7 @@ namespace T2207A_SEM3_API.Controllers
                             Success = true,
                             StatusCode = 204, // Sử dụng 204 No Content
                             Message = "Course updated successfully",
-                            Data = null
+                            Data = ""
                         };
 
                         return NoContent();
@@ -159,7 +159,7 @@ namespace T2207A_SEM3_API.Controllers
                             Success = false,
                             StatusCode = 404,
                             Message = "Course not found",
-                            Data = null
+                            Data = ""
                         };
 
                         return NotFound(notFoundResponse);
@@ -172,7 +172,7 @@ namespace T2207A_SEM3_API.Controllers
                         Success = false,
                         StatusCode = 400,
                         Message = ex.Message,
-                        Data = null
+                        Data = ""
                     };
 
                     return BadRequest(response);
@@ -206,7 +206,7 @@ namespace T2207A_SEM3_API.Controllers
                         Success = true,
                         StatusCode = 204, // Sử dụng 204 No Content
                         Message = "Course deleted successfully",
-                        Data = null
+                        Data = ""
                     };
 
                     return NoContent();
@@ -218,7 +218,7 @@ namespace T2207A_SEM3_API.Controllers
                         Success = false,
                         StatusCode = 404,
                         Message = "Course not found",
-                        Data = null
+                        Data = ""
                     };
 
                     return NotFound(notFoundResponse);
@@ -231,7 +231,7 @@ namespace T2207A_SEM3_API.Controllers
                     Success = false,
                     StatusCode = 400,
                     Message = ex.Message,
-                    Data = null
+                    Data = ""
                 };
 
                 return BadRequest(response);

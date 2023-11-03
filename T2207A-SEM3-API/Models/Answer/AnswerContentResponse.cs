@@ -8,6 +8,5 @@ namespace T2207A_SEM3_API.Models.Answer
 
         public string content { get; set; }
 
-        public int status { get; set; }
     }
 }

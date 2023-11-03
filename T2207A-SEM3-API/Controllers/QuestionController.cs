@@ -3,7 +3,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using T2207A_SEM3_API.DTOs;
 using T2207A_SEM3_API.Entities;
+using T2207A_SEM3_API.Models.Course;
+using T2207A_SEM3_API.Models.General;
 using T2207A_SEM3_API.Models.Question;
+using T2207A_SEM3_API.Service.Questions;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace T2207A_SEM3_API.Controllers
@@ -13,10 +16,12 @@ namespace T2207A_SEM3_API.Controllers
     public class QuestionController : Controller
     {
         private readonly ExamonimyContext _context;
+        private readonly IQuestionService _questionService;
 
-        public QuestionController(ExamonimyContext context)
+        public QuestionController(ExamonimyContext context, IQuestionService questionService)
         {
             _context = context;
+            _questionService = questionService;
         }
 
         [HttpGet]
@@ -84,74 +89,42 @@ namespace T2207A_SEM3_API.Controllers
             {
                 try
                 {
-                    Question data = new Question
+                    QuestionDTO question = await _questionService.CreateQuestionMultipleChoice(model);
+
+                    var response = new GeneralServiceResponse
                     {
-                        Title = model.title,
-                        Level = model.level,
-                        QuestionType = 0,
-                        CourseId = model.course_id,
-                        CreatedAt = DateTime.Now,
-                        UpdatedAt = DateTime.Now,
-                        DeletedAt = null,
+                        Success = true,
+                        StatusCode = 201, // Sử dụng 201 Created
+                        Message = "Course created successfully",
+                        Data = question
                     };
-                    
-                     // Thiết lập điểm (score) dựa trên mức độ (level)
-                     if (model.level == 1)
-                     {
-                         data.Score = 3.85; // Điểm cho câu dễ
-                     }
-                     else if(model.level == 2)
-                     {
-                         data.Score = 6.41; // Điểm cho câu trung bình
-                     }
-                     else if (model.level == 3)
-                     {
-                         data.Score = 8.97; // Điểm cho câu khó
-                     }
-                     else
-                     {
-                        // Xử lý khi mức độ không xác định, có thể đặt điểm mặc định hoặc thông báo lỗi.
-                         data.Score = 0.0; // Điểm mặc định hoặc giá trị khác tùy bạn
-                     }
 
-                    _context.Questions.Add(data);
-                    await _context.SaveChangesAsync();
-
-                    foreach (var answerModel in model.answers)
-                    {
-                        var answer = new Answer
-                        {
-                            Content = answerModel.content,
-                            Status = answerModel.status,
-                            QuestionId = data.Id,
-                            CreatedAt = DateTime.UtcNow,
-                            UpdatedAt = DateTime.UtcNow,
-                            DeletedAt = null,
-                        };
-
-                        _context.Answers.Add(answer);
-                        await _context.SaveChangesAsync();
-                    }
-
-
-                    return Created($"get-by-id?id={data.Id}", new QuestionDTO
-                    {
-                        id = data.Id,
-                        title = data.Title,
-                        level = data.Level,
-                        score = data.Score,
-                        createdAt = data.CreatedAt,
-                        updatedAt = data.UpdatedAt,
-                        deletedAt = data.DeletedAt
-                    });
+                    return Created($"get-by-id?id={question.id}", response);
                 }
                 catch (Exception ex)
                 {
-                    return BadRequest(ex.Message);
+                    var response = new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 400,
+                        Message = ex.Message,
+                        Data = ""
+                    };
+
+                    return BadRequest(response);
                 }
             }
-            var msgs = ModelState.Values.SelectMany(v => v.Errors).Select(v => v.ErrorMessage);
-            return BadRequest(string.Join(" | ", msgs));
+            var validationErrors = ModelState.Values.SelectMany(v => v.Errors).Select(v => v.ErrorMessage);
+
+            var validationResponse = new GeneralServiceResponse
+            {
+                Success = false,
+                StatusCode = 400,
+                Message = "Validation errors",
+                Data = string.Join(" | ", validationErrors)
+            };
+
+            return BadRequest(validationResponse);
         }
 
         [HttpPost("essay")]
@@ -161,41 +134,42 @@ namespace T2207A_SEM3_API.Controllers
             {
                 try
                 {
-                    Question data = new Question
+                    QuestionDTO question = await _questionService.CreateQuestionEssay(model);
+
+                    var response = new GeneralServiceResponse
                     {
-                        Title = model.title,
-                        Level = 3,
-                        QuestionType = 1,
-                        CourseId = model.course_id,
-                        Score = 100,
-                        CreatedAt = DateTime.Now,
-                        UpdatedAt = DateTime.Now,
-                        DeletedAt = null,
+                        Success = true,
+                        StatusCode = 201, // Sử dụng 201 Created
+                        Message = "Question created successfully",
+                        Data = question
                     };
 
-
-                    _context.Questions.Add(data);
-                    await _context.SaveChangesAsync();
-
-
-                    return Created($"get-by-id?id={data.Id}", new QuestionDTO
-                    {
-                        id = data.Id,
-                        title = data.Title,
-                        level = data.Level,
-                        score = data.Score,
-                        createdAt = data.CreatedAt,
-                        updatedAt = data.UpdatedAt,
-                        deletedAt = data.DeletedAt
-                    });
+                    return Created($"get-by-id?id={question.id}", response);
                 }
                 catch (Exception ex)
                 {
-                    return BadRequest(ex.Message);
+                    var response = new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 400,
+                        Message = ex.Message,
+                        Data = ""
+                    };
+
+                    return BadRequest(response);
                 }
             }
-            var msgs = ModelState.Values.SelectMany(v => v.Errors).Select(v => v.ErrorMessage);
-            return BadRequest(string.Join(" | ", msgs));
+            var validationErrors = ModelState.Values.SelectMany(v => v.Errors).Select(v => v.ErrorMessage);
+
+            var validationResponse = new GeneralServiceResponse
+            {
+                Success = false,
+                StatusCode = 400,
+                Message = "Validation errors",
+                Data = string.Join(" | ", validationErrors)
+            };
+
+            return BadRequest(validationResponse);
         }
 
         [HttpPut]

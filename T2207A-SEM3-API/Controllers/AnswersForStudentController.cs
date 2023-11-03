@@ -133,6 +133,13 @@ namespace T2207A_SEM3_API.Controllers
                     {
                         score = 0;
                     }
+                    // kiểm tra đã có điểm chưa
+
+                    var gradeCurrent = _context.Grades.Where(g => g.TestId == test_id && g.StudentId == answersForStudents1[0].StudentId).FirstOrDefaultAsync();
+                    if (gradeCurrent != null)
+                    {
+                        return BadRequest("The test has been taken before");
+                    }
 
                     // tạo điểm
                     var grade = new Grade

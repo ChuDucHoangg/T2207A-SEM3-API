@@ -5,5 +5,6 @@ namespace T2207A_SEM3_API.Service.Email
     public interface IEmailService
     {
         Task SendEmailAsync(Mailrequest mailrequest);
+
     }
 }

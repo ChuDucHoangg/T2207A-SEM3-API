@@ -47,75 +47,9 @@ namespace T2207A_SEM3_API.Controllers
             }
         }
 
-        /*[HttpGet]
-        [Route("get-by-id")]
-        public async Task<IActionResult> Get(int id)
-        {
-            try
-            {
-                Answer a = await _context.Answers.FirstOrDefaultAsync(x => x.Id == id);
-                if (a != null)
-                {
-                    return Ok(new AnswerDTO
-                    {
-                        id = a.Id,
-                        content = a.Content,
-                        status = a.Status,
-                        question_id = a.QuestionId,
-                        createdAt = a.CreatedAt,
-                        updatedAt = a.UpdatedAt,
-                        deletedAt = a.DeletedAt
-
-                    });
-                }
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
-            return NotFound();
-        }*/
-
-        /*[HttpPost]
-        public async Task<IActionResult> Create(CreateAnswer model)
-        {
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    Answer data = new Answer
-                    {
-                        Content = model.content,
-                        Status = model.status,
-                        QuestionId = model.question_id,
-                        CreatedAt = DateTime.Now,
-                        UpdatedAt = DateTime.Now,
-                        DeletedAt = null,
-                    };
-                    _context.Answers.Add(data);
-                    await _context.SaveChangesAsync();
-                    return Created($"get-by-id?id={data.Id}", new AnswerDTO
-                    {
-                        id = data.Id,
-                        content = data.Content,
-                        status = data.Status,
-                        question_id = data.QuestionId,
-                        createdAt = data.CreatedAt,
-                        updatedAt = data.UpdatedAt,
-                        deletedAt = data.DeletedAt
-                    });
-                }
-                catch (Exception ex)
-                {
-                    return BadRequest(ex.Message);
-                }
-            }
-            var msgs = ModelState.Values.SelectMany(v => v.Errors).Select(v => v.ErrorMessage);
-            return BadRequest(string.Join(" | ", msgs));
-        }*/
 
         [HttpPut]
-        public async Task<IActionResult> Update(EditAnswer model)
+        public async Task<IActionResult> UpdateAnswer(EditAnswer model)
         {
             if (ModelState.IsValid)
             {

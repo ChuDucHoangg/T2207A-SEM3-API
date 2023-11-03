@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using T2207A_SEM3_API.Entities;
 using T2207A_SEM3_API.Models.Answer;
 using T2207A_SEM3_API.Models.Question;
@@ -23,37 +25,72 @@ namespace T2207A_SEM3_API.Controllers
             _testQuestionService = testQuestionService;
         }
 
-        [HttpGet("take-test/{testId}/details/{studentId}")]
-        public async Task<IActionResult> GetTestQuestionsForTestDetail(int testId, int studentId)
+        [HttpGet("take-test/{testId}/details")]
+        [Authorize]
+        public async Task<IActionResult> GetTestQuestionsForTestDetail(int testId)
         {
-            // kiểm tra bài thi có tồn tại hay không    
-            var test = await _testQuestionService.TestExists(testId);
-            if (test == null)
-            {
-                return BadRequest("Test does not exist");
-            }
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
 
-            // kiểm tra đã làm bài
-            var studentTest = await _testQuestionService.IsTestNotTaken(testId, studentId);
-            if (studentTest == null)
+            if (!identity.IsAuthenticated)
             {
-                return BadRequest("Test does not exist");
+                return Unauthorized("Not Authorized");
             }
-            if (studentTest.Status != 0)
+            try
             {
-                return BadRequest("The test has been taken before");
-            }
 
-            // Kiểm tra thời gian bài thi
-            DateTime currentTime = DateTime.Now;
-            if (currentTime < test.StartDate || currentTime > test.EndDate)
+                var userClaims = identity.Claims;
+                var userId = userClaims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+                var user = _context.Students.Find(Convert.ToInt32(userId));
+                if (user == null)
+                {
+                    return Unauthorized("Not Authorized");
+                }
+
+                // kiểm tra bài thi có tồn tại hay không    
+                var test = await _testQuestionService.TestExists(testId);
+                if (test == null)
+                {
+                    return BadRequest("Test does not exist");
+                }
+
+                // kiểm tra đã làm bài
+                var studentTest = await _testQuestionService.IsTestNotTaken(testId, user.Id);
+                if (studentTest == null)
+                {
+                    return BadRequest("Test does not exist");
+                }
+                if (studentTest.Status != 0)
+                {
+                    return BadRequest("The test has been taken before");
+                }
+
+                // Kiểm tra thời gian bài thi
+                DateTime currentTime = DateTime.Now;
+                if (currentTime < test.StartDate || currentTime > test.EndDate)
+                {
+                    return BadRequest("The test has ended or has not started yet");
+                }
+
+                var quequestionAnswerResponses = await _testQuestionService.GetTestQuestionsForTestDetail(testId);
+
+                var takeTest = new TakeTestMultipleChoiceResponse
+                {
+                    name = test.Name,
+                    startDate = test.StartDate,
+                    endDate = test.EndDate,
+                    NumberOfQuestionsInExam = test.NumberOfQuestionsInExam,
+                    status = test.Status,
+                    questions = quequestionAnswerResponses
+                };
+
+                return Ok(takeTest);
+
+
+            } catch (Exception ex)
             {
-                return BadRequest("The test has ended or has not started yet");
+                return BadRequest(ex.Message);
             }
-
-            var quequestionAnswerResponses = await _testQuestionService.GetTestQuestionsForTestDetail(testId);
-
-            return Ok(quequestionAnswerResponses);
         }
 
         [HttpGet("result-test/{testId}/details/{studentId}")]
@@ -112,7 +149,7 @@ namespace T2207A_SEM3_API.Controllers
                         return BadRequest("The test has not been done yet");
                     }
 
-                    var answerContentResponses = question.Answers.Select(answer => new AnswerContentResponse
+                    var answerContentResponses = question.Answers.Select(answer => new AnswerContentResultResponse
                     {
                         id = answer.Id,
                         content = answer.Content,
