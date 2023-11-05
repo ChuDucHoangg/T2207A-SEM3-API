@@ -10,8 +10,6 @@
 
         public int exam_id { get; set; }
 
-        public int student_id { get; set; }
-
         public DateTime startDate { get; set; }
 
         public DateTime endDate { get; set; }
@@ -19,6 +17,7 @@
         public double past_marks { get; set; }
 
         public double total_marks { get; set; }
+        public int type_test { get; set; }
 
         public int created_by { get; set; }
 

@@ -1,5 +1,6 @@
 ﻿using T2207A_SEM3_API.DTOs;
 using T2207A_SEM3_API.Entities;
+using T2207A_SEM3_API.Models.Answer;
 using T2207A_SEM3_API.Models.Question;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
@@ -88,6 +89,32 @@ namespace T2207A_SEM3_API.Service.Questions
                 updatedAt = question.UpdatedAt,
                 deletedAt = question.DeletedAt
             };
+        }
+
+        public async Task<List<QuestionAnswerResponse>> GetTestQuestionsAnswers(List<Question> questions)
+        {
+
+            // Chuyển đổi dữ liệu câu hỏi và đáp án thành định dạng phản hồi
+            var questionAnswerResponses = new List<QuestionAnswerResponse>();
+            foreach (var question in questions)
+            {
+                var answerContentResponses = question.Answers.Select(answer => new AnswerContentResponse
+                {
+                    id = answer.Id,
+                    content = answer.Content
+                }).ToList();
+
+                var questionAnswerResponse = new QuestionAnswerResponse
+                {
+                    id = question.Id,
+                    title = question.Title,
+                    Answers = answerContentResponses
+                };
+
+                questionAnswerResponses.Add(questionAnswerResponse);
+
+            }
+            return questionAnswerResponses;
         }
 
         // Phương thức để đặt điểm dựa trên mức độ

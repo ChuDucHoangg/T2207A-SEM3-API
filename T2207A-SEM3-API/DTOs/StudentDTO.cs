@@ -22,8 +22,6 @@
 
         public int class_id { get; set; }
 
-        public string password { get; set; }
-
         public int status { get; set; }
 
         public DateTime? createdAt { get; set; }

@@ -21,6 +21,8 @@ public partial class Test
 
     public double TotalMarks { get; set; }
 
+    public int TypeTest { get; set; }
+
     public int NumberOfQuestionsInExam { get; set; }
 
     public int CreatedBy { get; set; }

@@ -53,7 +53,6 @@ namespace T2207A_SEM3_API.Controllers
                         gender = st.Gender,
                         address = st.Address,
                         class_id = st.ClassId,
-                        password = st.Password,
                         status = st.Status,
                         createdAt = st.CreatedAt,
                         updateAt = st.UpdatedAt,
@@ -90,7 +89,6 @@ namespace T2207A_SEM3_API.Controllers
                         gender = st.Gender,
                         address = st.Address,
                         class_id = st.ClassId,
-                        password = st.Password,
                         status = st.Status,
                         createdAt = st.CreatedAt,
                         updateAt = st.UpdatedAt,
@@ -181,7 +179,6 @@ namespace T2207A_SEM3_API.Controllers
                         gender = data.Gender,
                         address = data.Address,
                         class_id = data.ClassId,
-                        password = data.Password,
                         status = data.Status,
                         createdAt = data.CreatedAt,
                         updateAt = data.UpdatedAt,
@@ -354,11 +351,66 @@ namespace T2207A_SEM3_API.Controllers
                         gender = c.Gender,
                         address = c.Address,
                         class_id = c.ClassId,
-                        password = c.Password,
                         status = c.Status,
                         createdAt = c.CreatedAt,
                         updateAt = c.UpdatedAt,
                         deleteAt = c.DeletedAt
+                    }).ToList();
+
+                    return Ok(data);
+                }
+                else
+                {
+                    return NotFound("No student found in this class.");
+                }
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, e.Message);
+            }
+        }
+
+        [HttpGet]
+        [Route("student-test/{test_slug}")]
+        public async Task<IActionResult> GetStudentTest(string test_slug)
+        {
+            try
+            {
+                var test = await _context.Tests.FirstOrDefaultAsync(g => g.Slug.Equals(test_slug));
+                if (test == null)
+                {
+                    return BadRequest("The test does not exist");
+                }
+
+                // Lấy danh sách ID của các câu hỏi thuộc bài thi
+                var studentIds = await _context.StudentTests
+                    .Where(qt => qt.TestId == test.Id)
+                    .ToListAsync();
+
+                // Lấy danh sách câu hỏi dựa trên các ID câu hỏi
+                var students = new List<Student>();
+                foreach (var item in studentIds)
+                {
+                    var student = await _context.Students
+                        .Where(q => q.Id == item.StudentId)
+                        .FirstOrDefaultAsync();
+
+                    if (student != null)
+                    {
+                        students.Add(student);
+                    }
+                }
+                if (students != null)
+                {
+                    List<StudentOfTestResponse> data = students.Select(c => new StudentOfTestResponse
+                    {
+                        id = c.Id,
+                        student_code = c.StudentCode,
+                        fullname = c.Fullname,
+                        avatar = c.Avatar,
+                        birthday = c.Birthday,
+                        email = c.Email,
+                        class_id = c.ClassId,
                     }).ToList();
 
                     return Ok(data);

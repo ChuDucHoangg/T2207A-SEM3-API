@@ -6,8 +6,6 @@
 
         public string? title { get; set; }
 
-        public int? test_id { get; set; }
-
         public int level { get; set; }
 
         public int question_type { get; set; }

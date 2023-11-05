@@ -83,5 +83,20 @@ namespace T2207A_SEM3_API.Service.RegisterExams
 
             return true;
         }
+
+        public async Task<bool> ApproveRegisterExamAsync(int id)
+        { 
+            RegisterExam existingRegister = await _context.RegisterExams.FirstOrDefaultAsync(e => e.Id == id);
+            if (existingRegister == null)
+            {
+                return false;
+            }
+
+            existingRegister.Status = 1;
+            _context.RegisterExams.Update(existingRegister);
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
     }
 }

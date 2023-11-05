@@ -98,6 +98,70 @@ namespace T2207A_SEM3_API.Controllers
             }
         }
 
+        [HttpPut]
+        [Authorize]
+        public async Task<IActionResult> ApproveRegisterExam(ApproveRegisterExamRequest model)
+        {
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+
+            if (!identity?.IsAuthenticated ?? false)
+            {
+                return Unauthorized("Not Authorized");
+            }
+            try
+            {
+
+                var userClaims = identity.Claims;
+                var userId = userClaims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+                var user = await _context.Staffs.FindAsync(Convert.ToInt32(userId));
+                if (user == null)
+                {
+                    return Unauthorized("Not Authorized");
+                }
+
+                bool approved = await _registerExamService.ApproveRegisterExamAsync(model.id);
+
+                if (approved)
+                {
+                    var response = new GeneralServiceResponse
+                    {
+                        Success = true,
+                        StatusCode = 204, // Sử dụng 204 No Content
+                        Message = "Approved successfully",
+                        Data = ""
+                    };
+
+                    return Ok(response);
+                }
+                else
+                {
+                    var notFoundResponse = new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 404,
+                        Message = "This request does not exist",
+                        Data = ""
+                    };
+
+                    return NotFound(notFoundResponse);
+                }
+
+
+            } catch (Exception ex)
+            {
+                var response = new GeneralServiceResponse
+                {
+                    Success = false,
+                    StatusCode = 400,
+                    Message = ex.Message,
+                    Data = ""
+                };
+
+                return BadRequest(response);
+            }
+        }
+
         [HttpDelete]
         [Authorize]
         public async Task<IActionResult> Delete(int id)

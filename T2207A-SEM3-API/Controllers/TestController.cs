@@ -1,5 +1,6 @@
 ﻿using Azure.Core;
 using ExcelDataReader;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -7,6 +8,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.IdentityModel.Tokens;
 using OfficeOpenXml;
 using System.Reflection.PortableExecutable;
+using System.Security.Claims;
 using System.Text;
 using T2207A_SEM3_API.DTOs;
 using T2207A_SEM3_API.Entities;
@@ -197,6 +199,7 @@ namespace T2207A_SEM3_API.Controllers
                                             PastMarks = model.past_marks,
                                             TotalMarks = model.total_marks,
                                             NumberOfQuestionsInExam = 16,
+                                            TypeTest = 0,
                                             CreatedBy = model.created_by,
                                             Status = 0,
                                             CreatedAt = DateTime.Now,
@@ -323,6 +326,7 @@ namespace T2207A_SEM3_API.Controllers
                                             endDate = data.EndDate,
                                             past_marks = data.PastMarks,
                                             total_marks = data.TotalMarks,
+                                            type_test = data.TypeTest,
                                             created_by = data.CreatedBy,
                                             status = data.Status,
                                             createdAt = data.CreatedAt,
@@ -398,6 +402,7 @@ namespace T2207A_SEM3_API.Controllers
                         PastMarks = model.past_marks, 
                         TotalMarks = model.total_marks,
                         NumberOfQuestionsInExam = 16,
+                        TypeTest = 0,
                         CreatedBy = model.created_by,
                         Status = 0,
                         CreatedAt = DateTime.Now,
@@ -515,6 +520,7 @@ namespace T2207A_SEM3_API.Controllers
                         endDate = data.EndDate,
                         past_marks = data.PastMarks,
                         total_marks = data.TotalMarks,
+                        type_test = data.TypeTest,
                         created_by = data.CreatedBy,
                         status = data.Status,
                         createdAt = data.CreatedAt,
@@ -600,6 +606,7 @@ namespace T2207A_SEM3_API.Controllers
                         EndDate = model.endDate,
                         PastMarks = model.past_marks,
                         TotalMarks = model.total_marks,
+                        TypeTest = 0,
                         NumberOfQuestionsInExam = 16,
                         CreatedBy = model.created_by,
                         Status = 0,
@@ -655,6 +662,7 @@ namespace T2207A_SEM3_API.Controllers
                         endDate = data.EndDate,
                         past_marks = data.PastMarks,
                         total_marks = data.TotalMarks,
+                        type_test = data.TypeTest,
                         created_by = data.CreatedBy,
                         status = data.Status,
                         createdAt = data.CreatedAt,
@@ -703,6 +711,7 @@ namespace T2207A_SEM3_API.Controllers
                         EndDate = model.endDate,
                         PastMarks = model.past_marks,
                         TotalMarks = model.total_marks,
+                        TypeTest = 1,
                         NumberOfQuestionsInExam = 1,
                         CreatedBy = model.created_by,
                         Status = 0,
@@ -780,6 +789,7 @@ namespace T2207A_SEM3_API.Controllers
                         endDate = data.EndDate,
                         past_marks = data.PastMarks,
                         total_marks = data.TotalMarks,
+                        type_test = data.TypeTest,
                         created_by = data.CreatedBy,
                         status = data.Status,
                         createdAt = data.CreatedAt,
@@ -842,6 +852,7 @@ namespace T2207A_SEM3_API.Controllers
                         EndDate = model.endDate,
                         PastMarks = model.past_marks,
                         TotalMarks = model.total_marks,
+                        TypeTest = 1,
                         NumberOfQuestionsInExam = 1,
                         CreatedBy = model.created_by,
                         Status = 0,
@@ -895,6 +906,7 @@ namespace T2207A_SEM3_API.Controllers
                         endDate = data.EndDate,
                         past_marks = data.PastMarks,
                         total_marks = data.TotalMarks,
+                        type_test = data.TypeTest,
                         created_by = data.CreatedBy,
                         status = data.Status,
                         createdAt = data.CreatedAt,
@@ -1028,20 +1040,36 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpGet]
-        [Route("get-by-student/{student_code}")]
-        public async Task<IActionResult> GetTestByStudentId(string student_code)
+        [Route("get-by-exam/{slug_exam}")]
+        [Authorize]
+        public async Task<IActionResult> GetTestByStudentId(string slug_exam)
         {
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+
+            if (!identity.IsAuthenticated)
+            {
+                return Unauthorized("Not Authorized");
+            }
             try
             {
-                var student = await _context.Students.Where(st => st.StudentCode.Equals(student_code)).SingleOrDefaultAsync();
-                if (student == null)
+                var userClaims = identity.Claims;
+                var userId = userClaims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+                var user = _context.Students.Find(Convert.ToInt32(userId));
+                if (user == null)
                 {
-                    return NotFound("No student found");
+                    return Unauthorized("Not Authorized");
+                }
+
+                var exam = await _context.Exams.Where(e => e.Slug == slug_exam).FirstOrDefaultAsync();
+                if (exam == null)
+                {
+                    return NotFound("No tests found");
                 }
 
                 // Lấy danh sách ID của các test
                 var testIds = await _context.StudentTests
-                    .Where(qt => qt.StudentId == student.Id)
+                    .Where(qt => qt.StudentId == user.Id)
                     .Select(qt => qt.TestId)
                     .ToListAsync();
 
@@ -1050,7 +1078,7 @@ namespace T2207A_SEM3_API.Controllers
                 foreach (var item in testIds)
                 {
                     var test = await _context.Tests
-                        .Where(q => q.Id == item)
+                        .Where(q => q.Id == item && q.ExamId == exam.Id)
                         .FirstOrDefaultAsync();
 
                     if (test != null)
@@ -1071,6 +1099,7 @@ namespace T2207A_SEM3_API.Controllers
                         endDate = c.EndDate,
                         past_marks = c.PastMarks,
                         total_marks = c.TotalMarks,
+                        type_test = c.TypeTest,
                         created_by = c.CreatedBy,
                         status = c.Status,
                         createdAt = c.CreatedAt,

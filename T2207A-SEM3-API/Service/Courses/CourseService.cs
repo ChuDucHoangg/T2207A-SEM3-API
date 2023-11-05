@@ -96,7 +96,7 @@ namespace T2207A_SEM3_API.Service.Courses
             if (codeExists)
             {
                 throw new Exception("Course code already exists");
-            }
+            }   
 
             existingCourse.Name = model.name;
             existingCourse.CourseCode = model.course_code;

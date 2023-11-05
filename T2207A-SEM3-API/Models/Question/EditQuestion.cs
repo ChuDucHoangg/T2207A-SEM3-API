@@ -16,12 +16,5 @@ namespace T2207A_SEM3_API.Models.Question
         [Range(1, 3, ErrorMessage = "Please select a valid level")]
         public int level { get; set; }
 
-        [Required(ErrorMessage = "Please enter type")]
-        [Range(0, 1, ErrorMessage = "Please select a valid type")]
-        public int question_type { get; set; }
-
-        [Required(ErrorMessage = "Please enter Course")]
-        public int course_id { get; set; }
-
     }
 }

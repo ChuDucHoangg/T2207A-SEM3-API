@@ -135,7 +135,7 @@ namespace T2207A_SEM3_API.Controllers
                     }
                     // kiểm tra đã có điểm chưa
 
-                    var gradeCurrent = _context.Grades.Where(g => g.TestId == test_id && g.StudentId == answersForStudents1[0].StudentId).FirstOrDefaultAsync();
+                    var gradeCurrent = await _context.Grades.FirstOrDefaultAsync(g => g.TestId == test_id && g.StudentId == answersForStudents1[0].StudentId);
                     if (gradeCurrent != null)
                     {
                         return BadRequest("The test has been taken before");

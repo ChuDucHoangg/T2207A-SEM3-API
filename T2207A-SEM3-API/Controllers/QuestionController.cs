@@ -6,6 +6,7 @@ using T2207A_SEM3_API.Entities;
 using T2207A_SEM3_API.Models.Course;
 using T2207A_SEM3_API.Models.General;
 using T2207A_SEM3_API.Models.Question;
+using T2207A_SEM3_API.Service.ClassCourses;
 using T2207A_SEM3_API.Service.Questions;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
@@ -29,23 +30,12 @@ namespace T2207A_SEM3_API.Controllers
         {
             try
             {
-                List<Question> questions = await _context.Questions.ToListAsync();
+                List<Question> questions = await _context.Questions.Include(q => q.Answers).ToListAsync();
 
-                List<QuestionDTO> data = new List<QuestionDTO>();
-                foreach (Question q in questions)
-                {
-                    data.Add(new QuestionDTO
-                    {
-                        id = q.Id,
-                        title = q.Title,
-                        level = q.Level,
-                        score = q.Score,
-                        createdAt = q.CreatedAt,
-                        updatedAt = q.UpdatedAt,
-                        deletedAt = q.DeletedAt
-                    });
-                }
-                return Ok(data);
+                var questionAnswers = await _questionService.GetTestQuestionsAnswers(questions);
+
+                return Ok(questionAnswers);
+                
             } 
             catch (Exception ex)
             {
@@ -188,14 +178,14 @@ namespace T2207A_SEM3_API.Controllers
                             Id = model.id,
                             Title = model.title,
                             Level = model.level,
-                            CourseId = model.course_id,
-                            QuestionType = model.question_type,
+                            CourseId = existingQuestion.CourseId,
+                            QuestionType = existingQuestion.QuestionType,
                             CreatedAt = existingQuestion.CreatedAt,
                             UpdatedAt = DateTime.Now,
                             DeletedAt = null,
                         };
                         // type là trắc nghiệm
-                        if(model.question_type == 0)
+                        if(existingQuestion.QuestionType == 0)
                         {
                             // Thiết lập điểm (score) dựa trên mức độ (level)
                             if (model.level == 1)
