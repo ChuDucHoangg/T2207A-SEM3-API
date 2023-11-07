@@ -11,7 +11,7 @@ using T2207A_SEM3_API.Service.Courses;
 using T2207A_SEM3_API.Service.Email;
 using T2207A_SEM3_API.Service.Questions;
 using T2207A_SEM3_API.Service.RegisterExams;
-using T2207A_SEM3_API.Service.Student;
+using T2207A_SEM3_API.Service.Students;
 using T2207A_SEM3_API.Service.Tests;
 using T2207A_SEM3_API.Service.UploadFiles;
 

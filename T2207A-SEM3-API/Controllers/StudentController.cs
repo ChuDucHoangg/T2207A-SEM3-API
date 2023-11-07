@@ -8,7 +8,7 @@ using T2207A_SEM3_API.Helper.Email;
 using T2207A_SEM3_API.Helper.Password;
 using T2207A_SEM3_API.Models.Student;
 using T2207A_SEM3_API.Service.Email;
-using T2207A_SEM3_API.Service.Student;
+using T2207A_SEM3_API.Service.Students;
 using T2207A_SEM3_API.Service.UploadFiles;
 using static System.Net.Mime.MediaTypeNames;
 
