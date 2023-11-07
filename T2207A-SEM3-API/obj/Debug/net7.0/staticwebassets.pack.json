@@ -21,8 +21,16 @@
       "PackagePath": "staticwebassets\\uploads\\52d4187b-73a4-4df0-b4dc-36972ed235bf.jpg"
     },
     {
+      "Id": "D:\\SEM3\\project-examonimy\\SEM-Examonimy-API2\\T2207A-SEM3-API\\wwwroot\\uploads\\59690101-238b-4f4b-8c21-1d6a70f86301.jpg",
+      "PackagePath": "staticwebassets\\uploads\\59690101-238b-4f4b-8c21-1d6a70f86301.jpg"
+    },
+    {
       "Id": "D:\\SEM3\\project-examonimy\\SEM-Examonimy-API2\\T2207A-SEM3-API\\wwwroot\\uploads\\5d15b8f9-f4ba-4e05-aa7a-48d4ac5c91e3.png",
       "PackagePath": "staticwebassets\\uploads\\5d15b8f9-f4ba-4e05-aa7a-48d4ac5c91e3.png"
+    },
+    {
+      "Id": "D:\\SEM3\\project-examonimy\\SEM-Examonimy-API2\\T2207A-SEM3-API\\wwwroot\\uploads\\6f1a175e-13d4-4a55-96a7-a6af8b4a7340.jpg",
+      "PackagePath": "staticwebassets\\uploads\\6f1a175e-13d4-4a55-96a7-a6af8b4a7340.jpg"
     },
     {
       "Id": "D:\\SEM3\\project-examonimy\\SEM-Examonimy-API2\\T2207A-SEM3-API\\wwwroot\\uploads\\73cc94ca-b069-4198-8cf5-f8095aa1393f.jpg",
@@ -39,6 +47,10 @@
     {
       "Id": "D:\\SEM3\\project-examonimy\\SEM-Examonimy-API2\\T2207A-SEM3-API\\wwwroot\\uploads\\df118f48-217a-4861-bec5-be0a75cacefa.jpg",
       "PackagePath": "staticwebassets\\uploads\\df118f48-217a-4861-bec5-be0a75cacefa.jpg"
+    },
+    {
+      "Id": "D:\\SEM3\\project-examonimy\\SEM-Examonimy-API2\\T2207A-SEM3-API\\wwwroot\\uploads\\e7287174-f433-4a0e-af82-b0b84a450525.jpg",
+      "PackagePath": "staticwebassets\\uploads\\e7287174-f433-4a0e-af82-b0b84a450525.jpg"
     },
     {
       "Id": "obj\\Debug\\net7.0\\staticwebassets\\msbuild.T2207A-SEM3-API.Microsoft.AspNetCore.StaticWebAssets.props",

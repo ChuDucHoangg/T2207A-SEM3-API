@@ -6,17 +6,12 @@ namespace T2207A_SEM3_API.Models.Staff
         [Required]
         public int id { get; set; }
 
-        [Required(ErrorMessage = "Please enter student code")]
-        [MinLength(3, ErrorMessage = "Enter at least 3 characters")]
-        [MaxLength(100, ErrorMessage = "Enter up to 100 characters")]
-        public string staff_code { get; set; }
         public IFormFile? avatar { get; set; }
 
         [Required(ErrorMessage = "Please enter fullname")]
         [MinLength(3, ErrorMessage = "Enter at least 3 characters")]
         [MaxLength(255, ErrorMessage = "Enter up to 255 characters")]
         public string fullname { get; set; }
-
 
 
         [Required(ErrorMessage = "Please enter birthday")]
@@ -39,12 +34,5 @@ namespace T2207A_SEM3_API.Models.Staff
         [MaxLength(12, ErrorMessage = "Enter up to 12 characters")]
         public string phone { get; set; }
 
-        [Required(ErrorMessage = "Please enter password")]
-        [MinLength(6, ErrorMessage = "Enter at least 6 characters")]
-        [MaxLength(50, ErrorMessage = "Enter up to 255 characters")]
-        public string password { get; set; }
-
-        [Required(ErrorMessage = "Please enter role")]
-        public string role { get; set; }
     }
 }

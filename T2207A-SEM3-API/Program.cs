@@ -12,6 +12,7 @@ using T2207A_SEM3_API.Service.Email;
 using T2207A_SEM3_API.Service.Questions;
 using T2207A_SEM3_API.Service.RegisterExams;
 using T2207A_SEM3_API.Service.Student;
+using T2207A_SEM3_API.Service.Tests;
 using T2207A_SEM3_API.Service.UploadFiles;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -51,6 +52,7 @@ builder.Services.AddScoped<IStudentService, StudentService>();
 builder.Services.AddScoped<IQuestionService, QuestionService>();
 builder.Services.AddScoped<IAnswerService,  AnswerService>();
 builder.Services.AddScoped<IRegisterExamService, RegisterExamService>();
+builder.Services.AddScoped<ITestService, TestService>();
 
 
 // start connect db

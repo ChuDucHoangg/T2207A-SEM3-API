@@ -1,14 +1,14 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Drawing;
+using System.Security.Claims;
 using T2207A_SEM3_API.DTOs;
 using T2207A_SEM3_API.Entities;
 using T2207A_SEM3_API.Models.Answer;
 using T2207A_SEM3_API.Models.AnswerForStudent;
+using T2207A_SEM3_API.Models.General;
 using T2207A_SEM3_API.Models.Test;
-using static System.Net.Mime.MediaTypeNames;
+using T2207A_SEM3_API.Service.Tests;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace T2207A_SEM3_API.Controllers
@@ -18,26 +18,80 @@ namespace T2207A_SEM3_API.Controllers
     public class AnswersForStudentController : Controller
     {
         private readonly ExamonimyContext _context;
+        private readonly ITestService _testService;
 
-        public AnswersForStudentController(ExamonimyContext context)
+        public AnswersForStudentController(ExamonimyContext context, ITestService testService)
         {
             _context = context;
+            _testService = testService;
         }
 
-        [HttpPost("submit-exam")]
-        public async Task<IActionResult> SubmitAnswer(List<CreateAnswerForStudent> answersForStudents, int test_id)
+        [HttpPost("submit-exam/{test_slug}")]
+        [Authorize]
+        public async Task<IActionResult> SubmitAnswer(List<CreateAnswerForStudent> answersForStudents, string test_slug)
         {
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+
+            if (!identity.IsAuthenticated)
+            {
+                return Unauthorized(new GeneralServiceResponse
+                {
+                    Success = false,
+                    StatusCode = 401,
+                    Message = "Not Authorized",
+                    Data = ""
+                });
+            }
             try
             {
+                var userClaims = identity.Claims;
+                var userId = userClaims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+                var user = _context.Students.Find(Convert.ToInt32(userId));
+                if (user == null)
+                {
+                    return Unauthorized(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 401,
+                        Message = "Not Authorized",
+                        Data = ""
+                    });
+                }
+
+                var test = await _testService.TestExists(test_slug);
+                if (test == null)
+                {
+                    return NotFound(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 404,
+                        Message = "Test does not exist",
+                        Data = ""
+                    });
+                }
+
                 // đã làm bài
-                StudentTest studentTest = await _context.StudentTests.Where(st => st.TestId == test_id && st.StudentId == answersForStudents[0].student_id).FirstOrDefaultAsync();
+                StudentTest studentTest = await _context.StudentTests.Where(st => st.TestId == test.Id && st.StudentId == user.Id).FirstOrDefaultAsync();
                 if (studentTest == null)
                 {
-                    return BadRequest("The test has not found");
+                    return NotFound(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 404,
+                        Message = "The test has not found",
+                        Data = ""
+                    });
                 }
                 if (studentTest.Status != 0)
                 {
-                    return BadRequest("The test has been taken before");
+                    return BadRequest(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 400,
+                        Message = "The test has been taken before",
+                        Data = ""
+                    });
                 }
                 
 
@@ -46,7 +100,7 @@ namespace T2207A_SEM3_API.Controllers
                 // danh sách câu hỏi
                 // Lấy danh sách ID của các câu hỏi thuộc bài thi
                 var questionIds = await _context.QuestionTests
-                    .Where(qt => qt.TestId == test_id)
+                    .Where(qt => qt.TestId == test.Id)
                     .OrderBy(qt => qt.Orders)
                     .Select(qt => qt.QuestionId)
                     .ToListAsync();
@@ -65,7 +119,7 @@ namespace T2207A_SEM3_API.Controllers
                 {
                     AnswersForStudent answersForStudent = new AnswersForStudent
                     {
-                        StudentId = answer.student_id,
+                        StudentId = user.Id,
                         Content = answer.content,
                         QuestionId = answer.question_id,
                         CreatedAt = DateTime.Now,
@@ -104,7 +158,6 @@ namespace T2207A_SEM3_API.Controllers
                     // tính điểm
                     var score = CalculateScore(questions, answerCorrect, answersForStudents1);
 
-                    var test = await _context.Tests.FindAsync(test_id);
 
                     // kiểm tra thời gian và trừ điểm
                     if (!(finish_at >= test.StartDate && finish_at <= test.EndDate))
@@ -135,18 +188,24 @@ namespace T2207A_SEM3_API.Controllers
                     }
                     // kiểm tra đã có điểm chưa
 
-                    var gradeCurrent = await _context.Grades.FirstOrDefaultAsync(g => g.TestId == test_id && g.StudentId == answersForStudents1[0].StudentId);
+                    var gradeCurrent = await _context.Grades.FirstOrDefaultAsync(g => g.TestId == test.Id && g.StudentId == user.Id);
                     if (gradeCurrent != null)
                     {
-                        return BadRequest("The test has been taken before");
+                        return BadRequest(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 400,
+                            Message = "The test has been taken before",
+                            Data = ""
+                        });
                     }
 
                     // tạo điểm
                     var grade = new Grade
                     {
-                        StudentId = answersForStudents1[0].StudentId,
+                        StudentId = user.Id,
                         Score = score,
-                        TestId = test_id,
+                        TestId = test.Id,
                         FinishedAt = finish_at,
                         CreatedAt = DateTime.Now,
                         UpdatedAt = DateTime.Now,
@@ -166,7 +225,13 @@ namespace T2207A_SEM3_API.Controllers
 
                     _context.Add(grade);
                     await _context.SaveChangesAsync();
-                    return Ok(grade);
+                    return Ok(new GeneralServiceResponse
+                    {
+                        Success = true,
+                        StatusCode = 200,
+                        Message = "Submitted successfully",
+                        Data = grade
+                    });
 
                 }
                 // nếu quesion_type là tự luận
@@ -177,14 +242,12 @@ namespace T2207A_SEM3_API.Controllers
                     await _context.SaveChangesAsync();
 
 
-                    var test = await _context.Tests.FindAsync(test_id);
-
                     // tạo điểm
                     var grade = new Grade
                     {
-                        StudentId = answersForStudents1[0].StudentId,
+                        StudentId = user.Id,
                         Score = null,
-                        TestId = test_id,
+                        TestId = test.Id,
                         FinishedAt = finish_at,
                         CreatedAt = DateTime.Now,
                         UpdatedAt = DateTime.Now,
@@ -194,12 +257,24 @@ namespace T2207A_SEM3_API.Controllers
                     _context.Add(grade);
                     await _context.SaveChangesAsync();
 
-                    return Ok("Nộp bài thành công");
+                    return Ok(new GeneralServiceResponse
+                    {
+                        Success = true,
+                        StatusCode = 200,
+                        Message = "Submitted successfully",
+                        Data = ""
+                    });
                 }
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest(new GeneralServiceResponse
+                {
+                    Success = false,
+                    StatusCode = 400,
+                    Message = ex.Message,
+                    Data = ""
+                });
             }
 
         }
@@ -213,34 +288,71 @@ namespace T2207A_SEM3_API.Controllers
                 StudentTest studentTest = await _context.StudentTests.Where(st => st.TestId == model.test_id && st.StudentId == model.student_id).FirstOrDefaultAsync();
                 if (studentTest == null)
                 {
-                    return BadRequest("The test has not found");
+                    return NotFound(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 404,
+                        Message = "The test has not found",
+                        Data = ""
+                    });
                 }
-                if (studentTest.Status != 0)
+                if (studentTest.Status == 0)
                 {
-                    return BadRequest("The test has been taken before");
+                    return BadRequest(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 400,
+                        Message = "This test is not complete",
+                        Data = ""
+                    });
                 }
                 if(studentTest.Status == 2)
                 {
-                    return BadRequest("The test has been graded");
+                    return BadRequest(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 400,
+                        Message = "The test has been graded",
+                        Data = ""
+                    });
                 }
 
+                // kiểm tra test có tồn tại hay không
                 var test = await _context.Tests.FindAsync(model.test_id);
                 if(test == null)
                 {
-                    return BadRequest("Test is not found");
+                    return NotFound(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 404,
+                        Message = "Test is not found",
+                        Data = ""
+                    });
                 }
 
-
+                // kiểm tra đã nộp hay chưa
                 var grade = await _context.Grades.Where(g => g.StudentId == model.student_id && g.TestId == model.test_id).FirstOrDefaultAsync();
                 if (grade == null)
                 {
-                    return BadRequest("Test is not found");
+                    return BadRequest(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 400,
+                        Message = "This test is not complete",
+                        Data = ""
+                    });
                 }
 
                 // Kiểm tra xem điểm có nằm trong phạm vi hợp lệ (vd: từ 0 đến 100)
                 if (model.score < 0 || model.score > 100)
                 {
-                    return BadRequest("Invalid score range");
+                    return BadRequest(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 400,
+                        Message = "Invalid score range",
+                        Data = ""
+                    });
                 }
 
                 var current_score = model.score;
@@ -288,14 +400,32 @@ namespace T2207A_SEM3_API.Controllers
                     grade.Score = current_score;
                     grade.UpdatedAt = DateTime.Now;
                     await _context.SaveChangesAsync();
-                    return Ok("Scoring completed successfully");
+                    return Ok(new GeneralServiceResponse
+                    {
+                        Success = true,
+                        StatusCode = 200,
+                        Message = "Scoring completed successfully",
+                        Data = ""
+                    });
                 }
 
-                return Ok("The test has been graded");
+                return BadRequest(new GeneralServiceResponse
+                {
+                    Success = false,
+                    StatusCode = 400,
+                    Message = "The test has been graded",
+                    Data = ""
+                });
 
             } catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest(new GeneralServiceResponse
+                {
+                    Success = false,
+                    StatusCode = 400,
+                    Message = ex.Message,
+                    Data = ""
+                });
             }
         }
 
@@ -345,11 +475,23 @@ namespace T2207A_SEM3_API.Controllers
                         deletedAt = a.DeletedAt
                     });
                 }
-                return Ok(data);
+                return Ok(new GeneralServiceResponse
+                {
+                    Success = true,
+                    StatusCode = 200,
+                    Message = "Successfully",
+                    Data = data
+                });
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest(new GeneralServiceResponse
+                {
+                    Success = false,
+                    StatusCode = 400,
+                    Message = ex.Message,
+                    Data = ""
+                });
             }
         }
 
@@ -502,16 +644,34 @@ namespace T2207A_SEM3_API.Controllers
                         deletedAt = q.DeletedAt
                     }).ToList();
 
-                    return Ok(data);
+                    return Ok(new GeneralServiceResponse
+                    {
+                        Success = true,
+                        StatusCode = 200,
+                        Message = "Successfully",
+                        Data = data
+                    });
                 }
                 else
                 {
-                    return NotFound("No answer found in this question.");
+                    return NotFound(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 404,
+                        Message = "No answer found in this question.",
+                        Data = ""
+                    });
                 }
             }
             catch (Exception e)
             {
-                return StatusCode(500, e.Message);
+                return BadRequest(new GeneralServiceResponse
+                {
+                    Success = false,
+                    StatusCode = 400,
+                    Message = e.Message,
+                    Data = ""
+                });
             }
         }
 

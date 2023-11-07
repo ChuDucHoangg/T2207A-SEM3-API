@@ -5,6 +5,7 @@ using T2207A_SEM3_API.DTOs;
 using T2207A_SEM3_API.Entities;
 using T2207A_SEM3_API.Models.Staff;
 using T2207A_SEM3_API.Models.Student;
+using T2207A_SEM3_API.Service.UploadFiles;
 
 namespace T2207A_SEM3_API.Controllers
 {
@@ -13,10 +14,13 @@ namespace T2207A_SEM3_API.Controllers
     public class StaffController : Controller
     {
         private readonly ExamonimyContext _context;
+        private readonly IImgService _imgService;
 
-        public StaffController(ExamonimyContext context)
+
+        public StaffController(ExamonimyContext context, IImgService imgService)
         {
             _context = context;
+            _imgService = imgService;
         }
         [HttpGet]
         public async Task<IActionResult> Index()
@@ -92,30 +96,6 @@ namespace T2207A_SEM3_API.Controllers
             return NotFound();
         }
 
-        private async Task<string> UploadImageAsync(IFormFile avatar)
-        {
-            if (avatar != null && avatar.Length > 0)
-            {
-                // Lấy tên tệp tin
-                string fileName = $"{Guid.NewGuid()}{Path.GetExtension(avatar.FileName)}";
-
-                // Đường dẫn lưu trữ tệp tin
-                string uploadDirectory = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
-                string filePath = Path.Combine(uploadDirectory, fileName);
-
-                Directory.CreateDirectory(uploadDirectory);
-
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await avatar.CopyToAsync(stream);
-                }
-
-                return $"{Request.Scheme}://{Request.Host}/uploads/{fileName}";
-            }
-
-            return null; // Trả về null nếu không có hình ảnh
-        }
-
         private async Task<string> GenerateStaffCode()
         {
             // Lấy năm hiện tại dưới dạng chuỗi (ví dụ: "2022")
@@ -163,7 +143,7 @@ namespace T2207A_SEM3_API.Controllers
                         return BadRequest("Staff code already exists");
                     }
 
-                    string imageUrl = await UploadImageAsync(model.avatar);
+                    string imageUrl = await _imgService.UploadImageAsync(model.avatar);
 
                     // hash password
                     var salt = BCrypt.Net.BCrypt.GenerateSalt(10);
@@ -232,14 +212,6 @@ namespace T2207A_SEM3_API.Controllers
 
                     if (exexistingStaff != null)
                     {
-                        // Kiểm tra xem name đã tồn tại trong cơ sở dữ liệu hay chưa (trừ trường hợp cập nhật cùng mã)
-                        bool codeExists = await _context.Staffs.AnyAsync(c => c.StaffCode == model.staff_code && c.Id != model.id);
-
-                        if (codeExists)
-                        {
-                            // Nếu name đã tồn tại, trả về BadRequest hoặc thông báo lỗi tương tự
-                            return BadRequest("Code Staff already exists");
-                        }
 
                         // Kiểm tra xem email đã tồn tại trong cơ sở dữ liệu hay chưa (trừ trường hợp cập nhật cùng mã)
                         bool emailExists = await _context.Staffs.AnyAsync(c => c.Email == model.email && c.Id != model.id);
@@ -252,15 +224,15 @@ namespace T2207A_SEM3_API.Controllers
                         Staff staff = new Staff
                         {
                             Id = model.id,
-                            StaffCode = model.staff_code,
+                            StaffCode = exexistingStaff.StaffCode,
                             Fullname = model.fullname,
                             Birthday = model.birthday,
                             Email = model.email,
                             Phone = model.phone,
                             Gender = model.gender,
                             Address = model.address,
-                            Password = model.password,
-                            Role = model.role,
+                            Password = exexistingStaff.StaffCode,
+                            Role = exexistingStaff.StaffCode,
                             CreatedAt = exexistingStaff.CreatedAt,
                             UpdatedAt = DateTime.Now,
                             DeletedAt = null,
@@ -268,7 +240,7 @@ namespace T2207A_SEM3_API.Controllers
 
                         if (model.avatar != null)
                         {
-                            string imageUrl = await UploadImageAsync(model.avatar);
+                            string imageUrl = await _imgService.UploadImageAsync(model.avatar);
 
                             if (imageUrl == null)
                             {

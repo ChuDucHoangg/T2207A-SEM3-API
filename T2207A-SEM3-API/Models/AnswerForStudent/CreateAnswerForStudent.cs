@@ -10,8 +10,5 @@ namespace T2207A_SEM3_API.Models.AnswerForStudent
         [Required(ErrorMessage = "Please enter content")]
         public string content { get; set; }
 
-        [Required(ErrorMessage = "Please enter student")]
-        public int student_id { get; set; }
-
     }
 }

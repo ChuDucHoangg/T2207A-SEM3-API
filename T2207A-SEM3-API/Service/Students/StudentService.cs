@@ -1,7 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using T2207A_SEM3_API.DTOs;
 using T2207A_SEM3_API.Entities;
 
-namespace T2207A_SEM3_API.Service.Student
+namespace T2207A_SEM3_API.Service.Students
 {
     public class StudentService : IStudentService
     {
@@ -41,6 +42,38 @@ namespace T2207A_SEM3_API.Service.Student
             string studentCode = $"{codePrefix}{newSequenceNumber:D3}";
 
             return studentCode;
+        }
+
+        public async Task<StudentDTO> StudentExists(string student_code)
+        {
+
+            Student st = await _context.Students.AsNoTracking().FirstOrDefaultAsync(e => e.StudentCode == student_code);
+            if (st != null)
+            {
+                var studentDTO = new StudentDTO
+                {
+                    id = st.Id,
+                    student_code = st.StudentCode,
+                    fullname = st.Fullname,
+                    avatar = st.Avatar,
+                    birthday = st.Birthday,
+                    email = st.Email,
+                    phone = st.Phone,
+                    gender = st.Gender,
+                    address = st.Address,
+                    class_id = st.ClassId,
+                    status = st.Status,
+                    createdAt = st.CreatedAt,
+                    updateAt = st.UpdatedAt,
+                    deleteAt = st.DeletedAt
+
+                };
+                return studentDTO;
+            }
+            else
+            {
+                return null;
+            }
         }
     }
 }

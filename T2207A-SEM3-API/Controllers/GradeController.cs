@@ -1,10 +1,14 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using T2207A_SEM3_API.DTOs;
 using T2207A_SEM3_API.Entities;
 using T2207A_SEM3_API.Models.Answer;
+using T2207A_SEM3_API.Models.ClassCourse;
+using T2207A_SEM3_API.Models.General;
 using T2207A_SEM3_API.Models.Grade;
+using T2207A_SEM3_API.Models.Staff;
 
 namespace T2207A_SEM3_API.Controllers
 {
@@ -80,9 +84,55 @@ namespace T2207A_SEM3_API.Controllers
             }
             return NotFound();
         }
+        [HttpGet]
+        [Route("get-by-course")]
+        public async Task<IActionResult> GetGradeByCourse(int id)
+        {
+            /*var identity = HttpContext.User.Identity as ClaimsIdentity;
 
-        
+            if (!identity.IsAuthenticated)
+            {
+                return NotFound(new GeneralServiceResponse
+                {
+                    Success = false,
+                    StatusCode = 404,
+                    Message = "Not Authorized",
+                    Data = ""
+                });
+            }*/
 
+            try
+            {
+                /*var userClaims = identity.Claims;
+                var userId = userClaims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+                var user = await _context.Students
+                    .FirstOrDefaultAsync(u => u.Id == Convert.ToInt32(userId));
+
+                if (user == null)
+                {
+                    return NotFound(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 404,
+                        Message = "Incorrect current password",
+                        Data = ""
+                    });
+                }*/
+
+               
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new GeneralServiceResponse
+                {
+                    Success = false,
+                    StatusCode = 404,
+                    Message = ex.Message,
+                    Data = ""
+                });
+            }
+        }
         [HttpPut]
         public async Task<IActionResult> Update(EditGrade model)
         {

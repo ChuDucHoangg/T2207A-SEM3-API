@@ -63,9 +63,9 @@ namespace T2207A_SEM3_API.Service.ClassCourses
             return questionAnswerResponses;
         }
 
-        public async Task<Test> TestExists(int testId)
+        public async Task<Test> TestExists(string test_slug)
         {
-            return await _context.Tests.Include(t => t.QuestionTests).ThenInclude(t => t.Question).ThenInclude(q => q.Answers).SingleOrDefaultAsync(t => t.Id == testId);
+            return await _context.Tests.Include(t => t.QuestionTests).ThenInclude(t => t.Question).ThenInclude(q => q.Answers).SingleOrDefaultAsync(t => t.Slug == test_slug);
         }
 
         public async Task<StudentTest> IsTestNotTaken(int testId, int studentId)
