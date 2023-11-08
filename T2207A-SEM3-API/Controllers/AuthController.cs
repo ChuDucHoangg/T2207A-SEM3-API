@@ -437,8 +437,7 @@ namespace T2207A_SEM3_API.Controllers
 
         [HttpPut]
         [Route("student/update-profile")]
-        [Authorize]
-        public async Task<IActionResult> StudentUpdateProfile([FromForm]StudentUpdateProfileRequest model)
+        public async Task<IActionResult> StudentUpdateProfile(StudentUpdateProfileRequest model)
         {
             if (ModelState.IsValid)
             {
@@ -473,7 +472,6 @@ namespace T2207A_SEM3_API.Controllers
                             Data = ""
                         });
                     }
-
 
                     user.Birthday = model.birthday;
                     user.Phone = model.phone;
