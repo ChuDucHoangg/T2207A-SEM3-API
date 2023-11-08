@@ -228,7 +228,7 @@ namespace T2207A_SEM3_API.Controllers
                             Gender = model.gender,
                             Address = model.address,
                             ClassId = model.class_id,
-                            Password = model.password,
+                            Password = exexistingStudent.Password,
                             Status = exexistingStudent.Status,
                             CreatedAt = exexistingStudent.CreatedAt,
                             UpdatedAt = DateTime.Now,
