@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using T2207A_SEM3_API.DTOs;
@@ -26,6 +28,7 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpGet]
+        [Authorize]
         public async Task<IActionResult> Index()
         {
             try
@@ -118,6 +121,7 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpPost("essay")]
+        [Authorize]
         public async Task<IActionResult> CreateEssay(CreateQuestionEssay model)
         {
             if (ModelState.IsValid)
@@ -162,63 +166,82 @@ namespace T2207A_SEM3_API.Controllers
             return BadRequest(validationResponse);
         }
 
-        [HttpPut]
-        public async Task<IActionResult> Update(EditQuestion model)
+        [HttpPut("multiple-choice")]
+        [Authorize]
+        public async Task<IActionResult> UpdateMultipleChoice(EditQuestionMultipleChoice model)
         {
             if (ModelState.IsValid)
             {
                 try
                 {
-                    Question existingQuestion = await _context.Questions.AsNoTracking().FirstOrDefaultAsync(e => e.Id == model.id);
+                    bool updated = await _questionService.UpdateQuestionMultipleChoice(model);
 
-                    if (existingQuestion != null)
+                    if (updated)
                     {
-                        Question question = new Question
+                        var response = new GeneralServiceResponse
                         {
-                            Id = model.id,
-                            Title = model.title,
-                            Level = model.level,
-                            CourseId = existingQuestion.CourseId,
-                            QuestionType = existingQuestion.QuestionType,
-                            CreatedAt = existingQuestion.CreatedAt,
-                            UpdatedAt = DateTime.Now,
-                            DeletedAt = null,
+                            Success = true,
+                            StatusCode = 204, // Sử dụng 204 No Content
+                            Message = "Question updated successfully",
+                            Data = ""
                         };
-                        // type là trắc nghiệm
-                        if(existingQuestion.QuestionType == 0)
-                        {
-                            // Thiết lập điểm (score) dựa trên mức độ (level)
-                            if (model.level == 1)
-                            {
-                                question.Score = 3.85; // Điểm cho câu dễ
-                            }
-                            else if (model.level == 2)
-                            {
-                                question.Score = 6.41; // Điểm cho câu trung bình
-                            }
-                            else if (model.level == 3)
-                            {
-                                question.Score = 8.97; // Điểm cho câu khó
-                            }
-                            else
-                            {
-                                // Xử lý khi mức độ không xác định, có thể đặt điểm mặc định hoặc thông báo lỗi.
-                                question.Score = 0.0; // Điểm mặc định hoặc giá trị khác tùy bạn
-                            }
-                        }
-                        question.Score = 100;
-                        
 
-                        if (question != null)
-                        {
-                            _context.Questions.Update(question);
-                            await _context.SaveChangesAsync();
-                            return NoContent();
-                        }
+                        return NoContent();
                     }
                     else
                     {
-                        return NotFound(); // Không tìm thấy lớp để cập nhật
+                        var notFoundResponse = new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 404,
+                            Message = "Question not found",
+                            Data = ""
+                        };
+
+                        return NotFound(notFoundResponse);
+                    }
+                }
+                catch (Exception e)
+                {
+                    return BadRequest(e.Message);
+                }
+            }
+            return BadRequest();
+        }
+
+        [HttpPut("essay")]
+        [Authorize]
+        public async Task<IActionResult> UpdateEssay(EditQuestionEssay model)
+        {
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    bool updated = await _questionService.UpdateQuestionEssay(model);
+
+                    if (updated)
+                    {
+                        var response = new GeneralServiceResponse
+                        {
+                            Success = true,
+                            StatusCode = 204, // Sử dụng 204 No Content
+                            Message = "Question updated successfully",
+                            Data = ""
+                        };
+
+                        return NoContent();
+                    }
+                    else
+                    {
+                        var notFoundResponse = new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 404,
+                            Message = "Question not found",
+                            Data = ""
+                        };
+
+                        return NotFound(notFoundResponse);
                     }
                 }
                 catch (Exception e)

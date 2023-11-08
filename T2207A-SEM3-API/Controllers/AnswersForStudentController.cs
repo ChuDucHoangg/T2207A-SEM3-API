@@ -280,10 +280,38 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpPost("scoring-essay")]
+        [Authorize(Roles = "Teacher")]
         public async Task<IActionResult> ScoringEssay(CreateScore model)
         {
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+
+            if (!identity.IsAuthenticated)
+            {
+                return Unauthorized(new GeneralServiceResponse
+                {
+                    Success = false,
+                    StatusCode = 401,
+                    Message = "Not Authorized",
+                    Data = ""
+                });
+            }
             try
             {
+                var userClaims = identity.Claims;
+                var userId = userClaims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+                var user = _context.Staffs.Find(Convert.ToInt32(userId));
+                if (user == null)
+                {
+                    return Unauthorized(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 401,
+                        Message = "Not Authorized",
+                        Data = ""
+                    });
+                }
+
                 // đã làm bài
                 StudentTest studentTest = await _context.StudentTests.Where(st => st.TestId == model.test_id && st.StudentId == model.student_id).FirstOrDefaultAsync();
                 if (studentTest == null)
@@ -326,6 +354,28 @@ namespace T2207A_SEM3_API.Controllers
                         Success = false,
                         StatusCode = 404,
                         Message = "Test is not found",
+                        Data = ""
+                    });
+                }
+
+                if (test.Status == 1)
+                {
+                    return BadRequest(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 400,
+                        Message = "The exam has been locked",
+                        Data = ""
+                    });
+                }
+
+                if (user.Id != test.CreatedBy)
+                {
+                    return BadRequest(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 400,
+                        Message = "You are not allowed to grade this article",
                         Data = ""
                     });
                 }

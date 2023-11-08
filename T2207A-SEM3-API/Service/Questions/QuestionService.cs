@@ -1,6 +1,8 @@
-﻿using T2207A_SEM3_API.DTOs;
+﻿using Microsoft.EntityFrameworkCore;
+using T2207A_SEM3_API.DTOs;
 using T2207A_SEM3_API.Entities;
 using T2207A_SEM3_API.Models.Answer;
+using T2207A_SEM3_API.Models.Course;
 using T2207A_SEM3_API.Models.Question;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
@@ -115,6 +117,64 @@ namespace T2207A_SEM3_API.Service.Questions
 
             }
             return questionAnswerResponses;
+        }
+
+        public async Task<bool> UpdateQuestionMultipleChoice(EditQuestionMultipleChoice model)
+        {
+            Question existingQuestion = await _context.Questions.AsNoTracking().FirstOrDefaultAsync(e => e.Id == model.id);
+
+
+            if (existingQuestion != null && existingQuestion.QuestionType == 0)
+            {
+                existingQuestion.Title = model.title;
+                existingQuestion.UpdatedAt = DateTime.Now;
+
+                _context.Questions.Update(existingQuestion);
+                await _context.SaveChangesAsync();
+
+                foreach (var answerModel in model.answers)
+                {
+                    var existingAnswer = await _context.Answers.AsNoTracking().FirstOrDefaultAsync(e => e.Id == answerModel.id);
+
+                    if (existingAnswer == null)
+                    {
+                        throw new Exception("Answer not found");
+                    }
+
+                    existingAnswer.Content = answerModel.content;
+
+
+                    _context.Answers.Update(existingAnswer);
+                    await _context.SaveChangesAsync();
+                }
+
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public async Task<bool> UpdateQuestionEssay(EditQuestionEssay model)
+        {
+            Question existingQuestion = await _context.Questions.AsNoTracking().FirstOrDefaultAsync(e => e.Id == model.id);
+
+
+            if (existingQuestion != null && existingQuestion.QuestionType == 1)
+            {
+                existingQuestion.Title = model.title;
+                existingQuestion.UpdatedAt = DateTime.Now;
+
+                _context.Questions.Update(existingQuestion);
+                await _context.SaveChangesAsync();
+
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
 
         // Phương thức để đặt điểm dựa trên mức độ

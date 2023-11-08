@@ -174,7 +174,13 @@ namespace T2207A_SEM3_API.Controllers
 
             if (!identity.IsAuthenticated)
             {
-                return Unauthorized("Not Authorized");
+                return Unauthorized(new GeneralServiceResponse
+                {
+                    Success = false,
+                    StatusCode = 401,
+                    Message = "Not Authorized",
+                    Data = ""
+                });
             }
 
             try
@@ -249,13 +255,7 @@ namespace T2207A_SEM3_API.Controllers
 
             if (!identity.IsAuthenticated)
             {
-                return NotFound(new GeneralServiceResponse
-                {
-                    Success = false,
-                    StatusCode = 404,
-                    Message = "Not Authorized",
-                    Data = ""
-                });
+                return Unauthorized(new GeneralServiceResponse { Success = false, StatusCode = 401, Message = "Not Authorized", Data = "" });
             }
 
             try
@@ -330,13 +330,7 @@ namespace T2207A_SEM3_API.Controllers
 
             if (!identity.IsAuthenticated)
             {
-                return NotFound(new GeneralServiceResponse
-                {
-                    Success = false,
-                    StatusCode = 404,
-                    Message = "Not Authorized",
-                    Data = ""
-                });
+                return Unauthorized(new GeneralServiceResponse { Success = false, StatusCode = 401, Message = "Not Authorized", Data = "" });
             }
 
             try
@@ -363,7 +357,7 @@ namespace T2207A_SEM3_API.Controllers
                 {
                     id = user.Id,
                     student_code = user.StudentCode,
-                    email = user.Fullname,
+                    email = user.Email,
                     fullname = user.Fullname,
                     avatar = user.Avatar,
                     birthday = user.Birthday,
@@ -394,13 +388,7 @@ namespace T2207A_SEM3_API.Controllers
 
             if (!identity.IsAuthenticated)
             {
-                return NotFound(new GeneralServiceResponse
-                {
-                    Success = false,
-                    StatusCode = 404,
-                    Message = "Not Authorized",
-                    Data = ""
-                });
+                return Unauthorized(new GeneralServiceResponse { Success = false, StatusCode = 401, Message = "Not Authorized", Data = "" });
             }
 
             try
@@ -426,7 +414,7 @@ namespace T2207A_SEM3_API.Controllers
                 {
                     id = user.Id,
                     staff_code = user.StaffCode,
-                    email = user.Fullname,
+                    email = user.Email,
                     fullname = user.Fullname,
                     avatar = user.Avatar,
                     birthday = user.Birthday,
@@ -458,10 +446,10 @@ namespace T2207A_SEM3_API.Controllers
 
                 if (!identity.IsAuthenticated)
                 {
-                    return NotFound(new GeneralServiceResponse
+                    return Unauthorized(new GeneralServiceResponse
                     {
                         Success = false,
-                        StatusCode = 404,
+                        StatusCode = 401,
                         Message = "Not Authorized",
                         Data = ""
                     });
@@ -477,11 +465,11 @@ namespace T2207A_SEM3_API.Controllers
 
                     if (user == null)
                     {
-                        return NotFound(new GeneralServiceResponse
+                        return Unauthorized(new GeneralServiceResponse
                         {
                             Success = false,
-                            StatusCode = 404,
-                            Message = "Incorrect current password",
+                            StatusCode = 401,
+                            Message = "Not Authorized",
                             Data = ""
                         });
                     }

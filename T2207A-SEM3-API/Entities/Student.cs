@@ -11,17 +11,17 @@ public partial class Student
 
     public string Fullname { get; set; } = null!;
 
-    public string Avatar { get; set; } = null!;
+    public string? Avatar { get; set; }
 
     public DateTime Birthday { get; set; }
 
     public string Email { get; set; } = null!;
 
-    public string Phone { get; set; } = null!;
+    public string? Phone { get; set; }
 
-    public string Gender { get; set; } = null!;
+    public string? Gender { get; set; }
 
-    public string Address { get; set; } = null!;
+    public string? Address { get; set; }
 
     public int ClassId { get; set; }
 

@@ -7,12 +7,6 @@ namespace T2207A_SEM3_API.Models.Grade
         [Required]  
         public int id { get; set; }
 
-        [Required(ErrorMessage = "Please enter student")]
-        public int student_id { get; set; }
-
-        [Required(ErrorMessage = "Please enter test")]
-        public int test_id { get; set; }
-
         [Required(ErrorMessage = "Please enter score")]
         [Range(0.0, 100.0, ErrorMessage = "Invalid value")]
         public double score { get; set; }
@@ -21,9 +15,5 @@ namespace T2207A_SEM3_API.Models.Grade
         [Range(0, 1, ErrorMessage = "Please select a valid status")]
         public int status { get; set; }
 
-        [Required(ErrorMessage = "Please enter time")]
-        [DataType(DataType.Date)]
-        [DisplayFormat(DataFormatString = "{0:yyyy-MM-dd}", ApplyFormatInEditMode = true)]
-        public DateTime finished_at { get; set; }
     }
 }

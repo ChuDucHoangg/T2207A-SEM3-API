@@ -9,7 +9,7 @@ public partial class Staff
 
     public string StaffCode { get; set; } = null!;
 
-    public string Avatar { get; set; } = null!;
+    public string? Avatar { get; set; }
 
     public string Fullname { get; set; } = null!;
 
@@ -17,11 +17,11 @@ public partial class Staff
 
     public string Email { get; set; } = null!;
 
-    public string Gender { get; set; } = null!;
+    public string? Gender { get; set; }
 
-    public string Address { get; set; } = null!;
+    public string? Address { get; set; }
 
-    public string Phone { get; set; } = null!;
+    public string? Phone { get; set; }
 
     public string Password { get; set; } = null!;
 

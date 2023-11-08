@@ -48,7 +48,7 @@ namespace T2207A_SEM3_API.Controllers
         }
 
 
-        [HttpPut]
+        /*[HttpPut]
         public async Task<IActionResult> UpdateAnswer(EditAnswer model)
         {
             if (ModelState.IsValid)
@@ -89,7 +89,7 @@ namespace T2207A_SEM3_API.Controllers
                 }
             }
             return BadRequest();
-        }
+        }*/
 
         [HttpDelete]
         public async Task<IActionResult> Delete(int id)
