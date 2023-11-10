@@ -56,7 +56,7 @@ namespace T2207A_SEM3_API.Controllers
         {
             try
             {
-                List<CourseDTO> courses = await _classCourseService.GetCourseByClassIdAsync(id);
+                List<ClassCourseResponse> courses = await _classCourseService.GetCourseByClassIdAsync(id);
                 return Ok(new GeneralServiceResponse
                 {
                     Success = true,

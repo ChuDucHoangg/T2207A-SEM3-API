@@ -6,6 +6,7 @@ using System.Text;
 using T2207A_SEM3_API.Helper.Email;
 using T2207A_SEM3_API.Service.Answers;
 using T2207A_SEM3_API.Service.ClassCourses;
+using T2207A_SEM3_API.Service.Classes;
 using T2207A_SEM3_API.Service.CourseClass;
 using T2207A_SEM3_API.Service.Courses;
 using T2207A_SEM3_API.Service.Email;
@@ -53,6 +54,7 @@ builder.Services.AddScoped<IQuestionService, QuestionService>();
 builder.Services.AddScoped<IAnswerService,  AnswerService>();
 builder.Services.AddScoped<IRegisterExamService, RegisterExamService>();
 builder.Services.AddScoped<ITestService, TestService>();
+builder.Services.AddScoped<IClassService, ClassService>();
 
 
 // start connect db

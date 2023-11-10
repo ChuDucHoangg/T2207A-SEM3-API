@@ -4,18 +4,22 @@ using Microsoft.EntityFrameworkCore;
 using T2207A_SEM3_API.DTOs;
 using T2207A_SEM3_API.Entities;
 using T2207A_SEM3_API.Models.Class;
+using T2207A_SEM3_API.Models.General;
+using T2207A_SEM3_API.Service.Classes;
 
 namespace T2207A_SEM3_API.Controllers
 {
     [Route("api/classes")]
     [ApiController]
-    public class ClassController : Controller
+    public class ClassController : ControllerBase
     {
         private readonly ExamonimyContext _context;
+        private readonly IClassService _classService;
 
-        public ClassController(ExamonimyContext context)
+        public ClassController(ExamonimyContext context, IClassService classService)
         {
             _context = context;
+            _classService = classService;
         }
 
         [HttpGet]
@@ -23,28 +27,20 @@ namespace T2207A_SEM3_API.Controllers
         {
             try
             {
-                List<Class> classes = await _context.Classes.ToListAsync();
-
-                List<ClassDTO> data = new List<ClassDTO>();
-                foreach (Class c in classes)
-                {
-                    data.Add(new ClassDTO
-                    {
-                        id = c.Id,
-                        name = c.Name,
-                        slug = c.Slug,
-                        room = c.Room,
-                        teacher_id = c.TeacherId,
-                        createdAt = c.CreatedAt,
-                        updatedAt = c.UpdatedAt,
-                        deletedAt = c.DeletedAt
-                    });
-                }
-                return Ok(data);
+                List<ClassDTO> classes = await _classService.GetAllClassAsync();
+                return Ok(classes);
             } 
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                var response = new GeneralServiceResponse
+                {
+                    Success = false,
+                    StatusCode = 400,
+                    Message = ex.Message,
+                    Data = ""
+                };
+
+                return BadRequest(response);
             }
         }
 
@@ -54,28 +50,36 @@ namespace T2207A_SEM3_API.Controllers
         {
             try
             {
-                Class c = await _context.Classes.FirstOrDefaultAsync(x => x.Slug == slug);
-                if (c != null)
+                ClassDTO classes = await _classService.GetClassBySlugAsync(slug);
+                if (classes != null)
                 {
-                    return Ok(new ClassDTO
+                    return Ok(classes);
+                }
+                else
+                {
+                    var response = new GeneralServiceResponse
                     {
-                        id = c.Id,
-                        name = c.Name,
-                        slug = c.Slug,
-                        room = c.Room,
-                        teacher_id = c.TeacherId,
-                        createdAt = c.CreatedAt,
-                        updatedAt = c.UpdatedAt,
-                        deletedAt = c.DeletedAt
+                        Success = false,
+                        StatusCode = 404,
+                        Message = "Not Found",
+                        Data = ""
+                    };
 
-                    });
+                    return NotFound(response);
                 }
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                var response = new GeneralServiceResponse
+                {
+                    Success = false,
+                    StatusCode = 400,
+                    Message = ex.Message,
+                    Data = ""
+                };
+
+                return BadRequest(response);
             }
-            return NotFound();
         }
 
         [HttpPost]
@@ -85,46 +89,42 @@ namespace T2207A_SEM3_API.Controllers
             {
                 try
                 {
-                    // Kiểm tra xem name đã tồn tại trong cơ sở dữ liệu hay chưa
-                    bool nameExists = await _context.Classes.AnyAsync(c => c.Name == model.name);
+                    ClassDTO createdClasss = await _classService.CreateClassAsync(model);
 
-                    if (nameExists)
+                    var response = new GeneralServiceResponse
                     {
-                        // Nếu name đã tồn tại, trả về BadRequest hoặc thông báo lỗi tương tự
-                        return BadRequest("Class name already exists");
-                    }
-
-                    Class data = new Class
-                    {
-                        Name = model.name,
-                        Slug = model.name.ToLower().Replace(" ", "-"),
-                        Room = model.room,
-                        TeacherId = model.teacher_id,
-                        CreatedAt = DateTime.Now,
-                        UpdatedAt = DateTime.Now,
-                        DeletedAt = null,
+                        Success = true,
+                        StatusCode = 201, // Sử dụng 201 Created
+                        Message = "Class created successfully",
+                        Data = createdClasss
                     };
-                    _context.Classes.Add(data);
-                    await _context.SaveChangesAsync();
-                    return Created($"get-by-id?id={data.Id}", new ClassDTO
-                    {
-                        id = data.Id,
-                        name = data.Name,
-                        slug = data.Slug,
-                        room = data.Room,
-                        teacher_id = data.TeacherId,
-                        createdAt = data.CreatedAt,
-                        updatedAt = data.UpdatedAt,
-                        deletedAt = data.DeletedAt
-                    });
+
+                    return Created($"get-by-id?id={createdClasss.id}", response);
                 }
                 catch (Exception ex)
                 {
-                    return BadRequest(ex.Message);
+                    var response = new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 400,
+                        Message = ex.Message,
+                        Data = ""
+                    };
+
+                    return BadRequest(response);
                 }
             }
-            var msgs = ModelState.Values.SelectMany(v => v.Errors).Select(v => v.ErrorMessage);
-            return BadRequest(string.Join(" | ", msgs));
+            var validationErrors = ModelState.Values.SelectMany(v => v.Errors).Select(v => v.ErrorMessage);
+
+            var validationResponse = new GeneralServiceResponse
+            {
+                Success = false,
+                StatusCode = 400,
+                Message = "Validation errors",
+                Data = string.Join(" | ", validationErrors)
+            };
+
+            return BadRequest(validationResponse);
         }
 
         [HttpPut]
@@ -134,52 +134,57 @@ namespace T2207A_SEM3_API.Controllers
             {
                 try
                 {
-                    Class existingClass = await _context.Classes.AsNoTracking().FirstOrDefaultAsync(e => e.Id == model.id);
+                    bool updated = await _classService.UpdateClassAsync(model);
 
-                    if (existingClass != null)
+                    if (updated)
                     {
-                        // Kiểm tra xem name đã tồn tại trong cơ sở dữ liệu hay chưa
-                        bool nameExists = _context.Classes.Any(c => c.Name == model.name && c.Id != model.id);
-
-                        if (nameExists)
+                        var response = new GeneralServiceResponse
                         {
-                            // Nếu name đã tồn tại, trả về BadRequest hoặc thông báo lỗi tương tự
-                            return BadRequest("Class name already exists");
-                        }
-
-                        Class classes = new Class
-                        {
-                            Id = model.id,
-                            Name = model.name,
-                            Slug = model.name.ToLower().Replace(" ", "-"),
-                            Room = model.room,
-                            TeacherId = model.teacher_id,
-                            CreatedAt = existingClass.CreatedAt,
-                            UpdatedAt = DateTime.Now,
-                            DeletedAt = null,
+                            Success = true,
+                            StatusCode = 204, // Sử dụng 204 No Content
+                            Message = "Class updated successfully",
+                            Data = ""
                         };
 
-                        if (classes != null)
-                        {
-                            _context.Classes.Update(classes);
-                            await _context.SaveChangesAsync();
-                            return NoContent();
-                        }
+                        return NoContent();
                     }
                     else
                     {
-                        return NotFound(); // Không tìm thấy lớp để cập nhật
+                        var notFoundResponse = new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 404,
+                            Message = "Class not found",
+                            Data = ""
+                        };
+
+                        return NotFound(notFoundResponse);
                     }
-
-                    
-
                 }
                 catch (Exception e)
                 {
-                    return BadRequest(e.Message);
+                    var response = new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 400,
+                        Message = e.Message,
+                        Data = ""
+                    };
+
+                    return BadRequest(response);
                 }
             }
-            return BadRequest();
+            var validationErrors = ModelState.Values.SelectMany(v => v.Errors).Select(v => v.ErrorMessage);
+
+            var validationResponse = new GeneralServiceResponse
+            {
+                Success = false,
+                StatusCode = 400,
+                Message = "Validation errors",
+                Data = string.Join(" | ", validationErrors)
+            };
+
+            return BadRequest(validationResponse);
         }
 
         [HttpDelete]
@@ -191,12 +196,33 @@ namespace T2207A_SEM3_API.Controllers
             }
             try
             {
-                Class classes = await _context.Classes.FindAsync(id);
-                if (classes == null)
-                    return NotFound();
-                _context.Classes.Remove(classes);
-                await _context.SaveChangesAsync();
-                return NoContent();
+                
+                bool deleted = await _classService.DeleteClassAsync(id);
+
+                if (deleted)
+                {
+                    var response = new GeneralServiceResponse
+                    {
+                        Success = true,
+                        StatusCode = 204, // Sử dụng 204 No Content
+                        Message = "Class deleted successfully",
+                        Data = ""
+                    };
+
+                    return NoContent();
+                }
+                else
+                {
+                    var notFoundResponse = new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 404,
+                        Message = "Class not found",
+                        Data = ""
+                    };
+
+                    return NotFound(notFoundResponse);
+                }
             }
             catch (Exception e)
             {

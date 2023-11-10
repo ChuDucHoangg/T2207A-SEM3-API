@@ -10,6 +10,6 @@ namespace T2207A_SEM3_API.Service.CourseClass
 
         Task<ClassCourseDTO> CreateClassCourseAsync(CreateClassCourse model);
 
-        Task<List<CourseDTO>> GetCourseByClassIdAsync(int id);
+        Task<List<ClassCourseResponse>> GetCourseByClassIdAsync(int id);
     }
 }

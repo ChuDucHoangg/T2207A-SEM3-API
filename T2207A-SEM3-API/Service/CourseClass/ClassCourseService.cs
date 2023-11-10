@@ -78,29 +78,24 @@ namespace T2207A_SEM3_API.Service.CourseClass
             return data;
         }
 
-        public async Task<List<CourseDTO>> GetCourseByClassIdAsync(int id)
+        public async Task<List<ClassCourseResponse>> GetCourseByClassIdAsync(int id)
         {
-            var courseIds = await _context.ClassCourses
-                .Where(c => c.ClassId == id)
-                .Select(cc => cc.CourseId)
-                .ToListAsync();
 
-            var courses = await _context.Courses
-                .Where(c => courseIds.Contains(c.Id))
-                .ToListAsync();
+            List<ClassCourse> classCourses = await _context.ClassCourses.Include(c => c.Class).ThenInclude(c => c.Students).Include(c => c.Course).Include(c => c.CreatedByNavigation).Where(c => c.ClassId == id).ToListAsync();
 
-            List<CourseDTO> data = new List<CourseDTO>();
+            List<ClassCourseResponse> data = new List<ClassCourseResponse>();
 
-            foreach (Course cr in courses)
+            foreach (ClassCourse cr in classCourses)
             {
-                data.Add(new CourseDTO
+                data.Add(new ClassCourseResponse
                 {
-                    id = cr.Id,
-                    name = cr.Name,
-                    course_code = cr.CourseCode,
-                    createdAt = cr.CreatedAt,
-                    updateAt = cr.UpdatedAt,
-                    deleteAt = cr.DeletedAt
+                    classCourseId = cr.Id,
+                    className = cr.Class.Name,
+                    courseName = cr.Course.Name,
+                    createByName = cr.CreatedByNavigation.Fullname,
+                    numberOfStudents = cr.Class.Students.Count,
+                    startDate = cr.StartDate,
+                    endDate = cr.EndDate,
                 });
             }
 
