@@ -39,8 +39,6 @@ public partial class Student
 
     public virtual Class Class { get; set; } = null!;
 
-    public virtual ICollection<ExamAgain> ExamAgains { get; set; } = new List<ExamAgain>();
-
     public virtual ICollection<Grade> Grades { get; set; } = new List<Grade>();
 
     public virtual ICollection<RegisterExam> RegisterExams { get; set; } = new List<RegisterExam>();

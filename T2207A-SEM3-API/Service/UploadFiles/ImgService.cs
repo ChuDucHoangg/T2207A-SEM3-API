@@ -9,6 +9,10 @@ namespace T2207A_SEM3_API.Service.UploadFiles
         {
             if (avatar != null && avatar.Length > 0)
             {
+                if (!IsImageFile(avatar))
+                {
+                    throw new Exception("Only image files (png, jpg, etc.) are allowed.");
+                }
                 string fileName = GenerateUniqueFileName(avatar);
 
                 string uploadDirectory = GetUploadDirectory();
@@ -42,6 +46,13 @@ namespace T2207A_SEM3_API.Service.UploadFiles
             // You will need to provide the base URL here or retrieve it from your configuration.
             string baseUrl = "https://localhost:7218"; // Replace with your actual base URL.
             return $"{baseUrl}/uploads/{fileName}";
+        }
+        private bool IsImageFile(IFormFile file)
+        {
+            // Kiểm tra loại tệp tin có phải là ảnh không (png, jpg, jpeg, gif, bmp)
+            var allowedExtensions = new[] { ".png", ".jpg", ".jpeg", ".gif", ".bmp" };
+            var fileExtension = Path.GetExtension(file.FileName).ToLower();
+            return allowedExtensions.Contains(fileExtension);
         }
     }
 }

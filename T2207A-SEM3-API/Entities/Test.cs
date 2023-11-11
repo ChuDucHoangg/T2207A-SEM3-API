@@ -23,6 +23,8 @@ public partial class Test
 
     public int TypeTest { get; set; }
 
+    public int? RetakeTestId { get; set; }
+
     public int NumberOfQuestionsInExam { get; set; }
 
     public int CreatedBy { get; set; }
@@ -35,11 +37,11 @@ public partial class Test
 
     public DateTime? DeletedAt { get; set; }
 
+    public virtual ICollection<AnswersForStudent> AnswersForStudents { get; set; } = new List<AnswersForStudent>();
+
     public virtual Staff CreatedByNavigation { get; set; } = null!;
 
     public virtual Exam Exam { get; set; } = null!;
-
-    public virtual ICollection<ExamAgain> ExamAgains { get; set; } = new List<ExamAgain>();
 
     public virtual ICollection<Grade> Grades { get; set; } = new List<Grade>();
 

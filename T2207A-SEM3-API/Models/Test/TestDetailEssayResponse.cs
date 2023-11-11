@@ -10,7 +10,7 @@ namespace T2207A_SEM3_API.Models.Test
 
         public DateTime endDate { get; set; }
 
-        public DateTime finished_at { get; set; }
+        public DateTime? finished_at { get; set; }
 
         public int NumberOfQuestionsInExam { get; set; }
 

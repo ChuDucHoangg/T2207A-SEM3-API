@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using T2207A_SEM3_API.DTOs;
 using T2207A_SEM3_API.Entities;
@@ -51,7 +52,7 @@ namespace T2207A_SEM3_API.Controllers
             }
         }
 
-        [HttpPost]
+        [HttpPost("register-exam")]
         [Authorize]
         public async Task<IActionResult> RegisterExam(RegisterExamRequest model)
         {
@@ -70,6 +71,44 @@ namespace T2207A_SEM3_API.Controllers
                 if (user == null)
                 {
                     return Unauthorized("Not Authorized");
+                }
+
+                // kiểm tra đã có testMain chưa, nếu có thì mới cho đi tiếp
+                var testExists = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null);
+                if (testExists == null)
+                {
+                    return NotFound(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 400,
+                        Message = "Not Found",
+                        Data = ""
+                    });
+                }
+
+                // kiểm tra đã có điểm testMain chưa
+                var grade = await _context.Grades.FirstOrDefaultAsync(g => g.TestId == testExists.Id && g.StudentId == user.Id);
+                if (grade == null)
+                {
+                    return NotFound(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 400,
+                        Message = "Not Found",
+                        Data = ""
+                    });
+                }
+
+                // kiểm tra phải làm testMain rồi thì mới được đăng kí thi lại
+                if (grade.FinishedAt == null)
+                {
+                    return NotFound(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 400,
+                        Message = "Not Found",
+                        Data = ""
+                    });
                 }
 
                 RegisterExamDTO registerExam = await _registerExamService.CreateRegisterExamAsync(user.Id, model.exam_id);
@@ -98,8 +137,8 @@ namespace T2207A_SEM3_API.Controllers
             }
         }
 
-        [HttpPut]
-        [Authorize]
+        [HttpPut("approve-register")]
+        [Authorize(Roles = "Exam Administrator")]
         public async Task<IActionResult> ApproveRegisterExam(ApproveRegisterExamRequest model)
         {
             var identity = HttpContext.User.Identity as ClaimsIdentity;

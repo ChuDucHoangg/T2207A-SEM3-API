@@ -1,9 +1,13 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+using System.Security.Principal;
 using T2207A_SEM3_API.DTOs;
 using T2207A_SEM3_API.Entities;
 using T2207A_SEM3_API.Models.Exam;
+using T2207A_SEM3_API.Models.General;
 
 namespace T2207A_SEM3_API.Controllers
 {
@@ -204,10 +208,46 @@ namespace T2207A_SEM3_API.Controllers
 
         [HttpGet]
         [Route("get-by-courseId")]
+        [Authorize]
         public async Task<IActionResult> GetbyCourse(int courseId)
         {
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+
+            if (!identity.IsAuthenticated)
+            {
+                return Unauthorized(new GeneralServiceResponse { Success = false, StatusCode = 401, Message = "Not Authorized", Data = "" });
+            }
             try
             {
+                var userClaims = identity.Claims;
+                var userId = userClaims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+                var user = await _context.Students
+                    .Include(u => u.Class)
+                    .FirstOrDefaultAsync(u => u.Id == Convert.ToInt32(userId));
+
+                if (user == null)
+                {
+                    return NotFound(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 404,
+                        Message = "Incorrect current password",
+                        Data = ""
+                    });
+                }
+
+                // kiểm tra classCourseID
+                var classCourse = await _context.ClassCourses.FindAsync(courseId);
+                if (classCourse == null)
+                {
+                    return NotFound();
+                }
+                if (classCourse.ClassId != user.ClassId)
+                {
+                    return NotFound();
+                }
+
                 List<Exam> exams = await _context.Exams.Where(p => p.CourseClassId == courseId).ToListAsync();
                 if (exams != null)
                 {

@@ -9,6 +9,8 @@ public partial class AnswersForStudent
 
     public int QuestionId { get; set; }
 
+    public int TestId { get; set; }
+
     public string Content { get; set; } = null!;
 
     public int StudentId { get; set; }
@@ -22,4 +24,6 @@ public partial class AnswersForStudent
     public virtual Question Question { get; set; } = null!;
 
     public virtual Student Student { get; set; } = null!;
+
+    public virtual Test Test { get; set; } = null!;
 }

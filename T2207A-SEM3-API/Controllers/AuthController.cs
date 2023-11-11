@@ -437,7 +437,7 @@ namespace T2207A_SEM3_API.Controllers
 
         [HttpPut]
         [Route("student/update-profile")]
-        public async Task<IActionResult> StudentUpdateProfile(StudentUpdateProfileRequest model)
+        public async Task<IActionResult> StudentUpdateProfile([FromForm]StudentUpdateProfileRequest model)
         {
             if (ModelState.IsValid)
             {

@@ -122,6 +122,7 @@ namespace T2207A_SEM3_API.Controllers
                         StudentId = user.Id,
                         Content = answer.content,
                         QuestionId = answer.question_id,
+                        TestId = test.Id,
                         CreatedAt = DateTime.Now,
                         UpdatedAt = DateTime.Now,
                         DeletedAt = null,
@@ -189,48 +190,41 @@ namespace T2207A_SEM3_API.Controllers
                     // kiểm tra đã có điểm chưa
 
                     var gradeCurrent = await _context.Grades.FirstOrDefaultAsync(g => g.TestId == test.Id && g.StudentId == user.Id);
-                    if (gradeCurrent != null)
+                    if (gradeCurrent == null)
                     {
-                        return BadRequest(new GeneralServiceResponse
+                        return NotFound(new GeneralServiceResponse
                         {
                             Success = false,
-                            StatusCode = 400,
-                            Message = "The test has been taken before",
+                            StatusCode = 404,
+                            Message = "The test is not found",
                             Data = ""
                         });
                     }
 
-                    // tạo điểm
-                    var grade = new Grade
-                    {
-                        StudentId = user.Id,
-                        Score = score,
-                        TestId = test.Id,
-                        FinishedAt = finish_at,
-                        CreatedAt = DateTime.Now,
-                        UpdatedAt = DateTime.Now,
-                        DeletedAt = null
-                    };
+                    // lưu điểm
 
+                    gradeCurrent.Score = score;
+                    gradeCurrent.FinishedAt = finish_at;
+                    gradeCurrent.UpdatedAt = DateTime.Now;
 
                     // kiểm tra đỗ hay chưa
                     if (score >= test.PastMarks)
                     {
-                        grade.Status = 1;
+                        gradeCurrent.Status = 1;
                     }
                     else
                     {
-                        grade.Status = 0;
+                        gradeCurrent.Status = 0;
                     }
 
-                    _context.Add(grade);
+                    _context.Update(gradeCurrent);
                     await _context.SaveChangesAsync();
                     return Ok(new GeneralServiceResponse
                     {
                         Success = true,
                         StatusCode = 200,
                         Message = "Submitted successfully",
-                        Data = grade
+                        Data = gradeCurrent
                     });
 
                 }
@@ -241,20 +235,26 @@ namespace T2207A_SEM3_API.Controllers
                     studentTest.Status = 1;
                     await _context.SaveChangesAsync();
 
+                    // kiểm tra đã có điểm chưa
 
-                    // tạo điểm
-                    var grade = new Grade
+                    var gradeCurrent = await _context.Grades.FirstOrDefaultAsync(g => g.TestId == test.Id && g.StudentId == user.Id);
+                    if (gradeCurrent == null)
                     {
-                        StudentId = user.Id,
-                        Score = null,
-                        TestId = test.Id,
-                        FinishedAt = finish_at,
-                        CreatedAt = DateTime.Now,
-                        UpdatedAt = DateTime.Now,
-                        DeletedAt = null
-                    };
+                        return NotFound(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 404,
+                            Message = "The test is not found",
+                            Data = ""
+                        });
+                    }
 
-                    _context.Add(grade);
+                    // lưu điểm
+
+                    gradeCurrent.FinishedAt = finish_at;
+                    gradeCurrent.UpdatedAt = DateTime.Now;
+
+                    _context.Update(gradeCurrent);
                     await _context.SaveChangesAsync();
 
                     return Ok(new GeneralServiceResponse
@@ -393,6 +393,17 @@ namespace T2207A_SEM3_API.Controllers
                     });
                 }
 
+                if (grade.FinishedAt == null)
+                {
+                    return BadRequest(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 400,
+                        Message = "This test is not complete",
+                        Data = ""
+                    });
+                }
+
                 // Kiểm tra xem điểm có nằm trong phạm vi hợp lệ (vd: từ 0 đến 100)
                 if (model.score < 0 || model.score > 100)
                 {
@@ -407,12 +418,12 @@ namespace T2207A_SEM3_API.Controllers
 
                 var current_score = model.score;
 
-                if (grade.Score == null)
+                if (grade.Score == 0)
                 {
                     if (!(grade.FinishedAt >= test.StartDate && grade.FinishedAt <= test.EndDate))
                     {
                         // finish_at không nằm trong khoảng startDate và andDate
-                        TimeSpan timeDifference = (grade.FinishedAt > test.EndDate) ? grade.FinishedAt - test.EndDate : test.EndDate - grade.FinishedAt;
+                        TimeSpan timeDifference = (TimeSpan)((grade.FinishedAt > test.EndDate) ? grade.FinishedAt - test.EndDate : test.EndDate - grade.FinishedAt);
 
                         if (timeDifference.TotalMinutes > 30)
                         {
@@ -449,6 +460,10 @@ namespace T2207A_SEM3_API.Controllers
                     // Cập nhật điểm và lưu vào cơ sở dữ liệu
                     grade.Score = current_score;
                     grade.UpdatedAt = DateTime.Now;
+                    await _context.SaveChangesAsync();
+
+                    // Cập nhật trạng thái thi xong của học sinh
+                    studentTest.Status = 2;
                     await _context.SaveChangesAsync();
                     return Ok(new GeneralServiceResponse
                     {

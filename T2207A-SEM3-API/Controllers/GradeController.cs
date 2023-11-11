@@ -351,7 +351,7 @@ namespace T2207A_SEM3_API.Controllers
                             if (!(existingGrade.FinishedAt >= test.StartDate && existingGrade.FinishedAt <= test.EndDate))
                             {
                                 // finish_at không nằm trong khoảng startDate và andDate
-                                TimeSpan timeDifference = (existingGrade.FinishedAt > test.EndDate) ? existingGrade.FinishedAt - test.EndDate : test.EndDate - existingGrade.FinishedAt;
+                                TimeSpan timeDifference = (TimeSpan)((existingGrade.FinishedAt > test.EndDate) ? existingGrade.FinishedAt - test.EndDate : test.EndDate - existingGrade.FinishedAt);
 
                                 if (timeDifference.TotalMinutes > 30)
                                 {

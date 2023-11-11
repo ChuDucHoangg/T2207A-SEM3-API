@@ -327,7 +327,9 @@ namespace T2207A_SEM3_API.Controllers
             }
         }
 
+        // for staff
         [HttpGet("result-test/{test_slug}/details/{student_code}")]
+        /*[Authorize]*/
         public async Task<IActionResult> GetTestQuestionsAndAnswerStudent(string test_slug, string student_code)
         {
             try
@@ -408,7 +410,7 @@ namespace T2207A_SEM3_API.Controllers
 
                     foreach (var question in questions)
                     {
-                        var answersForStudent = await _context.AnswersForStudents.Where(a => a.QuestionId == question.Id && a.StudentId == student.id).FirstOrDefaultAsync();
+                        var answersForStudent = await _context.AnswersForStudents.FirstOrDefaultAsync(a => a.QuestionId == question.Id && a.StudentId == student.id && a.TestId == test.Id);
                         if (answersForStudent == null)
                         {
                             return BadRequest(new GeneralServiceResponse
@@ -529,6 +531,235 @@ namespace T2207A_SEM3_API.Controllers
                     return Ok(testDetail);
                 }
             } catch (Exception ex)
+            {
+                return BadRequest(new GeneralServiceResponse
+                {
+                    Success = false,
+                    StatusCode = 400,
+                    Message = ex.Message,
+                    Data = ""
+                });
+            }
+        }
+
+        // for student view
+        [HttpGet("result-test/{test_slug}/details")]
+        [Authorize]
+        public async Task<IActionResult> GetTestQuestionsAndAnswerStudentForStudentView(string test_slug)
+        {
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+
+            if (!identity.IsAuthenticated)
+            {
+                return Unauthorized(new GeneralServiceResponse { Success = false, StatusCode = 401, Message = "Not Authorized", Data = "" });
+            }
+            try
+            {
+                var userClaims = identity.Claims;
+                var userId = userClaims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+                var user = await _context.Students
+                    .Include(u => u.Class)
+                    .FirstOrDefaultAsync(u => u.Id == Convert.ToInt32(userId));
+
+                if (user == null)
+                {
+                    return NotFound(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 404,
+                        Message = "Incorrect current password",
+                        Data = ""
+                    });
+                }
+
+                // kiểm tra bài thi có tồn tại hay không    
+                var test = await _testQuestionService.TestExists(test_slug);
+                if (test == null)
+                {
+                    return NotFound(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 404,
+                        Message = "Test does not exist",
+                        Data = ""
+                    });
+                }
+                
+                // kiểm tra đã làm bài
+                var studentTest = await _testQuestionService.IsTestNotTaken(test.Id, user.Id);
+                if (studentTest == null)
+                {
+                    return NotFound(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 404,
+                        Message = "Test does not exist",
+                        Data = ""
+                    });
+                }
+                if (studentTest.Status == 0)
+                {
+                    return BadRequest(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 400,
+                        Message = "This test has not been done yet",
+                        Data = ""
+                    });
+                }
+
+                // Lấy danh sách ID của các câu hỏi thuộc bài thi
+                var questionIds = await _context.QuestionTests
+                    .Where(qt => qt.TestId == test.Id)
+                    .OrderBy(qt => qt.Orders)
+                    .Select(qt => new { qt.QuestionId, qt.Orders })
+                    .ToListAsync();
+
+                // Lấy danh sách câu hỏi dựa trên các ID câu hỏi
+                var questions = new List<Question>();
+                foreach (var item in questionIds)
+                {
+                    var question = await _context.Questions
+                        .Where(q => q.Id == item.QuestionId)
+                        .FirstOrDefaultAsync();
+
+                    if (question != null)
+                    {
+                        questions.Add(question);
+                    }
+                }
+                // trắc nghiệm
+                if (questions[0].QuestionType == 0)
+                {
+                    // Chuyển đổi dữ liệu câu hỏi và đáp án thành định dạng phản hồi
+
+                    var questionAnswerResponses = new List<QuestionAnswerToTestMultipleChoiceDetailResponse>();
+
+                    foreach (var question in questions)
+                    {
+                        var answersForStudent = await _context.AnswersForStudents.FirstOrDefaultAsync(a => a.QuestionId == question.Id && a.StudentId == user.Id && a.TestId == test.Id);
+                        if (answersForStudent == null)
+                        {
+                            return BadRequest(new GeneralServiceResponse
+                            {
+                                Success = false,
+                                StatusCode = 400,
+                                Message = "This test has not been done yet",
+                                Data = ""
+                            });
+                        }
+
+                        var answerContentResponses = question.Answers.Select(answer => new AnswerContentResultResponse
+                        {
+                            id = answer.Id,
+                            content = answer.Content,
+                            status = answer.Status
+
+                        }).ToList();
+
+                        var questionAnswerResponse = new QuestionAnswerToTestMultipleChoiceDetailResponse
+                        {
+                            id = question.Id,
+                            title = question.Title,
+                            Answers = answerContentResponses,
+                            answerForStudent = answersForStudent.Content
+                        };
+
+                        questionAnswerResponses.Add(questionAnswerResponse);
+
+                    }
+                    // Lấy ra câu trả lời của student
+                    var grade = await _context.Grades.FirstOrDefaultAsync(g => g.TestId == test.Id && g.StudentId == user.Id);
+                    if (grade == null)
+                    {
+                        return BadRequest(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 400,
+                            Message = "This test has not been done yet",
+                            Data = ""
+                        });
+                    }
+
+                    var testDetail = new TestDetailMultipleChoiceResponse
+                    {
+                        name = test.Name,
+                        startDate = test.StartDate,
+                        endDate = test.EndDate,
+                        finished_at = grade.FinishedAt,
+                        NumberOfQuestionsInExam = test.NumberOfQuestionsInExam,
+                        past_marks = test.PastMarks,
+                        total_marks = test.TotalMarks,
+                        status = grade.Status,
+                        score = grade.Score,
+                        questions = questionAnswerResponses,
+
+                    };
+                    return Ok(testDetail);
+                }
+                // tự luận
+                else
+                {
+                    // Chuyển đổi dữ liệu câu hỏi và đáp án thành định dạng phản hồi
+
+                    var questionAnswerResponses = new List<QuestionAnswerToTestEssayDetailResponse>();
+
+                    foreach (var question in questions)
+                    {
+                        var answersForStudent = await _context.AnswersForStudents.Where(a => a.QuestionId == question.Id && a.StudentId == user.Id).FirstOrDefaultAsync();
+                        if (answersForStudent == null)
+                        {
+                            return BadRequest(new GeneralServiceResponse
+                            {
+                                Success = false,
+                                StatusCode = 400,
+                                Message = "This test has not been done yet",
+                                Data = ""
+                            });
+                        }
+
+                        var questionAnswerResponse = new QuestionAnswerToTestEssayDetailResponse
+                        {
+                            id = question.Id,
+                            title = question.Title,
+                            answerForStudent = answersForStudent.Content
+                        };
+
+                        questionAnswerResponses.Add(questionAnswerResponse);
+
+                    }
+                    // Lấy ra câu trả lời của student
+                    var grade = await _context.Grades.Where(g => g.TestId == test.Id && g.StudentId == user.Id).FirstOrDefaultAsync();
+                    if (grade == null)
+                    {
+                        return BadRequest(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 400,
+                            Message = "This test has not been done yet",
+                            Data = ""
+                        });
+                    }
+
+                    var testDetail = new TestDetailEssayResponse
+                    {
+                        name = test.Name,
+                        startDate = test.StartDate,
+                        endDate = test.EndDate,
+                        finished_at = grade.FinishedAt,
+                        NumberOfQuestionsInExam = test.NumberOfQuestionsInExam,
+                        past_marks = test.PastMarks,
+                        total_marks = test.TotalMarks,
+                        status = grade.Status,
+                        score = grade.Score,
+                        questions = questionAnswerResponses,
+
+                    };
+                    return Ok(testDetail);
+                }
+            }
+            catch (Exception ex)
             {
                 return BadRequest(new GeneralServiceResponse
                 {

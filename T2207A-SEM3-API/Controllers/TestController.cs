@@ -13,6 +13,7 @@ using System.Text;
 using T2207A_SEM3_API.DTOs;
 using T2207A_SEM3_API.Entities;
 using T2207A_SEM3_API.Models.Answer;
+using T2207A_SEM3_API.Models.General;
 using T2207A_SEM3_API.Models.Question;
 using T2207A_SEM3_API.Models.Test;
 using T2207A_SEM3_API.Service.ClassCourses;
@@ -114,7 +115,13 @@ namespace T2207A_SEM3_API.Controllers
                     if (nameExists)
                     {
                         // Nếu name đã tồn tại, trả về BadRequest hoặc thông báo lỗi tương tự
-                        return BadRequest("Class name already exists");
+                        return BadRequest(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 400,
+                            Message = "Test name already exists",
+                            Data = ""
+                        });
                     }
 
                     // kiểm tra số câu hỏi 
@@ -199,6 +206,7 @@ namespace T2207A_SEM3_API.Controllers
                                             PastMarks = model.past_marks,
                                             TotalMarks = model.total_marks,
                                             NumberOfQuestionsInExam = 16,
+                                            RetakeTestId = null,
                                             TypeTest = 0,
                                             CreatedBy = model.created_by,
                                             Status = 0,
@@ -220,6 +228,23 @@ namespace T2207A_SEM3_API.Controllers
                                                 DeletedAt = null,
                                             };
                                             _context.StudentTests.Add(studentTest);
+                                            await _context.SaveChangesAsync();
+
+                                            // danh sách điểm
+                                            var grade = new Grade
+                                            {
+                                                StudentId = studentId,
+                                                TestId = data.Id,
+                                                Status = 0,
+                                                Score = 0,
+                                                FinishedAt = null,
+                                                IsRetake = false,
+                                                CreatedAt = DateTime.Now,
+                                                UpdatedAt = DateTime.Now,
+                                                DeletedAt = null,
+                                            };
+
+                                            _context.Grades.Add(grade);
                                             await _context.SaveChangesAsync();
                                         }
                                         int order = 1;
@@ -336,7 +361,13 @@ namespace T2207A_SEM3_API.Controllers
                                     }
                                     else
                                     {
-                                        return BadRequest("Số lượng câu hỏi hoặc mức độ không hợp lệ");
+                                        return BadRequest(new GeneralServiceResponse
+                                        {
+                                            Success = false,
+                                            StatusCode = 400,
+                                            Message = "The number of questions is redundant or missing",
+                                            Data = ""
+                                        });
                                     }
                                 }
                             }
@@ -344,18 +375,382 @@ namespace T2207A_SEM3_API.Controllers
                         }
                         else
                         {
-                            return BadRequest("định dạng sai");
+                            return BadRequest(new GeneralServiceResponse
+                            {
+                                Success = false,
+                                StatusCode = 400,
+                                Message = "bad format",
+                                Data = ""
+                            });
                         }
 
                     }
                 }
                 catch (Exception ex)
                 {
-                    return BadRequest(ex.Message);
+                    return BadRequest(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 400,
+                        Message = ex.Message,
+                        Data = ""
+                    });
                 }
             }
-            var msgs = ModelState.Values.SelectMany(v => v.Errors).Select(v => v.ErrorMessage);
-            return BadRequest(string.Join(" | ", msgs));
+            var validationErrors = ModelState.Values.SelectMany(v => v.Errors).Select(v => v.ErrorMessage);
+
+            var validationResponse = new GeneralServiceResponse
+            {
+                Success = false,
+                StatusCode = 400,
+                Message = "Validation errors",
+                Data = string.Join(" | ", validationErrors)
+            };
+
+            return BadRequest(validationResponse);
+        }
+
+        [HttpPost("multiple-choice-by-excel-file/retake")]
+        public async Task<IActionResult> CreateMultipleChoiceRetakeTestByExcelFile([FromForm] CreateMultipleChoiceRetakeTestByExcelFile model)
+        {
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    // Kiểm tra xem name đã tồn tại trong cơ sở dữ liệu hay chưa
+                    bool nameExists = await _context.Tests.AnyAsync(c => c.Name == model.name);
+
+                    if (nameExists)
+                    {
+                        // Nếu name đã tồn tại, trả về BadRequest hoặc thông báo lỗi tương tự
+                        return BadRequest(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 400,
+                            Message = "Test name already exists",
+                            Data = ""
+                        });
+                    }
+
+                    // chỉ có 1 bài test chính còn lại là test thi lại
+                    var testExists = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null);
+                    if (testExists == null)
+                    {
+                        return BadRequest(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 400,
+                            Message = "There is no official test yet",
+                            Data = ""
+                        });
+                    }
+
+                    // lấy ra danh sách học sinh đăng kí thi lại
+                    var studentIds = await _context.RegisterExams
+                        .Where(re => re.ExamId == model.exam_id && re.Status == 1)// lấy học sinh đã được duyệt
+                        .Select(re => re.StudentId)
+                        .ToListAsync();
+
+                    if (studentIds == null || !studentIds.Any())
+                    {
+                        return BadRequest(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 400,
+                            Message = "No students registered to retake the exam",
+                            Data = ""
+                        });
+                    }
+
+
+                    // Kiểm tra số câu hỏi
+
+                    Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+                    var file = model.excelFile;
+
+                    if (file != null || file.Length > 0)
+                    {
+                        var fileExtension = Path.GetExtension(file.FileName).ToLower(); // Lấy phần mở rộng của tên tệp và chuyển thành chữ thường
+
+                        // Kiểm tra xem tệp có đúng định dạng Excel (ví dụ: .xlsx) hay không
+                        if (fileExtension == ".xlsx" || fileExtension == ".xlsx")
+                        {
+                            var uploadDirectory = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "excels");
+
+                            if (!Directory.Exists(uploadDirectory))
+                            {
+                                Directory.CreateDirectory(uploadDirectory);
+                            }
+
+                            var filePath = Path.Combine(uploadDirectory, file.FileName);
+
+                            using (var stream = new FileStream(filePath, FileMode.Create))
+                            {
+                                await file.CopyToAsync(stream);
+                            }
+
+                            using (var stream = System.IO.File.Open(filePath, FileMode.Open, FileAccess.Read))
+                            {
+                                using (var reader = ExcelReaderFactory.CreateReader(stream))
+                                {
+                                    int totalQuestions = 0;
+                                    int easyCount = 0;
+                                    int mediumCount = 0;
+                                    int hardCount = 0;
+                                    do
+                                    {
+                                        bool isHeaderSkipped = false;
+
+                                        while (reader.Read())
+                                        {
+                                            if (!isHeaderSkipped)
+                                            {
+                                                isHeaderSkipped = true;
+                                                continue;
+                                            }
+
+                                            int level = Convert.ToInt32(reader.GetValue(6).ToString());  // Assumed column 7 contains the difficulty level
+                                                                                                         // Kiểm tra mức độ và tăng đếm cho từng loại
+                                            switch (level)
+                                            {
+                                                case 1:
+                                                    easyCount++;
+                                                    break;
+                                                case 2:
+                                                    mediumCount++;
+                                                    break;
+                                                case 3:
+                                                    hardCount++;
+                                                    break;
+                                                default:  // Xử lý nếu mức độ không hợp lệ
+                                                    break;
+                                            }  // Tăng tổng số câu hỏi
+                                            totalQuestions++;
+                                        }
+                                    } while (reader.NextResult());
+                                    reader.Close();
+
+                                    if (totalQuestions == 16 && easyCount == 6 && mediumCount == 5 && hardCount == 5)
+                                    {
+                                        Test data = new Test
+                                        {
+                                            Name = model.name,
+                                            Slug = model.name.ToLower().Replace(" ", "-"),
+                                            ExamId = model.exam_id,
+                                            StartDate = model.startDate,
+                                            EndDate = model.endDate,
+                                            PastMarks = model.past_marks,
+                                            TotalMarks = model.total_marks,
+                                            NumberOfQuestionsInExam = 16,
+                                            RetakeTestId = testExists.Id,
+                                            TypeTest = 0,
+                                            CreatedBy = model.created_by,
+                                            Status = 0,
+                                            CreatedAt = DateTime.Now,
+                                            UpdatedAt = DateTime.Now,
+                                            DeletedAt = null,
+                                        };
+                                        _context.Tests.Add(data);
+                                        await _context.SaveChangesAsync();  // tạo danh sách thi
+                                        foreach (var studentId in studentIds)
+                                        {
+                                            var studentTest = new StudentTest
+                                            {
+                                                TestId = data.Id,
+                                                StudentId = studentId,
+                                                Status = 0,
+                                                CreatedAt = DateTime.Now,
+                                                UpdatedAt = DateTime.Now,
+                                                DeletedAt = null,
+                                            };
+                                            _context.StudentTests.Add(studentTest);
+                                            await _context.SaveChangesAsync();
+
+                                            // danh sách điểm
+                                            var grade = new Grade
+                                            {
+                                                StudentId = studentId,
+                                                TestId = data.Id,
+                                                Status = 0,
+                                                Score = 0,
+                                                FinishedAt = null,
+                                                IsRetake = true,
+                                                CreatedAt = DateTime.Now,
+                                                UpdatedAt = DateTime.Now,
+                                                DeletedAt = null,
+                                            };
+
+                                            _context.Grades.Add(grade);
+                                            await _context.SaveChangesAsync();
+
+                                            // chuyển đổi trạng thái đăng kí thi lại
+                                            var registerExam = await _context.RegisterExams.FirstOrDefaultAsync(r => r.StudentId == studentId && r.ExamId == model.exam_id);
+
+                                            registerExam.Status = 2;
+                                            _context.RegisterExams.Update(registerExam);
+                                            await _context.SaveChangesAsync();
+                                        }
+                                        int order = 1;
+                                        int testId = data.Id;
+                                        var courseClassId = _context.Tests.Where(t => t.Id == testId)
+                                                                .Select(t => t.Exam.CourseClassId)
+                                                                .SingleOrDefault();
+                                        var courseId = _context.ClassCourses.Where(cc => cc.Id == courseClassId)
+                                                           .Select(cc => cc.CourseId)
+                                                           .SingleOrDefault();
+                                        using (var newStream = System.IO.File.Open(filePath, FileMode.Open, FileAccess.Read))
+                                        {
+                                            using (var newReader = ExcelReaderFactory.CreateReader(newStream))
+                                            {
+                                                do
+                                                {
+                                                    bool isHeaderSkipped1 = false;
+
+                                                    while (newReader.Read())
+                                                    {
+                                                        if (!isHeaderSkipped1)
+                                                        {
+                                                            isHeaderSkipped1 = true;
+                                                            continue;
+                                                        }
+
+                                                        string questionText = newReader.GetValue(1).ToString();
+                                                        int level = Convert.ToInt32(newReader.GetValue(6).ToString());
+                                                        var question = new Question
+                                                        {
+                                                            Title = questionText,
+                                                            CourseId = courseId,
+                                                            Level = level,
+                                                            QuestionType = 0,
+                                                            CreatedAt = DateTime.UtcNow,
+                                                            UpdatedAt = DateTime.UtcNow,
+                                                            DeletedAt = null,
+                                                        };  // Thiết lập điểm (score) dựa trên mức độ (level)
+                                                        if (level == 1)
+                                                        {
+                                                            question.Score = 3.85;  // Điểm cho câu dễ
+                                                        }
+                                                        else if (level == 2)
+                                                        {
+                                                            question.Score = 6.41;  // Điểm cho câu trung bình
+                                                        }
+                                                        else if (level == 3)
+                                                        {
+                                                            question.Score = 8.97;  // Điểm cho câu khó
+                                                        }
+                                                        else
+                                                        {  // Xử lý khi mức độ không xác định, có thể đặt điểm mặc định
+                                                           // hoặc thông báo lỗi.
+                                                            question.Score = 0.0;  // Điểm mặc định hoặc giá trị khác tùy bạn
+                                                        }
+                                                        _context.Questions.Add(question);
+                                                        await _context.SaveChangesAsync();
+                                                        var question_test = new QuestionTest
+                                                        {
+                                                            TestId = data.Id,
+                                                            QuestionId = question.Id,
+                                                            Orders = order  // Gán thứ tự cho câu hỏi
+                                                        };
+                                                        _context.QuestionTests.Add(question_test);
+                                                        await _context.SaveChangesAsync();
+                                                        string answerCorrect =
+                                                            newReader.GetValue(7).ToString();  // Tạo câu trả lời
+                                                        for (int i = 0; i < 4; i++)
+                                                        {
+                                                            string answerText = newReader.GetValue(2 + i).ToString();
+                                                            var answer = new Answer
+                                                            {
+                                                                Content = answerText,
+                                                                QuestionId = question.Id,
+                                                                CreatedAt = DateTime.UtcNow,
+                                                                UpdatedAt = DateTime.UtcNow,
+                                                                DeletedAt = null,
+                                                            };  // Đặt câu trả lời đúng
+                                                            if (answer.Content.Trim() == answerCorrect.Trim())
+                                                            {
+                                                                answer.Status = 1;
+                                                            }
+                                                            else
+                                                            {
+                                                                answer.Status = 0;
+                                                            }
+                                                            _context.Answers.Add(answer);
+                                                            await _context.SaveChangesAsync();
+                                                        }
+                                                        order++;
+
+                                                    }
+                                                } while (newReader.NextResult());
+                                            }
+                                        }
+
+                                        return Created($"get-by-id?id={data.Id}", new TestDTO
+                                        {
+                                            id = data.Id,
+                                            name = data.Name,
+                                            slug = data.Slug,
+                                            exam_id = data.ExamId,
+                                            startDate = data.StartDate,
+                                            endDate = data.EndDate,
+                                            past_marks = data.PastMarks,
+                                            total_marks = data.TotalMarks,
+                                            type_test = data.TypeTest,
+                                            created_by = data.CreatedBy,
+                                            status = data.Status,
+                                            createdAt = data.CreatedAt,
+                                            updatedAt = data.UpdatedAt,
+                                            deletedAt = data.DeletedAt
+                                        });
+                                    }
+                                    else
+                                    {
+                                        return BadRequest(new GeneralServiceResponse
+                                        {
+                                            Success = false,
+                                            StatusCode = 400,
+                                            Message = "The number of questions is redundant or missing",
+                                            Data = ""
+                                        });
+                                    }
+                                }
+                            }
+
+                        }
+                        else
+                        {
+                            return BadRequest(new GeneralServiceResponse
+                            {
+                                Success = false,
+                                StatusCode = 400,
+                                Message = "bad format",
+                                Data = ""
+                            });
+                        }
+
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return BadRequest(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 400,
+                        Message = ex.Message,
+                        Data = ""
+                    });
+                }
+            }
+            var validationErrors = ModelState.Values.SelectMany(v => v.Errors).Select(v => v.ErrorMessage);
+
+            var validationResponse = new GeneralServiceResponse
+            {
+                Success = false,
+                StatusCode = 400,
+                Message = "Validation errors",
+                Data = string.Join(" | ", validationErrors)
+            };
+
+            return BadRequest(validationResponse);
         }
 
         [HttpPost("multiple-choice-by-hand")]
@@ -371,14 +766,39 @@ namespace T2207A_SEM3_API.Controllers
                     if (nameExists)
                     {
                         // Nếu name đã tồn tại, trả về BadRequest hoặc thông báo lỗi tương tự
-                        return BadRequest("Class name already exists");
+                        return BadRequest(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 400,
+                            Message = "Test name already exists",
+                            Data = ""
+                        });
+                    }
+
+                    // chỉ có 1 bài test chính còn lại là test thi lại
+                    var testExists = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null);
+                    if (testExists != null)
+                    {
+                        return BadRequest(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 400,
+                            Message = "Test already exists",
+                            Data = ""
+                        });
                     }
 
                     // kiểm tra số câu hỏi 
                     var result = model.questions.Count();
                     if (result > 16 || result < 16)
                     {
-                        return BadRequest("The number of questions is redundant or missing");
+                        return BadRequest(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 400,
+                            Message = "The number of questions is redundant or missing",
+                            Data = ""
+                        });
                     }
 
                     // Kiểm tra số câu hỏi
@@ -388,7 +808,13 @@ namespace T2207A_SEM3_API.Controllers
 
                     if (easyCount != 6 || mediumCount != 5 || hardCount != 5)
                     {
-                        return BadRequest(new { error = "The number of questions is incorrect" });
+                        return BadRequest(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 400,
+                            Message = "The number of questions is incorrect",
+                            Data = ""
+                        });
                     }
 
 
@@ -403,6 +829,7 @@ namespace T2207A_SEM3_API.Controllers
                         TotalMarks = model.total_marks,
                         NumberOfQuestionsInExam = 16,
                         TypeTest = 0,
+                        RetakeTestId = null,
                         CreatedBy = model.created_by,
                         Status = 0,
                         CreatedAt = DateTime.Now,
@@ -415,6 +842,7 @@ namespace T2207A_SEM3_API.Controllers
                     // tạo danh sách thi
                     foreach (var studentId in model.studentIds)
                     {
+                        // danh sách học sinh
                         var studentTest = new StudentTest
                         {
                             TestId = data.Id,
@@ -426,6 +854,276 @@ namespace T2207A_SEM3_API.Controllers
                         };
 
                         _context.StudentTests.Add(studentTest);
+                        await _context.SaveChangesAsync();
+
+                        // danh sách điểm
+                        var grade = new Grade
+                        {
+                            StudentId = studentId,
+                            TestId = data.Id,
+                            Status = 0,
+                            Score = 0,
+                            FinishedAt = null,
+                            IsRetake = false,
+                            CreatedAt = DateTime.Now,
+                            UpdatedAt = DateTime.Now,
+                            DeletedAt = null,
+                        };
+
+                        _context.Grades.Add(grade);
+                        await _context.SaveChangesAsync();
+
+                    }
+
+                    int order = 1;
+                    int testId = data.Id;
+                    var courseClassId = _context.Tests
+                        .Where(t => t.Id == testId)
+                        .Select(t => t.Exam.CourseClassId)
+                        .SingleOrDefault();
+
+                    var courseId = _context.ClassCourses
+                        .Where(cc => cc.Id == courseClassId)
+                        .Select(cc => cc.CourseId)
+                        .SingleOrDefault();
+
+                    // tạo câu hỏi và trả lời
+                    foreach (var questionModel in model.questions)
+                    {
+                        var question = new Question
+                        {
+                            Title = questionModel.title,
+                            Level = questionModel.level,
+                            QuestionType = 0,
+                            CourseId = courseId,
+                            CreatedAt = DateTime.UtcNow,
+                            UpdatedAt = DateTime.UtcNow,
+                            DeletedAt = null,
+                        };
+                        // Thiết lập điểm (score) dựa trên mức độ (level)
+                        if (questionModel.level == 1)
+                        {
+                            question.Score = 3.85; // Điểm cho câu dễ
+                        }
+                        else if (questionModel.level == 2)
+                        {
+                            question.Score = 6.41; // Điểm cho câu trung bình
+                        }
+                        else if (questionModel.level == 3)
+                        {
+                            question.Score = 8.97; // Điểm cho câu khó
+                        }
+                        else
+                        {
+                            // Xử lý khi mức độ không xác định, có thể đặt điểm mặc định hoặc thông báo lỗi.
+                            question.Score = 0.0; // Điểm mặc định hoặc giá trị khác tùy bạn
+                        }
+
+                        _context.Questions.Add(question);
+                        await _context.SaveChangesAsync();
+
+
+                        var question_test = new QuestionTest
+                        {
+                            TestId = data.Id,
+                            QuestionId = question.Id,
+                            Orders = order // Gán thứ tự cho câu hỏi
+                        };
+
+                        _context.QuestionTests.Add(question_test);
+                        await _context.SaveChangesAsync();
+
+                        foreach (var answerModel in questionModel.answers)
+                        {
+                            var answer = new Answer
+                            {
+                                Content = answerModel.content,
+                                Status = answerModel.status,
+                                QuestionId = question.Id,
+                                CreatedAt = DateTime.UtcNow,
+                                UpdatedAt = DateTime.UtcNow,
+                                DeletedAt = null,
+                            };
+
+                            _context.Answers.Add(answer);
+                            await _context.SaveChangesAsync();
+                        }
+                        // Tăng thứ tự cho câu hỏi tiếp theo
+                        order++;
+                    }
+
+                    await _context.SaveChangesAsync();
+
+
+                    return Created($"get-by-id?id={data.Id}", new TestDTO
+                    {
+                        id = data.Id,
+                        name = data.Name,
+                        slug = data.Slug,
+                        exam_id = data.ExamId,
+                        startDate = data.StartDate,
+                        endDate = data.EndDate,
+                        past_marks = data.PastMarks,
+                        total_marks = data.TotalMarks,
+                        type_test = data.TypeTest,
+                        created_by = data.CreatedBy,
+                        status = data.Status,
+                        createdAt = data.CreatedAt,
+                        updatedAt = data.UpdatedAt,
+                        deletedAt = data.DeletedAt
+                    });
+                }
+                catch (Exception ex)
+                {
+                    return BadRequest(ex.Message);
+                }
+            }
+            var msgs = ModelState.Values.SelectMany(v => v.Errors).Select(v => v.ErrorMessage);
+            return BadRequest(string.Join(" | ", msgs));
+        }
+
+        [HttpPost("multiple-choice-by-hand/retake")]
+        public async Task<IActionResult> CreateMultipleChoiceRetakeTestByHand(CreateMultipleChoiceRetakeTestByHand model)
+        {
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    // Kiểm tra xem name đã tồn tại trong cơ sở dữ liệu hay chưa
+                    bool nameExists = await _context.Tests.AnyAsync(c => c.Name == model.name);
+
+                    if (nameExists)
+                    {
+                        // Nếu name đã tồn tại, trả về BadRequest hoặc thông báo lỗi tương tự
+                        return BadRequest(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 400,
+                            Message = "Test name already exists",
+                            Data = ""
+                        });
+                    }
+
+                    // chỉ có 1 bài test chính còn lại là test thi lại
+                    var testExists = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null);
+                    if (testExists == null)
+                    {
+                        return BadRequest(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 400,
+                            Message = "There is no official test yet",
+                            Data = ""
+                        });
+                    }
+
+                    // lấy ra danh sách học sinh đăng kí thi lại
+                    var studentIds = await _context.RegisterExams
+                        .Where(re => re.ExamId == model.exam_id && re.Status == 1)// lấy học sinh đã được duyệt
+                        .Select(re => re.StudentId)
+                        .ToListAsync();
+
+                    if (studentIds == null || !studentIds.Any())
+                    {
+                        return BadRequest(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 400,
+                            Message = "No students registered to retake the exam",
+                            Data = ""
+                        });
+                    }
+
+                    // kiểm tra số câu hỏi 
+                    var result = model.questions.Count();
+                    if (result > 16 || result < 16)
+                    {
+                        return BadRequest(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 400,
+                            Message = "The number of questions is redundant or missing",
+                            Data = ""
+                        });
+                    }
+
+                    // Kiểm tra số câu hỏi
+                    int easyCount = model.questions.Count(q => q.level == 1);
+                    int mediumCount = model.questions.Count(q => q.level == 2);
+                    int hardCount = model.questions.Count(q => q.level == 3);
+
+                    if (easyCount != 6 || mediumCount != 5 || hardCount != 5)
+                    {
+                        return BadRequest(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 400,
+                            Message = "The number of questions is incorrect",
+                            Data = ""
+                        });
+                    }
+
+
+                    Test data = new Test
+                    {
+                        Name = model.name,
+                        Slug = model.name.ToLower().Replace(" ", "-"),
+                        ExamId = model.exam_id,
+                        StartDate = model.startDate,
+                        EndDate = model.endDate,
+                        PastMarks = model.past_marks,
+                        TotalMarks = model.total_marks,
+                        NumberOfQuestionsInExam = 16,
+                        TypeTest = 0,
+                        RetakeTestId = testExists.Id,
+                        CreatedBy = model.created_by,
+                        Status = 0,
+                        CreatedAt = DateTime.Now,
+                        UpdatedAt = DateTime.Now,
+                        DeletedAt = null,
+                    };
+                    _context.Tests.Add(data);
+                    await _context.SaveChangesAsync();
+
+                    // tạo danh sách thi
+                    foreach (var studentId in studentIds)
+                    {
+                        // danh sách học sinh
+                        var studentTest = new StudentTest
+                        {
+                            TestId = data.Id,
+                            StudentId = studentId,
+                            Status = 0,
+                            CreatedAt = DateTime.Now,
+                            UpdatedAt = DateTime.Now,
+                            DeletedAt = null,
+                        };
+
+                        _context.StudentTests.Add(studentTest);
+                        await _context.SaveChangesAsync();
+
+                        // danh sách điểm
+                        var grade = new Grade
+                        {
+                            StudentId = studentId,
+                            TestId = data.Id,
+                            Status = 0,
+                            Score = 0,
+                            FinishedAt = null,
+                            IsRetake = true,
+                            CreatedAt = DateTime.Now,
+                            UpdatedAt = DateTime.Now,
+                            DeletedAt = null,
+                        };
+
+                        _context.Grades.Add(grade);
+                        await _context.SaveChangesAsync();
+
+                        // chuyển đổi trạng thái đăng kí thi lại
+                        var registerExam = await _context.RegisterExams.FirstOrDefaultAsync(r => r.StudentId == studentId && r.ExamId == model.exam_id);
+
+                        registerExam.Status = 2;
+                        _context.RegisterExams.Update(registerExam);
                         await _context.SaveChangesAsync();
 
                     }
@@ -550,7 +1248,13 @@ namespace T2207A_SEM3_API.Controllers
                     if (nameExists)
                     {
                         // Nếu name đã tồn tại, trả về BadRequest hoặc thông báo lỗi tương tự
-                        return BadRequest("Class name already exists");
+                        return BadRequest(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 400,
+                            Message = "Test name already exists",
+                            Data = ""
+                        });
                     }
 
                     // lấy danh sách câu hỏi cho đề thi
@@ -565,7 +1269,13 @@ namespace T2207A_SEM3_API.Controllers
 
                     if (randomEasyQuestions.Count() < 6)
                     {
-                        return BadRequest("The number of easy questions is not enough, the exam cannot be created");
+                        return BadRequest(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 400,
+                            Message = "The number of easy questions is not enough, the exam cannot be created",
+                            Data = ""
+                        });
                     }
 
                     // chọn câu hỏi medium 
@@ -577,7 +1287,13 @@ namespace T2207A_SEM3_API.Controllers
 
                     if (randomMediumQuestions.Count() < 5)
                     {
-                        return BadRequest("The number of medium questions is not enough, the exam cannot be created");
+                        return BadRequest(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 400,
+                            Message = "The number of easy questions is not enough, the exam cannot be created",
+                            Data = ""
+                        });
                     }
 
                     // chọn câu hỏi hard 
@@ -589,7 +1305,13 @@ namespace T2207A_SEM3_API.Controllers
 
                     if (randomHardQuestions.Count() < 5)
                     {
-                        return BadRequest("The number of hard questions is not enough, the exam cannot be created");
+                        return BadRequest(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 400,
+                            Message = "The number of easy questions is not enough, the exam cannot be created",
+                            Data = ""
+                        });
                     }
 
                     selectedQuestions.AddRange(randomEasyQuestions);
@@ -608,6 +1330,7 @@ namespace T2207A_SEM3_API.Controllers
                         TotalMarks = model.total_marks,
                         TypeTest = 0,
                         NumberOfQuestionsInExam = 16,
+                        RetakeTestId = null,
                         CreatedBy = model.created_by,
                         Status = 0,
                         CreatedAt = DateTime.Now,
@@ -631,6 +1354,23 @@ namespace T2207A_SEM3_API.Controllers
                         };
 
                         _context.StudentTests.Add(studentTest);
+                        await _context.SaveChangesAsync();
+
+                        // danh sách điểm
+                        var grade = new Grade
+                        {
+                            StudentId = studentId,
+                            TestId = data.Id,
+                            Status = 0,
+                            Score = 0,
+                            FinishedAt = null,
+                            IsRetake = false,
+                            CreatedAt = DateTime.Now,
+                            UpdatedAt = DateTime.Now,
+                            DeletedAt = null,
+                        };
+
+                        _context.Grades.Add(grade);
                         await _context.SaveChangesAsync();
 
                     }
@@ -679,6 +1419,234 @@ namespace T2207A_SEM3_API.Controllers
             return BadRequest(string.Join(" | ", msgs));
         }
 
+        [HttpPost("multiple-choice-by-auto/retake")]
+        public async Task<IActionResult> CreateMultipleChoiceRetakeTestByAuto(CreateMultipleChoiceRetakeTestByAuto model)
+        {
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    // Kiểm tra xem name đã tồn tại trong cơ sở dữ liệu hay chưa
+                    bool nameExists = await _context.Tests.AnyAsync(c => c.Name == model.name);
+
+                    if (nameExists)
+                    {
+                        // Nếu name đã tồn tại, trả về BadRequest hoặc thông báo lỗi tương tự
+                        return BadRequest(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 400,
+                            Message = "Test name already exists",
+                            Data = ""
+                        });
+                    }
+
+                    var testMain = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null);
+                    if (testMain == null)
+                    {
+                        return NotFound(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 404,
+                            Message = "There is no official test yet",
+                            Data = ""
+                        });
+                    }
+
+                    // lấy ra danh sách học sinh đăng kí thi lại
+                    var studentIds = await _context.RegisterExams
+                        .Where(re => re.ExamId == model.exam_id && re.Status == 1)// lấy học sinh đã được duyệt
+                        .Select(re => re.StudentId)
+                        .ToListAsync();
+
+                    if (studentIds == null || !studentIds.Any())
+                    {
+                        return BadRequest(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 400,
+                            Message = "No students registered to retake the exam",
+                            Data = ""
+                        });
+                    }
+
+                    // lấy danh sách câu hỏi cho đề thi
+                    var selectedQuestions = new List<Question>();
+
+                    // chọn câu hỏi eassy 
+                    var randomEasyQuestions = _context.Questions
+                        .Where(q => q.Level == 1 && q.QuestionType == 0)
+                        .OrderBy(x => Guid.NewGuid()) // Lấy ngẫu nhiên
+                        .Take(6) // Lấy 6 câu hỏi
+                        .ToList();
+
+                    if (randomEasyQuestions.Count() < 6)
+                    {
+                        return BadRequest(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 400,
+                            Message = "The number of easy questions is not enough, the exam cannot be created",
+                            Data = ""
+                        });
+                    }
+
+                    // chọn câu hỏi medium 
+                    var randomMediumQuestions = _context.Questions
+                        .Where(q => q.Level == 2 && q.QuestionType == 0)
+                        .OrderBy(x => Guid.NewGuid()) // Lấy ngẫu nhiên
+                        .Take(5) // Lấy 5 câu hỏi
+                        .ToList();
+
+                    if (randomMediumQuestions.Count() < 5)
+                    {
+                        return BadRequest(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 400,
+                            Message = "The number of easy questions is not enough, the exam cannot be created",
+                            Data = ""
+                        });
+                    }
+
+                    // chọn câu hỏi hard 
+                    var randomHardQuestions = _context.Questions
+                        .Where(q => q.Level == 3 && q.QuestionType == 0)
+                        .OrderBy(x => Guid.NewGuid()) // Lấy ngẫu nhiên
+                        .Take(5) // Lấy 5 câu hỏi
+                        .ToList();
+
+                    if (randomHardQuestions.Count() < 5)
+                    {
+                        return BadRequest(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 400,
+                            Message = "The number of easy questions is not enough, the exam cannot be created",
+                            Data = ""
+                        });
+                    }
+
+                    selectedQuestions.AddRange(randomEasyQuestions);
+                    selectedQuestions.AddRange(randomMediumQuestions);
+                    selectedQuestions.AddRange(randomHardQuestions);
+
+
+                    Test data = new Test
+                    {
+                        Name = model.name,
+                        Slug = model.name.ToLower().Replace(" ", "-"),
+                        ExamId = model.exam_id,
+                        StartDate = model.startDate,
+                        EndDate = model.endDate,
+                        PastMarks = model.past_marks,
+                        TotalMarks = model.total_marks,
+                        TypeTest = 0,
+                        NumberOfQuestionsInExam = 16,
+                        RetakeTestId = testMain.Id,
+                        CreatedBy = model.created_by,
+                        Status = 0,
+                        CreatedAt = DateTime.Now,
+                        UpdatedAt = DateTime.Now,
+                        DeletedAt = null,
+                    };
+                    _context.Tests.Add(data);
+                    await _context.SaveChangesAsync();
+
+                    
+
+                    // tạo danh sách thi
+                    foreach (var studentId in studentIds)
+                    {
+                        var studentTest = new StudentTest
+                        {
+                            TestId = data.Id,
+                            StudentId = studentId,
+                            Status = 0,
+                            CreatedAt = DateTime.Now,
+                            UpdatedAt = DateTime.Now,
+                            DeletedAt = null,
+                        };
+
+                        _context.StudentTests.Add(studentTest);
+                        await _context.SaveChangesAsync();
+
+                        // danh sách điểm
+                        var grade = new Grade
+                        {
+                            StudentId = studentId,
+                            TestId = data.Id,
+                            Status = 0,
+                            Score = 0,
+                            FinishedAt = null,
+                            IsRetake = true,
+                            CreatedAt = DateTime.Now,
+                            UpdatedAt = DateTime.Now,
+                            DeletedAt = null,
+                        };
+
+                        _context.Grades.Add(grade);
+                        await _context.SaveChangesAsync();
+
+                        // chuyển đổi trạng thái đăng kí thi lại
+                        var registerExam = await _context.RegisterExams.FirstOrDefaultAsync(r => r.StudentId == studentId && r.ExamId == model.exam_id);
+
+                        registerExam.Status = 2;
+                        _context.RegisterExams.Update(registerExam);
+                        await _context.SaveChangesAsync();
+
+                    }
+                    int order = 1;
+
+                    foreach (var question in selectedQuestions)
+                    {
+                        var questionTest = new QuestionTest
+                        {
+                            TestId = data.Id,
+                            QuestionId = question.Id,
+                            Orders = order
+                        };
+
+                        _context.QuestionTests.Add(questionTest);
+                        await _context.SaveChangesAsync();
+
+                        order++;
+                    }
+
+
+                    return Created($"get-by-id?id={data.Id}", new TestDTO
+                    {
+                        id = data.Id,
+                        name = data.Name,
+                        slug = data.Slug,
+                        exam_id = data.ExamId,
+                        startDate = data.StartDate,
+                        endDate = data.EndDate,
+                        past_marks = data.PastMarks,
+                        total_marks = data.TotalMarks,
+                        type_test = data.TypeTest,
+                        created_by = data.CreatedBy,
+                        status = data.Status,
+                        createdAt = data.CreatedAt,
+                        updatedAt = data.UpdatedAt,
+                        deletedAt = data.DeletedAt
+                    });
+                }
+                catch (Exception ex)
+                {
+                    return BadRequest(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 400,
+                        Message = ex.Message,
+                        Data = ""
+                    });
+                }
+            }
+            var msgs = ModelState.Values.SelectMany(v => v.Errors).Select(v => v.ErrorMessage);
+            return BadRequest(string.Join(" | ", msgs));
+        }
+
         [HttpPost("essay-by-hand")]
         public async Task<IActionResult> CreateEssayTestByHand(CreateEssayTestByHand model)
         { 
@@ -692,14 +1660,26 @@ namespace T2207A_SEM3_API.Controllers
                     if (nameExists)
                     {
                         // Nếu name đã tồn tại, trả về BadRequest hoặc thông báo lỗi tương tự
-                        return BadRequest("Class name already exists");
+                        return BadRequest(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 400,
+                            Message = "Test name already exists",
+                            Data = ""
+                        });
                     }
 
                     // kiểm tra số câu hỏi 
                     var result = model.questions.Count();
                     if (result > 1 || result < 1)
                     {
-                        return BadRequest("The number of questions is redundant or missing");
+                        return BadRequest(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 400,
+                            Message = "The number of questions is redundant or missing",
+                            Data = ""
+                        });
                     }
 
                     Test data = new Test
@@ -713,6 +1693,7 @@ namespace T2207A_SEM3_API.Controllers
                         TotalMarks = model.total_marks,
                         TypeTest = 1,
                         NumberOfQuestionsInExam = 1,
+                        RetakeTestId = null,
                         CreatedBy = model.created_by,
                         Status = 0,
                         CreatedAt = DateTime.Now,
@@ -736,6 +1717,23 @@ namespace T2207A_SEM3_API.Controllers
                         };
 
                         _context.StudentTests.Add(studentTest);
+                        await _context.SaveChangesAsync();
+
+                        // danh sách điểm
+                        var grade = new Grade
+                        {
+                            StudentId = studentId,
+                            TestId = data.Id,
+                            Status = 0,
+                            Score = 0,
+                            FinishedAt = null,
+                            IsRetake = false,
+                            CreatedAt = DateTime.Now,
+                            UpdatedAt = DateTime.Now,
+                            DeletedAt = null,
+                        };
+
+                        _context.Grades.Add(grade);
                         await _context.SaveChangesAsync();
                     }
 
@@ -800,12 +1798,240 @@ namespace T2207A_SEM3_API.Controllers
 
                 catch (Exception ex)
                 {
-                    return BadRequest(ex.Message);
+                    return BadRequest(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 400,
+                        Message = ex.Message,
+                        Data = ""
+                    });
                 }
             }
 
-            var msgs = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
-            return BadRequest(msgs);
+            var validationErrors = ModelState.Values.SelectMany(v => v.Errors).Select(v => v.ErrorMessage);
+
+            var validationResponse = new GeneralServiceResponse
+            {
+                Success = false,
+                StatusCode = 400,
+                Message = "Validation errors",
+                Data = string.Join(" | ", validationErrors)
+            };
+
+            return BadRequest(validationResponse);
+        }
+
+        [HttpPost("essay-by-hand/retake")]
+        public async Task<IActionResult> CreateEssayRetakeTestByHand(CreateEssayRetakeTestByHand model)
+        {
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    // Kiểm tra xem name đã tồn tại trong cơ sở dữ liệu hay chưa
+                    bool nameExists = await _context.Tests.AnyAsync(c => c.Name == model.name);
+
+                    if (nameExists)
+                    {
+                        // Nếu name đã tồn tại, trả về BadRequest hoặc thông báo lỗi tương tự
+                        return BadRequest(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 400,
+                            Message = "Test name already exists",
+                            Data = ""
+                        });
+                    }
+
+                    // kiểm tra số câu hỏi 
+                    var result = model.questions.Count();
+                    if (result > 1 || result < 1)
+                    {
+                        return BadRequest(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 400,
+                            Message = "The number of questions is redundant or missing",
+                            Data = ""
+                        });
+                    }
+
+                    var testMain = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null);
+                    if (testMain == null)
+                    {
+                        return NotFound(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 404,
+                            Message = "There is no official test yet",
+                            Data = ""
+                        });
+                    }
+
+                    // lấy ra danh sách học sinh đăng kí thi lại
+                    var studentIds = await _context.RegisterExams
+                        .Where(re => re.ExamId == model.exam_id && re.Status == 1)// lấy học sinh đã được duyệt
+                        .Select(re => re.StudentId)
+                        .ToListAsync();
+
+                    if (studentIds == null || !studentIds.Any())
+                    {
+                        return BadRequest(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 400,
+                            Message = "No students registered to retake the exam",
+                            Data = ""
+                        });
+                    }
+
+                    Test data = new Test
+                    {
+                        Name = model.name,
+                        Slug = model.name.ToLower().Replace(" ", "-"),
+                        ExamId = model.exam_id,
+                        StartDate = model.startDate,
+                        EndDate = model.endDate,
+                        PastMarks = model.past_marks,
+                        TotalMarks = model.total_marks,
+                        TypeTest = 1,
+                        NumberOfQuestionsInExam = 1,
+                        RetakeTestId = testMain.Id,
+                        CreatedBy = model.created_by,
+                        Status = 0,
+                        CreatedAt = DateTime.Now,
+                        UpdatedAt = DateTime.Now,
+                        DeletedAt = null,
+                    };
+                    _context.Tests.Add(data);
+                    await _context.SaveChangesAsync();
+
+                    // tạo danh sách thi
+                    foreach (var studentId in studentIds)
+                    {
+                        var studentTest = new StudentTest
+                        {
+                            TestId = data.Id,
+                            StudentId = studentId,
+                            Status = 0,
+                            CreatedAt = DateTime.Now,
+                            UpdatedAt = DateTime.Now,
+                            DeletedAt = null,
+                        };
+
+                        _context.StudentTests.Add(studentTest);
+                        await _context.SaveChangesAsync();
+
+                        // danh sách điểm
+                        var grade = new Grade
+                        {
+                            StudentId = studentId,
+                            TestId = data.Id,
+                            Status = 0,
+                            Score = 0,
+                            FinishedAt = null,
+                            IsRetake = true,
+                            CreatedAt = DateTime.Now,
+                            UpdatedAt = DateTime.Now,
+                            DeletedAt = null,
+                        };
+
+                        _context.Grades.Add(grade);
+                        await _context.SaveChangesAsync();
+
+                        _context.Grades.Add(grade);
+                        await _context.SaveChangesAsync();
+
+                        // chuyển đổi trạng thái đăng kí thi lại
+                        var registerExam = await _context.RegisterExams.FirstOrDefaultAsync(r => r.StudentId == studentId && r.ExamId == model.exam_id);
+
+                        registerExam.Status = 2;
+                        _context.RegisterExams.Update(registerExam);
+                        await _context.SaveChangesAsync();
+                    }
+
+                    int testId = data.Id;
+                    var courseClassId = _context.Tests
+                        .Where(t => t.Id == testId)
+                        .Select(t => t.Exam.CourseClassId)
+                        .SingleOrDefault();
+
+                    var courseId = _context.ClassCourses
+                        .Where(cc => cc.Id == courseClassId)
+                        .Select(cc => cc.CourseId)
+                        .SingleOrDefault();
+
+                    foreach (var questionModel in model.questions)
+                    {
+                        var question = new Question
+                        {
+                            Title = questionModel.title,
+                            Level = 3,
+                            QuestionType = 1,
+                            CourseId = courseId,
+                            Score = 100,
+                            CreatedAt = DateTime.UtcNow,
+                            UpdatedAt = DateTime.UtcNow,
+                            DeletedAt = null,
+                        };
+
+                        _context.Questions.Add(question);
+                        await _context.SaveChangesAsync();
+
+                        var question_test = new QuestionTest
+                        {
+                            TestId = data.Id,
+                            QuestionId = question.Id,
+                            Orders = 1 // Gán thứ tự cho câu hỏi
+                        };
+
+
+                        _context.QuestionTests.Add(question_test);
+                        await _context.SaveChangesAsync();
+                    }
+
+                    return Created($"get-by-id?id={data.Id}", new TestDTO
+                    {
+                        id = data.Id,
+                        name = data.Name,
+                        slug = data.Slug,
+                        exam_id = data.ExamId,
+                        startDate = data.StartDate,
+                        endDate = data.EndDate,
+                        past_marks = data.PastMarks,
+                        total_marks = data.TotalMarks,
+                        type_test = data.TypeTest,
+                        created_by = data.CreatedBy,
+                        status = data.Status,
+                        createdAt = data.CreatedAt,
+                        updatedAt = data.UpdatedAt,
+                        deletedAt = data.DeletedAt
+                    });
+                }
+
+                catch (Exception ex)
+                {
+                    return BadRequest(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 400,
+                        Message = ex.Message,
+                        Data = ""
+                    });
+                }
+            }
+
+            var validationErrors = ModelState.Values.SelectMany(v => v.Errors).Select(v => v.ErrorMessage);
+
+            var validationResponse = new GeneralServiceResponse
+            {
+                Success = false,
+                StatusCode = 400,
+                Message = "Validation errors",
+                Data = string.Join(" | ", validationErrors)
+            };
+
+            return BadRequest(validationResponse);
         }
 
         [HttpPost("essay-by-auto")]
@@ -821,7 +2047,7 @@ namespace T2207A_SEM3_API.Controllers
                     if (nameExists)
                     {
                         // Nếu name đã tồn tại, trả về BadRequest hoặc thông báo lỗi tương tự
-                        return BadRequest("Class name already exists");
+                        return BadRequest(new GeneralServiceResponse { Success = false, StatusCode = 400, Message = "Class name already exists", Data = "" });
                     }
 
                     // lấy danh sách câu hỏi cho đề thi
@@ -837,7 +2063,13 @@ namespace T2207A_SEM3_API.Controllers
 
                     if (randomHardQuestions.Count() != 1)
                     {
-                        return BadRequest("The number of hard questions is not enough, the exam cannot be created");
+                        return BadRequest(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 400,
+                            Message = "The number of hard questions is not enough, the exam cannot be created",
+                            Data = ""
+                        });
                     }
 
                     selectedQuestions.AddRange(randomHardQuestions);
@@ -854,6 +2086,7 @@ namespace T2207A_SEM3_API.Controllers
                         TotalMarks = model.total_marks,
                         TypeTest = 1,
                         NumberOfQuestionsInExam = 1,
+                        RetakeTestId = null,
                         CreatedBy = model.created_by,
                         Status = 0,
                         CreatedAt = DateTime.Now,
@@ -877,6 +2110,23 @@ namespace T2207A_SEM3_API.Controllers
                         };
 
                         _context.StudentTests.Add(studentTest);
+                        await _context.SaveChangesAsync();
+
+                        // danh sách điểm
+                        var grade = new Grade
+                        {
+                            StudentId = studentId,
+                            TestId = data.Id,
+                            Status = 0,
+                            Score = 0,
+                            FinishedAt = null,
+                            IsRetake = false,
+                            CreatedAt = DateTime.Now,
+                            UpdatedAt = DateTime.Now,
+                            DeletedAt = null,
+                        };
+
+                        _context.Grades.Add(grade);
                         await _context.SaveChangesAsync();
 
                     }
@@ -916,11 +2166,203 @@ namespace T2207A_SEM3_API.Controllers
                 }
                 catch (Exception ex)
                 {
-                    return BadRequest(ex.Message);
+                    new GeneralServiceResponse { Success = false, StatusCode = 400, Message = ex.Message, Data = "" };
                 }
             }
-            var msgs = ModelState.Values.SelectMany(v => v.Errors).Select(v => v.ErrorMessage);
-            return BadRequest(string.Join(" | ", msgs));
+            var validationErrors = ModelState.Values.SelectMany(v => v.Errors).Select(v => v.ErrorMessage);
+
+            var validationResponse = new GeneralServiceResponse
+            {
+                Success = false,
+                StatusCode = 400,
+                Message = "Validation errors",
+                Data = string.Join(" | ", validationErrors)
+            };
+
+            return BadRequest(validationResponse);
+        }
+
+        [HttpPost("essay-by-auto/retake")]
+        public async Task<IActionResult> CreateEssayRetakeTestByAuto(CreateEssayRetakeTestByAuto model)
+        {
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    // Kiểm tra xem name đã tồn tại trong cơ sở dữ liệu hay chưa
+                    bool nameExists = await _context.Tests.AnyAsync(c => c.Name == model.name);
+
+                    if (nameExists)
+                    {
+                        // Nếu name đã tồn tại, trả về BadRequest hoặc thông báo lỗi tương tự
+                        return BadRequest(new GeneralServiceResponse { Success = false, StatusCode = 400, Message = "Class name already exists", Data = "" });
+                    }
+
+                    var testMain = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null);
+                    if (testMain == null)
+                    {
+                        return NotFound(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 404,
+                            Message = "There is no official test yet",
+                            Data = ""
+                        });
+                    }
+
+                    // lấy ra danh sách học sinh đăng kí thi lại
+                    var studentIds = await _context.RegisterExams
+                        .Where(re => re.ExamId == model.exam_id && re.Status == 1)// lấy học sinh đã được duyệt
+                        .Select(re => re.StudentId)
+                        .ToListAsync();
+
+                    if (studentIds == null || !studentIds.Any())
+                    {
+                        return BadRequest(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 400,
+                            Message = "No students registered to retake the exam",
+                            Data = ""
+                        });
+                    }
+
+                    // lấy danh sách câu hỏi cho đề thi
+                    var selectedQuestions = new List<Question>();
+
+
+                    // chọn câu hỏi hard 
+                    var randomHardQuestions = _context.Questions
+                        .Where(q => q.Level == 3 && q.QuestionType == 1)
+                        .OrderBy(x => Guid.NewGuid()) // Lấy ngẫu nhiên
+                        .Take(1) // Lấy 1 câu hỏi
+                        .ToList();
+
+                    if (randomHardQuestions.Count() != 1)
+                    {
+                        return BadRequest(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 400,
+                            Message = "The number of hard questions is not enough, the exam cannot be created",
+                            Data = ""
+                        });
+                    }
+
+                    selectedQuestions.AddRange(randomHardQuestions);
+
+
+                    Test data = new Test
+                    {
+                        Name = model.name,
+                        Slug = model.name.ToLower().Replace(" ", "-"),
+                        ExamId = model.exam_id,
+                        StartDate = model.startDate,
+                        EndDate = model.endDate,
+                        PastMarks = model.past_marks,
+                        TotalMarks = model.total_marks,
+                        TypeTest = 1,
+                        NumberOfQuestionsInExam = 1,
+                        RetakeTestId = testMain.Id,
+                        CreatedBy = model.created_by,
+                        Status = 0,
+                        CreatedAt = DateTime.Now,
+                        UpdatedAt = DateTime.Now,
+                        DeletedAt = null,
+                    };
+                    _context.Tests.Add(data);
+                    await _context.SaveChangesAsync();
+
+                    // tạo danh sách thi
+                    foreach (var studentId in studentIds)
+                    {
+                        var studentTest = new StudentTest
+                        {
+                            TestId = data.Id,
+                            StudentId = studentId,
+                            Status = 0,
+                            CreatedAt = DateTime.Now,
+                            UpdatedAt = DateTime.Now,
+                            DeletedAt = null,
+                        };
+
+                        _context.StudentTests.Add(studentTest);
+                        await _context.SaveChangesAsync();
+
+                        // danh sách điểm
+                        var grade = new Grade
+                        {
+                            StudentId = studentId,
+                            TestId = data.Id,
+                            Status = 0,
+                            Score = 0,
+                            FinishedAt = null,
+                            IsRetake = true,
+                            CreatedAt = DateTime.Now,
+                            UpdatedAt = DateTime.Now,
+                            DeletedAt = null,
+                        };
+
+                        _context.Grades.Add(grade);
+                        await _context.SaveChangesAsync();
+
+                        // chuyển đổi trạng thái đăng kí thi lại
+                        var registerExam = await _context.RegisterExams.FirstOrDefaultAsync(r => r.StudentId == studentId && r.ExamId == model.exam_id);
+
+                        registerExam.Status = 2;
+                        _context.RegisterExams.Update(registerExam);
+                        await _context.SaveChangesAsync();
+                    }
+
+                    foreach (var question in selectedQuestions)
+                    {
+                        var questionTest = new QuestionTest
+                        {
+                            TestId = data.Id,
+                            QuestionId = question.Id,
+                            Orders = 1
+                        };
+
+                        _context.QuestionTests.Add(questionTest);
+                        await _context.SaveChangesAsync();
+
+                    }
+
+
+                    return Created($"get-by-id?id={data.Id}", new TestDTO
+                    {
+                        id = data.Id,
+                        name = data.Name,
+                        slug = data.Slug,
+                        exam_id = data.ExamId,
+                        startDate = data.StartDate,
+                        endDate = data.EndDate,
+                        past_marks = data.PastMarks,
+                        total_marks = data.TotalMarks,
+                        type_test = data.TypeTest,
+                        created_by = data.CreatedBy,
+                        status = data.Status,
+                        createdAt = data.CreatedAt,
+                        updatedAt = data.UpdatedAt,
+                        deletedAt = data.DeletedAt
+                    });
+                }
+                catch (Exception ex)
+                {
+                    new GeneralServiceResponse { Success = false, StatusCode = 400, Message = ex.Message, Data = "" };
+                }
+            }
+            var validationErrors = ModelState.Values.SelectMany(v => v.Errors).Select(v => v.ErrorMessage);
+
+            var validationResponse = new GeneralServiceResponse
+            {
+                Success = false,
+                StatusCode = 400,
+                Message = "Validation errors",
+                Data = string.Join(" | ", validationErrors)
+            };
+
+            return BadRequest(validationResponse);
         }
 
         [HttpPut]

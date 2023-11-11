@@ -15,7 +15,9 @@ public partial class Grade
 
     public int Status { get; set; }
 
-    public DateTime FinishedAt { get; set; }
+    public bool? IsRetake { get; set; }
+
+    public DateTime? FinishedAt { get; set; }
 
     public DateTime? CreatedAt { get; set; }
 

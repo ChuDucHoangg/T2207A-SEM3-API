@@ -12,7 +12,7 @@
 
         public int status { get; set; }
 
-        public DateTime finishedAt { get; set; }
+        public DateTime? finishedAt { get; set; }
 
         public DateTime? createdAt { get; set; }
 

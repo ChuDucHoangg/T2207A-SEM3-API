@@ -1,6 +1,9 @@
 ﻿using Azure;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using T2207A_SEM3_API.DTOs;
 using T2207A_SEM3_API.Entities;
 using T2207A_SEM3_API.Models.ClassCourse;
@@ -52,11 +55,36 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpGet("by-classId")]
-        public async Task<IActionResult> GetCourseByClassId(int id)
+        [Authorize]
+        public async Task<IActionResult> GetCourseByClassId()
         {
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+
+            if (!identity.IsAuthenticated)
+            {
+                return Unauthorized(new GeneralServiceResponse { Success = false, StatusCode = 401, Message = "Not Authorized", Data = "" });
+            }
             try
             {
-                List<ClassCourseResponse> courses = await _classCourseService.GetCourseByClassIdAsync(id);
+                var userClaims = identity.Claims;
+                var userId = userClaims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+                var user = await _context.Students
+                    .Include(u => u.Class)
+                    .FirstOrDefaultAsync(u => u.Id == Convert.ToInt32(userId));
+
+                if (user == null)
+                {
+                    return NotFound(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 404,
+                        Message = "Incorrect current password",
+                        Data = ""
+                    });
+                }
+
+                List<ClassCourseResponse> courses = await _classCourseService.GetCourseByClassIdAsync(user.ClassId);
                 return Ok(new GeneralServiceResponse
                 {
                     Success = true,
