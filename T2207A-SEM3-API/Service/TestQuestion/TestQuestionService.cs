@@ -73,5 +73,52 @@ namespace T2207A_SEM3_API.Service.ClassCourses
             return await _context.StudentTests.Where(st => st.TestId == testId && st.StudentId == studentId).FirstOrDefaultAsync();
         }
 
+        public async Task<List<QuestionAnswerStatusResponse>> GetTestQuestionsForTestDetailForAdmin(int testId)
+        {
+            // Lấy danh sách ID của các câu hỏi thuộc bài thi
+            var questionIds = await _context.QuestionTests
+                .Where(qt => qt.TestId == testId)
+                .OrderBy(qt => qt.Orders)
+                .Select(qt => new { qt.QuestionId, qt.Orders })
+                .ToListAsync();
+
+            // Lấy danh sách câu hỏi dựa trên các ID câu hỏi
+            var questions = new List<Question>();
+            foreach (var item in questionIds)
+            {
+                var question = await _context.Questions
+                    .Where(q => q.Id == item.QuestionId)
+                    .FirstOrDefaultAsync();
+
+                if (question != null)
+                {
+                    questions.Add(question);
+                }
+            }
+
+            // Chuyển đổi dữ liệu câu hỏi và đáp án thành định dạng phản hồi
+            var questionAnswerResponses = new List<QuestionAnswerStatusResponse>();
+            foreach (var question in questions)
+            {
+                var answerContentResponses = question.Answers.Select(answer => new AnswerContentResultResponse
+                {
+                    id = answer.Id,
+                    content = answer.Content,
+                    status = answer.Status,
+                    
+                }).ToList();
+
+                var questionAnswerResponse = new QuestionAnswerStatusResponse
+                {
+                    id = question.Id,
+                    title = question.Title,
+                    Answers = answerContentResponses
+                };
+
+                questionAnswerResponses.Add(questionAnswerResponse);
+
+            }
+            return questionAnswerResponses;
+        }
     }
 }

@@ -783,7 +783,7 @@ namespace T2207A_SEM3_API.Controllers
                     return BadRequest("Test does not exist");
                 }
 
-                var quequestionAnswerResponses = await _testQuestionService.GetTestQuestionsForTestDetail(test.Id);
+                var quequestionAnswerResponses = await _testQuestionService.GetTestQuestionsForTestDetailForAdmin(test.Id);
 
                 return Ok(quequestionAnswerResponses);
             } catch (Exception ex)
