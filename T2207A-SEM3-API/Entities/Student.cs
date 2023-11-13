@@ -29,6 +29,10 @@ public partial class Student
 
     public int Status { get; set; }
 
+    public string? ResetToken { get; set; }
+
+    public DateTime? ResetTokenExpiry { get; set; }
+
     public DateTime? CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }

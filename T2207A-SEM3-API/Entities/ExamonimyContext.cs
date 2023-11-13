@@ -51,7 +51,7 @@ public partial class ExamonimyContext : DbContext
     {
         modelBuilder.Entity<Answer>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Answers__3213E83F399440D2");
+            entity.HasKey(e => e.Id).HasName("PK__Answers__3213E83FFB87DA49");
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Content)
@@ -72,12 +72,12 @@ public partial class ExamonimyContext : DbContext
             entity.HasOne(d => d.Question).WithMany(p => p.Answers)
                 .HasForeignKey(d => d.QuestionId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Answers__questio__54EB90A0");
+                .HasConstraintName("FK__Answers__questio__0B47A151");
         });
 
         modelBuilder.Entity<AnswersForStudent>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__AnswersF__3213E83FB0FBA991");
+            entity.HasKey(e => e.Id).HasName("PK__AnswersF__3213E83F21A13BFC");
 
             entity.ToTable("AnswersForStudent");
 
@@ -101,24 +101,24 @@ public partial class ExamonimyContext : DbContext
             entity.HasOne(d => d.Question).WithMany(p => p.AnswersForStudents)
                 .HasForeignKey(d => d.QuestionId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__AnswersFo__quest__57C7FD4B");
+                .HasConstraintName("FK__AnswersFo__quest__0E240DFC");
 
             entity.HasOne(d => d.Student).WithMany(p => p.AnswersForStudents)
                 .HasForeignKey(d => d.StudentId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__AnswersFo__stude__59B045BD");
+                .HasConstraintName("FK__AnswersFo__stude__100C566E");
 
             entity.HasOne(d => d.Test).WithMany(p => p.AnswersForStudents)
                 .HasForeignKey(d => d.TestId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__AnswersFo__test___58BC2184");
+                .HasConstraintName("FK__AnswersFo__test___0F183235");
         });
 
         modelBuilder.Entity<Class>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Classes__3213E83F2F51EECF");
+            entity.HasKey(e => e.Id).HasName("PK__Classes__3213E83F28F68EAC");
 
-            entity.HasIndex(e => e.Name, "UQ__Classes__72E12F1B35A881A9").IsUnique();
+            entity.HasIndex(e => e.Name, "UQ__Classes__72E12F1BAA2CBA2A").IsUnique();
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.CreatedAt)
@@ -145,12 +145,12 @@ public partial class ExamonimyContext : DbContext
             entity.HasOne(d => d.Teacher).WithMany(p => p.Classes)
                 .HasForeignKey(d => d.TeacherId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Classes__teacher__10416098");
+                .HasConstraintName("FK__Classes__teacher__68F2894D");
         });
 
         modelBuilder.Entity<ClassCourse>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Class_Co__3213E83F300FA1F9");
+            entity.HasKey(e => e.Id).HasName("PK__Class_Co__3213E83F28708B7A");
 
             entity.ToTable("Class_Course");
 
@@ -178,22 +178,22 @@ public partial class ExamonimyContext : DbContext
             entity.HasOne(d => d.Class).WithMany(p => p.ClassCourses)
                 .HasForeignKey(d => d.ClassId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Class_Cou__class__19CACAD2");
+                .HasConstraintName("FK__Class_Cou__class__727BF387");
 
             entity.HasOne(d => d.Course).WithMany(p => p.ClassCourses)
                 .HasForeignKey(d => d.CourseId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Class_Cou__cours__1ABEEF0B");
+                .HasConstraintName("FK__Class_Cou__cours__737017C0");
 
             entity.HasOne(d => d.CreatedByNavigation).WithMany(p => p.ClassCourses)
                 .HasForeignKey(d => d.CreatedBy)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Class_Cou__creat__1BB31344");
+                .HasConstraintName("FK__Class_Cou__creat__74643BF9");
         });
 
         modelBuilder.Entity<Course>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Courses__3213E83F8FF2565D");
+            entity.HasKey(e => e.Id).HasName("PK__Courses__3213E83FC7E7B80A");
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.CourseCode)
@@ -216,9 +216,9 @@ public partial class ExamonimyContext : DbContext
 
         modelBuilder.Entity<Exam>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Exams__3213E83F256250DA");
+            entity.HasKey(e => e.Id).HasName("PK__Exams__3213E83F8A96DF5E");
 
-            entity.HasIndex(e => e.Name, "UQ__Exams__72E12F1B27D17777").IsUnique();
+            entity.HasIndex(e => e.Name, "UQ__Exams__72E12F1B6D9007DB").IsUnique();
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.CourseClassId).HasColumnName("courseClass_id");
@@ -246,16 +246,16 @@ public partial class ExamonimyContext : DbContext
             entity.HasOne(d => d.CourseClass).WithMany(p => p.Exams)
                 .HasForeignKey(d => d.CourseClassId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Exams__courseCla__1F83A428");
+                .HasConstraintName("FK__Exams__courseCla__7834CCDD");
 
             entity.HasOne(d => d.CreatedByNavigation).WithMany(p => p.Exams)
                 .HasForeignKey(d => d.CreatedBy)
-                .HasConstraintName("FK__Exams__created_b__2077C861");
+                .HasConstraintName("FK__Exams__created_b__7928F116");
         });
 
         modelBuilder.Entity<Grade>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Grades__3213E83F367F750D");
+            entity.HasKey(e => e.Id).HasName("PK__Grades__3213E83F1DF7B005");
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.CreatedAt)
@@ -279,17 +279,17 @@ public partial class ExamonimyContext : DbContext
             entity.HasOne(d => d.Student).WithMany(p => p.Grades)
                 .HasForeignKey(d => d.StudentId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Grades__student___5C8CB268");
+                .HasConstraintName("FK__Grades__student___12E8C319");
 
             entity.HasOne(d => d.Test).WithMany(p => p.Grades)
                 .HasForeignKey(d => d.TestId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Grades__test_id__5D80D6A1");
+                .HasConstraintName("FK__Grades__test_id__13DCE752");
         });
 
         modelBuilder.Entity<Question>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Question__3213E83FBCFBE6BA");
+            entity.HasKey(e => e.Id).HasName("PK__Question__3213E83F1CD7EA67");
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.CourseId).HasColumnName("course_id");
@@ -312,12 +312,12 @@ public partial class ExamonimyContext : DbContext
             entity.HasOne(d => d.Course).WithMany(p => p.Questions)
                 .HasForeignKey(d => d.CourseId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Questions__cours__4E3E9311");
+                .HasConstraintName("FK__Questions__cours__049AA3C2");
         });
 
         modelBuilder.Entity<QuestionTest>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Question__3213E83F5F93B3CB");
+            entity.HasKey(e => e.Id).HasName("PK__Question__3213E83F4CA2E364");
 
             entity.ToTable("Question_Test");
 
@@ -329,17 +329,17 @@ public partial class ExamonimyContext : DbContext
             entity.HasOne(d => d.Question).WithMany(p => p.QuestionTests)
                 .HasForeignKey(d => d.QuestionId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Question___quest__520F23F5");
+                .HasConstraintName("FK__Question___quest__086B34A6");
 
             entity.HasOne(d => d.Test).WithMany(p => p.QuestionTests)
                 .HasForeignKey(d => d.TestId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Question___test___511AFFBC");
+                .HasConstraintName("FK__Question___test___0777106D");
         });
 
         modelBuilder.Entity<RegisterExam>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Register__3213E83FBBB18FD9");
+            entity.HasKey(e => e.Id).HasName("PK__Register__3213E83F27E114B6");
 
             entity.ToTable("RegisterExam");
 
@@ -360,21 +360,21 @@ public partial class ExamonimyContext : DbContext
             entity.HasOne(d => d.Exam).WithMany(p => p.RegisterExams)
                 .HasForeignKey(d => d.ExamId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__RegisterE__exam___61516785");
+                .HasConstraintName("FK__RegisterE__exam___17AD7836");
 
             entity.HasOne(d => d.Student).WithMany(p => p.RegisterExams)
                 .HasForeignKey(d => d.StudentId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__RegisterE__stude__605D434C");
+                .HasConstraintName("FK__RegisterE__stude__16B953FD");
         });
 
         modelBuilder.Entity<Staff>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Staffs__3213E83F36ED1870");
+            entity.HasKey(e => e.Id).HasName("PK__Staffs__3213E83F57CFE327");
 
-            entity.HasIndex(e => e.StaffCode, "UQ__Staffs__097F3286F435C228").IsUnique();
+            entity.HasIndex(e => e.StaffCode, "UQ__Staffs__097F328696C595AD").IsUnique();
 
-            entity.HasIndex(e => e.Email, "UQ__Staffs__AB6E616499413140").IsUnique();
+            entity.HasIndex(e => e.Email, "UQ__Staffs__AB6E61649A7024DA").IsUnique();
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Address)
@@ -411,6 +411,13 @@ public partial class ExamonimyContext : DbContext
                 .HasMaxLength(12)
                 .IsUnicode(false)
                 .HasColumnName("phone");
+            entity.Property(e => e.ResetToken)
+                .HasMaxLength(255)
+                .IsUnicode(false)
+                .HasColumnName("resetToken");
+            entity.Property(e => e.ResetTokenExpiry)
+                .HasColumnType("datetime")
+                .HasColumnName("resetTokenExpiry");
             entity.Property(e => e.Role)
                 .HasMaxLength(255)
                 .IsUnicode(false)
@@ -425,11 +432,11 @@ public partial class ExamonimyContext : DbContext
 
         modelBuilder.Entity<Student>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Students__3213E83F47CBB738");
+            entity.HasKey(e => e.Id).HasName("PK__Students__3213E83FC8E890BC");
 
-            entity.HasIndex(e => e.StudentCode, "UQ__Students__6DF33C458D052177").IsUnique();
+            entity.HasIndex(e => e.StudentCode, "UQ__Students__6DF33C4508993540").IsUnique();
 
-            entity.HasIndex(e => e.Email, "UQ__Students__AB6E61648022A7A6").IsUnique();
+            entity.HasIndex(e => e.Email, "UQ__Students__AB6E616485756E17").IsUnique();
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Address)
@@ -468,6 +475,13 @@ public partial class ExamonimyContext : DbContext
                 .HasMaxLength(12)
                 .IsUnicode(false)
                 .HasColumnName("phone");
+            entity.Property(e => e.ResetToken)
+                .HasMaxLength(255)
+                .IsUnicode(false)
+                .HasColumnName("resetToken");
+            entity.Property(e => e.ResetTokenExpiry)
+                .HasColumnType("datetime")
+                .HasColumnName("resetTokenExpiry");
             entity.Property(e => e.Status).HasColumnName("status");
             entity.Property(e => e.StudentCode)
                 .HasMaxLength(100)
@@ -480,12 +494,12 @@ public partial class ExamonimyContext : DbContext
             entity.HasOne(d => d.Class).WithMany(p => p.Students)
                 .HasForeignKey(d => d.ClassId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Students__class___150615B5");
+                .HasConstraintName("FK__Students__class___6DB73E6A");
         });
 
         modelBuilder.Entity<StudentTest>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Student___3213E83FDDC78280");
+            entity.HasKey(e => e.Id).HasName("PK__Student___3213E83F8F1FE495");
 
             entity.ToTable("Student_Test");
 
@@ -506,19 +520,19 @@ public partial class ExamonimyContext : DbContext
             entity.HasOne(d => d.Student).WithMany(p => p.StudentTests)
                 .HasForeignKey(d => d.StudentId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Student_T__stude__4B622666");
+                .HasConstraintName("FK__Student_T__stude__01BE3717");
 
             entity.HasOne(d => d.Test).WithMany(p => p.StudentTests)
                 .HasForeignKey(d => d.TestId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Student_T__test___4A6E022D");
+                .HasConstraintName("FK__Student_T__test___00CA12DE");
         });
 
         modelBuilder.Entity<Test>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Tests__3213E83FC7D4D93D");
+            entity.HasKey(e => e.Id).HasName("PK__Tests__3213E83F31F2C837");
 
-            entity.HasIndex(e => e.Name, "UQ__Tests__72E12F1B024C28A5").IsUnique();
+            entity.HasIndex(e => e.Name, "UQ__Tests__72E12F1B994605CC").IsUnique();
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.CreatedAt)
@@ -555,12 +569,12 @@ public partial class ExamonimyContext : DbContext
             entity.HasOne(d => d.CreatedByNavigation).WithMany(p => p.Tests)
                 .HasForeignKey(d => d.CreatedBy)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Tests__created_b__47919582");
+                .HasConstraintName("FK__Tests__created_b__7DEDA633");
 
             entity.HasOne(d => d.Exam).WithMany(p => p.Tests)
                 .HasForeignKey(d => d.ExamId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Tests__exam_id__469D7149");
+                .HasConstraintName("FK__Tests__exam_id__7CF981FA");
         });
 
         OnModelCreatingPartial(modelBuilder);

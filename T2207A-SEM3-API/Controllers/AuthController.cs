@@ -3,15 +3,18 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Org.BouncyCastle.Pqc.Crypto.Lms;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using T2207A_SEM3_API.DTOs;
 using T2207A_SEM3_API.Entities;
+using T2207A_SEM3_API.Helper.Email;
 using T2207A_SEM3_API.Models.General;
 using T2207A_SEM3_API.Models.Staff;
 using T2207A_SEM3_API.Models.Student;
 using T2207A_SEM3_API.Models.User;
+using T2207A_SEM3_API.Service.Email;
 using T2207A_SEM3_API.Service.UploadFiles;
 
 namespace T2207A_SEM3_API.Controllers
@@ -23,12 +26,14 @@ namespace T2207A_SEM3_API.Controllers
         private readonly ExamonimyContext _context;
         private readonly IConfiguration _config;
         private readonly IImgService _imgService;
+        private readonly IEmailService _emailService;
 
-        public AuthController(ExamonimyContext context, IConfiguration config, IImgService imgService)
+        public AuthController(ExamonimyContext context, IConfiguration config, IImgService imgService, IEmailService emailService)
         {
             _context = context;
             _config = config;
             _imgService = imgService;
+            _emailService = emailService;
         }
 
         private string GenerateTokenStaff(Staff user)
@@ -319,6 +324,194 @@ namespace T2207A_SEM3_API.Controllers
                     Data = ""
                 });
             }
+        }
+
+        [HttpPost]
+        [Route("student/forgot-password")]
+        public async Task<IActionResult> StudentForgotPassword(ForgotPasswordModel model)
+        {
+            try
+            {
+                var student = await _context.Students.FirstOrDefaultAsync(s => s.Email == model.email);
+                if (student == null)
+                {
+                    return BadRequest(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 404,
+                        Message = "Student not found"
+                    });
+                }
+
+                var resetToken = GenerateResetToken();
+                student.ResetToken = resetToken;
+                student.ResetTokenExpiry = DateTime.UtcNow.AddHours(1); // Thời gian hết hiệu lực của token: 1 giờ
+                await _context.SaveChangesAsync();
+
+                var resetLink = "https://localhost:7218/api/Auth/student/reset-password/"+resetToken;
+
+                /*Mailrequest mailrequest = new Mailrequest();
+                mailrequest.ToEmail = "trungtvt.dev@gmail.com";
+                mailrequest.Subject = "Password Reset";
+                mailrequest.Body = $"Click the link to reset your password: {resetLink}";
+
+                await _emailService.SendEmailAsync(mailrequest);*/
+
+
+                return Ok(new GeneralServiceResponse
+                {
+                    Success = true,
+                    Message = "Password reset email sent successfully"
+                });
+            } catch (Exception ex)
+            {
+                return null;
+            }
+        }
+
+        [HttpPost("student/reset-password/{token}")]
+        public async Task<IActionResult> StudentResetPassword(string token, ResetPasswordModel model)
+        {
+            try
+            {
+                var student = await _context.Students.FirstOrDefaultAsync(s => s.Email == model.Email);
+                if (student == null)
+                {
+                    return NotFound(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 404,
+                        Message = "Student not found"
+                    });
+                }
+
+                // Kiểm tra tính hợp lệ của mã reset
+                if (model == null || string.IsNullOrEmpty(token) || student.ResetToken != token || student.Email != model.Email || student.ResetTokenExpiry < DateTime.UtcNow)
+                {
+                    return BadRequest(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 400,
+                        Message = "Invalid or expired reset token"
+                    });
+                }
+
+                // Cập nhật mật khẩu
+                var salt = BCrypt.Net.BCrypt.GenerateSalt(10);
+                var hassNewPassword = BCrypt.Net.BCrypt.HashPassword(model.NewPassword, salt);
+
+                student.Password = hassNewPassword; // Hash mật khẩu trước khi lưu
+                student.ResetToken = null;
+                student.ResetTokenExpiry = null;
+                await _context.SaveChangesAsync();
+
+                return Ok(new GeneralServiceResponse
+                {
+                    Success = true,
+                    Message = "Password reset successful"
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPost]
+        [Route("staff/forgot-password")]
+        public async Task<IActionResult> StaffForgotPassword(ForgotPasswordModel model)
+        {
+            try
+            {
+                var staff = await _context.Staffs.FirstOrDefaultAsync(s => s.Email == model.email);
+                if (staff == null)
+                {
+                    return BadRequest(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 404,
+                        Message = "Staff not found"
+                    });
+                }
+
+                var resetToken = GenerateResetToken();
+                staff.ResetToken = resetToken;
+                staff.ResetTokenExpiry = DateTime.UtcNow.AddHours(1); // Thời gian hết hiệu lực của token: 1 giờ
+                await _context.SaveChangesAsync();
+
+                var resetLink = "https://localhost:7218/api/Auth/staff/reset-password/" + resetToken;
+
+                /*Mailrequest mailrequest = new Mailrequest();
+                mailrequest.ToEmail = "trungtvt.dev@gmail.com";
+                mailrequest.Subject = "Password Reset";
+                mailrequest.Body = $"Click the link to reset your password: {resetLink}";
+
+                await _emailService.SendEmailAsync(mailrequest);*/
+
+
+                return Ok(new GeneralServiceResponse
+                {
+                    Success = true,
+                    Message = "Password reset email sent successfully"
+                });
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
+        }
+
+        [HttpPost("Staff/reset-password/{token}")]
+        public async Task<IActionResult> StaffResetPassword(string token, ResetPasswordModel model)
+        {
+            try
+            {
+                var staff = await _context.Staffs.FirstOrDefaultAsync(s => s.Email == model.Email);
+                if (staff == null)
+                {
+                    return NotFound(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 404,
+                        Message = "Staff not found"
+                    });
+                }
+
+                // Kiểm tra tính hợp lệ của mã reset
+                if (model == null || string.IsNullOrEmpty(token) || staff.ResetToken != token || staff.Email != model.Email || staff.ResetTokenExpiry < DateTime.UtcNow)
+                {
+                    return BadRequest(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 400,
+                        Message = "Invalid or expired reset token"
+                    });
+                }
+
+                // Cập nhật mật khẩu
+                var salt = BCrypt.Net.BCrypt.GenerateSalt(10);
+                var hassNewPassword = BCrypt.Net.BCrypt.HashPassword(model.NewPassword, salt);
+
+                staff.Password = hassNewPassword; // Hash mật khẩu trước khi lưu
+                staff.ResetToken = null;
+                staff.ResetTokenExpiry = null;
+                await _context.SaveChangesAsync();
+
+                return Ok(new GeneralServiceResponse
+                {
+                    Success = true,
+                    Message = "Password reset successful"
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        private string GenerateResetToken()
+        {
+            return Guid.NewGuid().ToString();
         }
 
         [HttpGet]

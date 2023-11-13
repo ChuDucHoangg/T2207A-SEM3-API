@@ -81,18 +81,23 @@ namespace T2207A_SEM3_API.Service.CourseClass
         public async Task<List<ClassCourseResponse>> GetCourseByClassIdAsync(int id)
         {
 
-            List<ClassCourse> classCourses = await _context.ClassCourses.Include(c => c.Class).ThenInclude(c => c.Students).Include(c => c.Course).Include(c => c.CreatedByNavigation).Where(c => c.ClassId == id).ToListAsync();
+            List<ClassCourse> classCourses = await _context.ClassCourses.Include(c => c.Class).ThenInclude(c => c.Students).Include(c => c.Course).Where(c => c.ClassId == id).ToListAsync();
 
             List<ClassCourseResponse> data = new List<ClassCourseResponse>();
 
             foreach (ClassCourse cr in classCourses)
             {
+                var staff = await _context.Staffs.FirstOrDefaultAsync(st => st.Id == cr.Class.TeacherId);
+                if (staff == null)
+                {
+                    throw new Exception("Not Found");
+                }
                 data.Add(new ClassCourseResponse
                 {
                     classCourseId = cr.Id,
                     className = cr.Class.Name,
                     courseName = cr.Course.Name,
-                    createByName = cr.CreatedByNavigation.Fullname,
+                    createByName = staff.Fullname,
                     numberOfStudents = cr.Class.Students.Count,
                     startDate = cr.StartDate,
                     endDate = cr.EndDate,

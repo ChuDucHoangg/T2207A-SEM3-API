@@ -12,11 +12,14 @@ using System.Security.Claims;
 using System.Text;
 using T2207A_SEM3_API.DTOs;
 using T2207A_SEM3_API.Entities;
+using T2207A_SEM3_API.Helper.Email;
 using T2207A_SEM3_API.Models.Answer;
 using T2207A_SEM3_API.Models.General;
 using T2207A_SEM3_API.Models.Question;
+using T2207A_SEM3_API.Models.Student;
 using T2207A_SEM3_API.Models.Test;
 using T2207A_SEM3_API.Service.ClassCourses;
+using T2207A_SEM3_API.Service.Email;
 using static System.Net.Mime.MediaTypeNames;
 
 namespace T2207A_SEM3_API.Controllers
@@ -26,10 +29,12 @@ namespace T2207A_SEM3_API.Controllers
     public class TestController : Controller
     {
         private readonly ExamonimyContext _context;
+        private readonly IEmailService _emailService;
 
-        public TestController(ExamonimyContext context)
+        public TestController(ExamonimyContext context, IEmailService emailService)
         {
             _context = context;
+            _emailService = emailService;
         }
 
         [HttpGet]
@@ -120,6 +125,19 @@ namespace T2207A_SEM3_API.Controllers
                             Success = false,
                             StatusCode = 400,
                             Message = "Test name already exists",
+                            Data = ""
+                        });
+                    }
+
+                    // chỉ có 1 bài test chính còn lại là test thi lại
+                    var testExists = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null);
+                    if (testExists != null)
+                    {
+                        return BadRequest(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 400,
+                            Message = "Test already exists",
                             Data = ""
                         });
                     }
@@ -955,6 +973,42 @@ namespace T2207A_SEM3_API.Controllers
                     await _context.SaveChangesAsync();
 
 
+                    /*var exam = await _context.Exams.FindAsync(model.exam_id);
+                    
+                    var classCourse = await _context.ClassCourses.FindAsync(exam.CourseClassId);
+
+                    var course = await _context.Courses.FindAsync(classCourse.CourseId);
+
+                    if (classCourse == null)
+                    {
+                        return NotFound("ClassCourse not found for the specified exam.");
+                    }
+
+                    List<StudentListOfEmail> students = new List<StudentListOfEmail>();
+
+                    var studentlist = await _context.Students
+                        .Where(s => model.studentIds.Contains(s.Id))
+                        .ToListAsync();
+
+                    foreach(var student in studentlist)
+                    {
+                        var st = new StudentListOfEmail
+                        {
+                            id = student.Id,
+                            student_code = student.StudentCode,
+                            fullname = student.Fullname,
+                        };
+                        students.Add(st);
+                    }
+
+                    Mailrequest mailrequest = new Mailrequest();
+                    mailrequest.ToEmail = "trungtvt.dev@gmail.com";
+                    mailrequest.Subject = "Welcome to Examonimy";
+                    mailrequest.Body = EmailContentRegister.GetHtmlcontentTestMultipleChoice(course.Name, data.Name, data.StartDate, data.EndDate, data.PastMarks, students);
+
+                    await _emailService.SendEmailAsync(mailrequest);*/
+
+
                     return Created($"get-by-id?id={data.Id}", new TestDTO
                     {
                         id = data.Id,
@@ -1253,6 +1307,19 @@ namespace T2207A_SEM3_API.Controllers
                             Success = false,
                             StatusCode = 400,
                             Message = "Test name already exists",
+                            Data = ""
+                        });
+                    }
+
+                    // chỉ có 1 bài test chính còn lại là test thi lại
+                    var testExists = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null);
+                    if (testExists != null)
+                    {
+                        return BadRequest(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 400,
+                            Message = "Test already exists",
                             Data = ""
                         });
                     }
@@ -1668,6 +1735,18 @@ namespace T2207A_SEM3_API.Controllers
                             Data = ""
                         });
                     }
+                    // chỉ có 1 bài test chính còn lại là test thi lại
+                    var testExists = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null);
+                    if (testExists != null)
+                    {
+                        return BadRequest(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 400,
+                            Message = "Test already exists",
+                            Data = ""
+                        });
+                    }
 
                     // kiểm tra số câu hỏi 
                     var result = model.questions.Count();
@@ -2048,6 +2127,19 @@ namespace T2207A_SEM3_API.Controllers
                     {
                         // Nếu name đã tồn tại, trả về BadRequest hoặc thông báo lỗi tương tự
                         return BadRequest(new GeneralServiceResponse { Success = false, StatusCode = 400, Message = "Class name already exists", Data = "" });
+                    }
+
+                    // chỉ có 1 bài test chính còn lại là test thi lại
+                    var testExists = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null);
+                    if (testExists != null)
+                    {
+                        return BadRequest(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 400,
+                            Message = "Test already exists",
+                            Data = ""
+                        });
                     }
 
                     // lấy danh sách câu hỏi cho đề thi

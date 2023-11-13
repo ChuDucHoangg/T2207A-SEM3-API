@@ -91,13 +91,32 @@ namespace T2207A_SEM3_API.Controllers
             {
                 try
                 {
+                    List<Exam> exams = await _context.Exams.Where(p => p.CourseClassId == model.courseClass_id).ToListAsync();
+                    if (exams.Count >= 2)
+                    {
+                        // Nếu name đã tồn tại, trả về BadRequest hoặc thông báo lỗi tương tự
+                        return BadRequest(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 400,
+                            Message = "You have created too many exams",
+                            Data = ""
+                        });
+                    }
+
                     // Kiểm tra xem name đã tồn tại trong cơ sở dữ liệu hay chưa
                     bool nameExists = await _context.Exams.AnyAsync(c => c.Name == model.name);
 
                     if (nameExists)
                     {
                         // Nếu name đã tồn tại, trả về BadRequest hoặc thông báo lỗi tương tự
-                        return BadRequest("Exam name already exists");
+                        return BadRequest(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 400,
+                            Message = "Exam name already exists",
+                            Data = ""
+                        });
                     }
 
                     Exam data = new Exam

@@ -27,6 +27,10 @@ public partial class Staff
 
     public string Role { get; set; } = null!;
 
+    public string? ResetToken { get; set; }
+
+    public DateTime? ResetTokenExpiry { get; set; }
+
     public DateTime? CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
