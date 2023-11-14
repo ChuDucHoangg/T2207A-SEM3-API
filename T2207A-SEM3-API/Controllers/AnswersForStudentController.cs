@@ -369,7 +369,23 @@ namespace T2207A_SEM3_API.Controllers
                     });
                 }
 
-                if (user.Id != test.CreatedBy)
+                var student = await _context.Students.FirstAsync(st => st.Id == model.student_id);
+
+                if (student == null)
+                {
+                    return NotFound(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 404,
+                        Message = "Test is not found",
+                        Data = ""
+                    });
+                }
+
+                // phải đúng giáo viên dạy lớp đó thì mới chấm được 
+                var classes = await _context.Classes.FirstAsync(cl => cl.Id == student.ClassId);
+
+                if (user.Id != classes.TeacherId)
                 {
                     return BadRequest(new GeneralServiceResponse
                     {

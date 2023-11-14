@@ -1324,12 +1324,36 @@ namespace T2207A_SEM3_API.Controllers
                         });
                     }
 
+                    var exam = await _context.Exams.FirstOrDefaultAsync(e => e.Id == model.exam_id);
+                    if (exam == null)
+                    {
+                        return NotFound(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 404,
+                            Message = "Not Found",
+                            Data = ""
+                        });
+                    }
+                    var courseClass = await _context.ClassCourses.FirstOrDefaultAsync(e => e.Id == exam.CourseClassId);
+
+                    if (courseClass == null)
+                    {
+                        return NotFound(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 404,
+                            Message = "Not Found",
+                            Data = ""
+                        });
+                    }
+
                     // lấy danh sách câu hỏi cho đề thi
                     var selectedQuestions = new List<Question>();
 
                     // chọn câu hỏi eassy 
                     var randomEasyQuestions = _context.Questions
-                        .Where(q => q.Level == 1 && q.QuestionType == 0)
+                        .Where(q => q.Level == 1 && q.QuestionType == 0 && q.CourseId == courseClass.CourseId)
                         .OrderBy(x => Guid.NewGuid()) // Lấy ngẫu nhiên
                         .Take(6) // Lấy 6 câu hỏi
                         .ToList();
@@ -1347,7 +1371,7 @@ namespace T2207A_SEM3_API.Controllers
 
                     // chọn câu hỏi medium 
                     var randomMediumQuestions = _context.Questions
-                        .Where(q => q.Level == 2 && q.QuestionType == 0)
+                        .Where(q => q.Level == 2 && q.QuestionType == 0 && q.CourseId == courseClass.CourseId)
                         .OrderBy(x => Guid.NewGuid()) // Lấy ngẫu nhiên
                         .Take(5) // Lấy 5 câu hỏi
                         .ToList();
@@ -1365,7 +1389,7 @@ namespace T2207A_SEM3_API.Controllers
 
                     // chọn câu hỏi hard 
                     var randomHardQuestions = _context.Questions
-                        .Where(q => q.Level == 3 && q.QuestionType == 0)
+                        .Where(q => q.Level == 3 && q.QuestionType == 0 && q.CourseId == courseClass.CourseId)
                         .OrderBy(x => Guid.NewGuid()) // Lấy ngẫu nhiên
                         .Take(5) // Lấy 5 câu hỏi
                         .ToList();
@@ -1457,7 +1481,40 @@ namespace T2207A_SEM3_API.Controllers
 
                         order++;
                     }
-                    
+
+                    var classCourse = await _context.ClassCourses.FindAsync(exam.CourseClassId);
+
+                    var course = await _context.Courses.FindAsync(classCourse.CourseId);
+
+                    if (classCourse == null)
+                    {
+                        return NotFound("ClassCourse not found for the specified exam.");
+                    }
+
+                    List<StudentListOfEmail> students = new List<StudentListOfEmail>();
+
+                    var studentlist = await _context.Students
+                        .Where(s => model.studentIds.Contains(s.Id))
+                        .ToListAsync();
+
+                    foreach (var student in studentlist)
+                    {
+                        var st = new StudentListOfEmail
+                        {
+                            id = student.Id,
+                            student_code = student.StudentCode,
+                            fullname = student.Fullname,
+                        };
+                        students.Add(st);
+                    }
+
+                    Mailrequest mailrequest = new Mailrequest();
+                    mailrequest.ToEmail = "trungtvt.dev@gmail.com";
+                    mailrequest.Subject = "Welcome to Examonimy";
+                    mailrequest.Body = EmailContentRegister.GetHtmlcontentTestMultipleChoice(course.Name, data.Name, data.StartDate, data.EndDate, data.PastMarks, students);
+
+                    await _emailService.SendEmailAsync(mailrequest);
+
 
                     return Created($"get-by-id?id={data.Id}", new TestDTO
                     {
@@ -1537,12 +1594,36 @@ namespace T2207A_SEM3_API.Controllers
                         });
                     }
 
+                    var exam = await _context.Exams.FirstOrDefaultAsync(e => e.Id == model.exam_id);
+                    if (exam == null)
+                    {
+                        return NotFound(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 404,
+                            Message = "Not Found",
+                            Data = ""
+                        });
+                    }
+                    var courseClass = await _context.ClassCourses.FirstOrDefaultAsync(e => e.Id == exam.CourseClassId);
+
+                    if (courseClass == null)
+                    {
+                        return NotFound(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 404,
+                            Message = "Not Found",
+                            Data = ""
+                        });
+                    }
+
                     // lấy danh sách câu hỏi cho đề thi
                     var selectedQuestions = new List<Question>();
 
                     // chọn câu hỏi eassy 
                     var randomEasyQuestions = _context.Questions
-                        .Where(q => q.Level == 1 && q.QuestionType == 0)
+                        .Where(q => q.Level == 1 && q.QuestionType == 0 && q.CourseId == courseClass.CourseId)
                         .OrderBy(x => Guid.NewGuid()) // Lấy ngẫu nhiên
                         .Take(6) // Lấy 6 câu hỏi
                         .ToList();
@@ -1560,7 +1641,7 @@ namespace T2207A_SEM3_API.Controllers
 
                     // chọn câu hỏi medium 
                     var randomMediumQuestions = _context.Questions
-                        .Where(q => q.Level == 2 && q.QuestionType == 0)
+                        .Where(q => q.Level == 2 && q.QuestionType == 0 && q.CourseId == courseClass.CourseId)
                         .OrderBy(x => Guid.NewGuid()) // Lấy ngẫu nhiên
                         .Take(5) // Lấy 5 câu hỏi
                         .ToList();
@@ -1578,7 +1659,7 @@ namespace T2207A_SEM3_API.Controllers
 
                     // chọn câu hỏi hard 
                     var randomHardQuestions = _context.Questions
-                        .Where(q => q.Level == 3 && q.QuestionType == 0)
+                        .Where(q => q.Level == 3 && q.QuestionType == 0 && q.CourseId == courseClass.CourseId)
                         .OrderBy(x => Guid.NewGuid()) // Lấy ngẫu nhiên
                         .Take(5) // Lấy 5 câu hỏi
                         .ToList();
@@ -1855,6 +1936,41 @@ namespace T2207A_SEM3_API.Controllers
                         _context.QuestionTests.Add(question_test);
                         await _context.SaveChangesAsync();
                     }
+
+                    var exam = await _context.Exams.FindAsync(model.exam_id);
+
+                    var classCourse = await _context.ClassCourses.FindAsync(exam.CourseClassId);
+
+                    var course = await _context.Courses.FindAsync(classCourse.CourseId);
+
+                    if (classCourse == null)
+                    {
+                        return NotFound("ClassCourse not found for the specified exam.");
+                    }
+
+                    List<StudentListOfEmail> students = new List<StudentListOfEmail>();
+
+                    var studentlist = await _context.Students
+                        .Where(s => model.studentIds.Contains(s.Id))
+                        .ToListAsync();
+
+                    foreach (var student in studentlist)
+                    {
+                        var st = new StudentListOfEmail
+                        {
+                            id = student.Id,
+                            student_code = student.StudentCode,
+                            fullname = student.Fullname,
+                        };
+                        students.Add(st);
+                    }
+
+                    Mailrequest mailrequest = new Mailrequest();
+                    mailrequest.ToEmail = "trungtvt.dev@gmail.com";
+                    mailrequest.Subject = "Welcome to Examonimy";
+                    mailrequest.Body = EmailContentRegister.GetHtmlcontentTestMultipleChoice(course.Name, data.Name, data.StartDate, data.EndDate, data.PastMarks, students);
+
+                    await _emailService.SendEmailAsync(mailrequest);
 
                     return Created($"get-by-id?id={data.Id}", new TestDTO
                     {
@@ -2141,6 +2257,31 @@ namespace T2207A_SEM3_API.Controllers
                             Data = ""
                         });
                     }
+                    //
+
+                    var exam = await _context.Exams.FirstOrDefaultAsync(e => e.Id == model.exam_id);
+                    if (exam == null)
+                    {
+                        return NotFound(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 404,
+                            Message = "Not Found",
+                            Data = ""
+                        });
+                    }
+                    var courseClass = await _context.ClassCourses.FirstOrDefaultAsync(e => e.Id == exam.CourseClassId);
+
+                    if (courseClass == null)
+                    {
+                        return NotFound(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 404,
+                            Message = "Not Found",
+                            Data = ""
+                        });
+                    }
 
                     // lấy danh sách câu hỏi cho đề thi
                     var selectedQuestions = new List<Question>();
@@ -2148,7 +2289,7 @@ namespace T2207A_SEM3_API.Controllers
 
                     // chọn câu hỏi hard 
                     var randomHardQuestions = _context.Questions
-                        .Where(q => q.Level == 3 && q.QuestionType == 1)
+                        .Where(q => q.Level == 3 && q.QuestionType == 1 && q.CourseId == courseClass.CourseId)
                         .OrderBy(x => Guid.NewGuid()) // Lấy ngẫu nhiên
                         .Take(1) // Lấy 1 câu hỏi
                         .ToList();
@@ -2319,13 +2460,37 @@ namespace T2207A_SEM3_API.Controllers
                         });
                     }
 
+                    var exam = await _context.Exams.FirstOrDefaultAsync(e => e.Id == model.exam_id);
+                    if (exam == null)
+                    {
+                        return NotFound(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 404,
+                            Message = "Not Found",
+                            Data = ""
+                        });
+                    }
+                    var courseClass = await _context.ClassCourses.FirstOrDefaultAsync(e => e.Id == exam.CourseClassId);
+
+                    if (courseClass == null)
+                    {
+                        return NotFound(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 404,
+                            Message = "Not Found",
+                            Data = ""
+                        });
+                    }
+
                     // lấy danh sách câu hỏi cho đề thi
                     var selectedQuestions = new List<Question>();
 
 
                     // chọn câu hỏi hard 
                     var randomHardQuestions = _context.Questions
-                        .Where(q => q.Level == 3 && q.QuestionType == 1)
+                        .Where(q => q.Level == 3 && q.QuestionType == 1 && q.CourseId == courseClass.CourseId)
                         .OrderBy(x => Guid.NewGuid()) // Lấy ngẫu nhiên
                         .Take(1) // Lấy 1 câu hỏi
                         .ToList();
