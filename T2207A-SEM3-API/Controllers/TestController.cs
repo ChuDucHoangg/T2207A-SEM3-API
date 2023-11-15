@@ -57,6 +57,7 @@ namespace T2207A_SEM3_API.Controllers
                         endDate = t.EndDate,
                         past_marks = t.PastMarks,
                         total_marks = t.TotalMarks,
+                        type_test = t.TypeTest,
                         created_by = t.CreatedBy,
                         status = t.Status,
                         createdAt = t.CreatedAt,
@@ -130,7 +131,7 @@ namespace T2207A_SEM3_API.Controllers
                     }
 
                     // chỉ có 1 bài test chính còn lại là test thi lại
-                    var testExists = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null);
+                    var testExists = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null && t.TypeTest == 0);
                     if (testExists != null)
                     {
                         return BadRequest(new GeneralServiceResponse
@@ -254,7 +255,7 @@ namespace T2207A_SEM3_API.Controllers
                                                 StudentId = studentId,
                                                 TestId = data.Id,
                                                 Status = 0,
-                                                Score = 0,
+                                                Score = null,
                                                 FinishedAt = null,
                                                 IsRetake = false,
                                                 CreatedAt = DateTime.Now,
@@ -451,7 +452,7 @@ namespace T2207A_SEM3_API.Controllers
                     }
 
                     // chỉ có 1 bài test chính còn lại là test thi lại
-                    var testExists = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null);
+                    var testExists = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null && t.TypeTest == 0);
                     if (testExists == null)
                     {
                         return BadRequest(new GeneralServiceResponse
@@ -590,7 +591,7 @@ namespace T2207A_SEM3_API.Controllers
                                                 StudentId = studentId,
                                                 TestId = data.Id,
                                                 Status = 0,
-                                                Score = 0,
+                                                Score = null,
                                                 FinishedAt = null,
                                                 IsRetake = true,
                                                 CreatedAt = DateTime.Now,
@@ -794,7 +795,7 @@ namespace T2207A_SEM3_API.Controllers
                     }
 
                     // chỉ có 1 bài test chính còn lại là test thi lại
-                    var testExists = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null);
+                    var testExists = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null && t.TypeTest == 0);
                     if (testExists != null)
                     {
                         return BadRequest(new GeneralServiceResponse
@@ -880,7 +881,7 @@ namespace T2207A_SEM3_API.Controllers
                             StudentId = studentId,
                             TestId = data.Id,
                             Status = 0,
-                            Score = 0,
+                            Score = null,
                             FinishedAt = null,
                             IsRetake = false,
                             CreatedAt = DateTime.Now,
@@ -1059,7 +1060,7 @@ namespace T2207A_SEM3_API.Controllers
                     }
 
                     // chỉ có 1 bài test chính còn lại là test thi lại
-                    var testExists = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null);
+                    var testExists = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null && t.TypeTest == 0);
                     if (testExists == null)
                     {
                         return BadRequest(new GeneralServiceResponse
@@ -1162,7 +1163,7 @@ namespace T2207A_SEM3_API.Controllers
                             StudentId = studentId,
                             TestId = data.Id,
                             Status = 0,
-                            Score = 0,
+                            Score = null,
                             FinishedAt = null,
                             IsRetake = true,
                             CreatedAt = DateTime.Now,
@@ -1453,7 +1454,7 @@ namespace T2207A_SEM3_API.Controllers
                             StudentId = studentId,
                             TestId = data.Id,
                             Status = 0,
-                            Score = 0,
+                            Score = null,
                             FinishedAt = null,
                             IsRetake = false,
                             CreatedAt = DateTime.Now,
@@ -1565,7 +1566,7 @@ namespace T2207A_SEM3_API.Controllers
                         });
                     }
 
-                    var testMain = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null);
+                    var testMain = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null && t.TypeTest == 0);
                     if (testMain == null)
                     {
                         return NotFound(new GeneralServiceResponse
@@ -1725,7 +1726,7 @@ namespace T2207A_SEM3_API.Controllers
                             StudentId = studentId,
                             TestId = data.Id,
                             Status = 0,
-                            Score = 0,
+                            Score = null,
                             FinishedAt = null,
                             IsRetake = true,
                             CreatedAt = DateTime.Now,
@@ -1817,7 +1818,7 @@ namespace T2207A_SEM3_API.Controllers
                         });
                     }
                     // chỉ có 1 bài test chính còn lại là test thi lại
-                    var testExists = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null);
+                    var testExists = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null && t.TypeTest == 1);
                     if (testExists != null)
                     {
                         return BadRequest(new GeneralServiceResponse
@@ -1885,7 +1886,7 @@ namespace T2207A_SEM3_API.Controllers
                             StudentId = studentId,
                             TestId = data.Id,
                             Status = 0,
-                            Score = 0,
+                            Score = null,
                             FinishedAt = null,
                             IsRetake = false,
                             CreatedAt = DateTime.Now,
@@ -2051,7 +2052,7 @@ namespace T2207A_SEM3_API.Controllers
                         });
                     }
 
-                    var testMain = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null);
+                    var testMain = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null && t.TypeTest == 1);
                     if (testMain == null)
                     {
                         return NotFound(new GeneralServiceResponse
@@ -2123,16 +2124,13 @@ namespace T2207A_SEM3_API.Controllers
                             StudentId = studentId,
                             TestId = data.Id,
                             Status = 0,
-                            Score = 0,
+                            Score = null,
                             FinishedAt = null,
                             IsRetake = true,
                             CreatedAt = DateTime.Now,
                             UpdatedAt = DateTime.Now,
                             DeletedAt = null,
                         };
-
-                        _context.Grades.Add(grade);
-                        await _context.SaveChangesAsync();
 
                         _context.Grades.Add(grade);
                         await _context.SaveChangesAsync();
@@ -2246,7 +2244,7 @@ namespace T2207A_SEM3_API.Controllers
                     }
 
                     // chỉ có 1 bài test chính còn lại là test thi lại
-                    var testExists = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null);
+                    var testExists = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null && t.TypeTest == 1);
                     if (testExists != null)
                     {
                         return BadRequest(new GeneralServiceResponse
@@ -2351,7 +2349,7 @@ namespace T2207A_SEM3_API.Controllers
                             StudentId = studentId,
                             TestId = data.Id,
                             Status = 0,
-                            Score = 0,
+                            Score = null,
                             FinishedAt = null,
                             IsRetake = false,
                             CreatedAt = DateTime.Now,
@@ -2431,7 +2429,7 @@ namespace T2207A_SEM3_API.Controllers
                         return BadRequest(new GeneralServiceResponse { Success = false, StatusCode = 400, Message = "Class name already exists", Data = "" });
                     }
 
-                    var testMain = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null);
+                    var testMain = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null && t.TypeTest == 1);
                     if (testMain == null)
                     {
                         return NotFound(new GeneralServiceResponse
@@ -2552,7 +2550,7 @@ namespace T2207A_SEM3_API.Controllers
                             StudentId = studentId,
                             TestId = data.Id,
                             Status = 0,
-                            Score = 0,
+                            Score = null,
                             FinishedAt = null,
                             IsRetake = true,
                             CreatedAt = DateTime.Now,

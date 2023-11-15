@@ -234,14 +234,14 @@ namespace T2207A_SEM3_API.Controllers
                 foreach (var studentTest in studentTests)
                 {
                     var grade = await _context.Grades.FirstOrDefaultAsync(g => g.TestId == studentTest.TestId && g.StudentId == user.Id);
-                    if(grade == null)
+                    if(grade.FinishedAt == null)
                     {
                         var testGradeResponse = new TestGradeResponse();
                         testGradeResponse.studentTestId = studentTest.TestId;
                         testGradeResponse.TestName = studentTest.Test.Name;
                         testGradeResponse.score = null;
-                        testGradeResponse.IsPass = null;
-                        
+                        testGradeResponse.IsPass = false;
+                        testGradeResponse.finishAt = grade.FinishedAt;
 
                         testGradeResponses.Add(testGradeResponse);
                     }
@@ -250,16 +250,9 @@ namespace T2207A_SEM3_API.Controllers
                         var testGradeResponse = new TestGradeResponse();
                         testGradeResponse.studentTestId = studentTest.TestId;
                         testGradeResponse.TestName = studentTest.Test.Name;
-                        if(grade.Score == null)
-                        {
-                            testGradeResponse.score = null;
-                            testGradeResponse.IsPass = null;
-                        }
-                        else
-                        {
-                            testGradeResponse.score = (double)grade.Score;
-                            testGradeResponse.IsPass = grade.Status == 1 ? true : false;
-                        }
+                        testGradeResponse.score = grade.Score == null ? null : (double)grade.Score;
+                        testGradeResponse.IsPass = grade.Status == 1 ? true : false;
+                        testGradeResponse.finishAt = grade.FinishedAt;
 
                         testGradeResponses.Add(testGradeResponse);
                     }
@@ -337,7 +330,35 @@ namespace T2207A_SEM3_API.Controllers
                             var current_score = model.score;
                             var test = await _context.Tests.SingleOrDefaultAsync(t => t.Id == existingGrade.TestId);
 
-                            if(user.Id != test.CreatedBy)
+                            // phải đúng giáo viên dạy lớp đó thì mới chấm được 
+
+                            var student = await _context.Students.FirstAsync(st => st.Id == existingGrade.StudentId);
+
+                            if (student == null)
+                            {
+                                return NotFound(new GeneralServiceResponse
+                                {
+                                    Success = false,
+                                    StatusCode = 404,
+                                    Message = "Not Found",
+                                    Data = ""
+                                });
+                            }
+
+                            var classes = await _context.Classes.FirstAsync(cl => cl.Id == student.ClassId);
+
+                            if (user.Id != classes.TeacherId)
+                            {
+                                return BadRequest(new GeneralServiceResponse
+                                {
+                                    Success = false,
+                                    StatusCode = 400,
+                                    Message = "You are not allowed to grade this article",
+                                    Data = ""
+                                });
+                            }
+
+                            if (user.Role != "Super Admin" && user.Id != classes.TeacherId)
                             {
                                 return BadRequest(new GeneralServiceResponse
                                 {

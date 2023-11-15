@@ -92,7 +92,7 @@ namespace T2207A_SEM3_API.Controllers
                 try
                 {
                     List<Exam> exams = await _context.Exams.Where(p => p.CourseClassId == model.courseClass_id).ToListAsync();
-                    if (exams.Count >= 2)
+                    if (exams.Count >= 1)
                     {
                         // Nếu name đã tồn tại, trả về BadRequest hoặc thông báo lỗi tương tự
                         return BadRequest(new GeneralServiceResponse

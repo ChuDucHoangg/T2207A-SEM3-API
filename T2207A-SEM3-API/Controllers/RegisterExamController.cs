@@ -138,7 +138,7 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpPut("approve-register")]
-        [Authorize(Roles = "Exam Administrator")]
+        [Authorize(Roles = "Super Admin, Staff")]
         public async Task<IActionResult> ApproveRegisterExam(ApproveRegisterExamRequest model)
         {
             var identity = HttpContext.User.Identity as ClaimsIdentity;

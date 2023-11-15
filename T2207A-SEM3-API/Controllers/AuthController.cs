@@ -48,7 +48,8 @@ namespace T2207A_SEM3_API.Controllers
                 new Claim("Staff-Code", user.StaffCode),
                 new Claim(ClaimTypes.Email,user.Email),
                 new Claim(ClaimTypes.Name,user.Fullname),
-                new Claim(ClaimTypes.Role,user.Role)
+                new Claim(ClaimTypes.Role,user.Role),
+                new Claim("Thumbnail", user.Avatar)
             };
             var token = new JwtSecurityToken(
                     _config["JWT:Issuer"],

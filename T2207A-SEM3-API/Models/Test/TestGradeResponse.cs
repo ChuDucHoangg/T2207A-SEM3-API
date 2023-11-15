@@ -6,6 +6,6 @@
         public string TestName { get; set; }
         public DateTime? finishAt { get; set; }
         public double? score { get; set; }
-        public bool? IsPass { get; set; }
+        public bool IsPass { get; set; }
     }
 }

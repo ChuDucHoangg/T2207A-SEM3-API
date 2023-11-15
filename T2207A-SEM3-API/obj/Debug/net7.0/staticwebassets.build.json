@@ -1,6 +1,6 @@
 {
   "Version": 1,
-  "Hash": "JjG0NQQwIZ44M2jkLCw6XXdQr+SYy0MTlpN0Br2tKmU=",
+  "Hash": "hGJ1V9Fz8U65xOEEgAWWn/T6vAY+mGDGh8+UYyEFSxI=",
   "Source": "T2207A-SEM3-API",
   "BasePath": "_content/T2207A-SEM3-API",
   "Mode": "Default",
@@ -117,6 +117,23 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot\\uploads\\3f5524ed-7030-4da9-851e-1544d708cf86.png"
+    },
+    {
+      "Identity": "D:\\SEM3\\project-examonimy\\SEM-Examonimy-API2\\T2207A-SEM3-API\\wwwroot\\uploads\\4e3a68f1-db09-4be2-964b-293c610666bf.png",
+      "SourceId": "T2207A-SEM3-API",
+      "SourceType": "Discovered",
+      "ContentRoot": "D:\\SEM3\\project-examonimy\\SEM-Examonimy-API2\\T2207A-SEM3-API\\wwwroot\\",
+      "BasePath": "_content/T2207A-SEM3-API",
+      "RelativePath": "uploads/4e3a68f1-db09-4be2-964b-293c610666bf.png",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\uploads\\4e3a68f1-db09-4be2-964b-293c610666bf.png"
     },
     {
       "Identity": "D:\\SEM3\\project-examonimy\\SEM-Examonimy-API2\\T2207A-SEM3-API\\wwwroot\\uploads\\6834f0c2-d2ec-4513-8d19-f29ac9c04ed8.png",

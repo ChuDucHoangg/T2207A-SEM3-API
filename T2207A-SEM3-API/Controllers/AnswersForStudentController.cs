@@ -280,7 +280,7 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpPost("scoring-essay")]
-        [Authorize(Roles = "Teacher")]
+        [Authorize(Roles = "Super Admin, Teacher")]
         public async Task<IActionResult> ScoringEssay(CreateScore model)
         {
             var identity = HttpContext.User.Identity as ClaimsIdentity;
@@ -377,7 +377,7 @@ namespace T2207A_SEM3_API.Controllers
                     {
                         Success = false,
                         StatusCode = 404,
-                        Message = "Test is not found",
+                        Message = "Not Found",
                         Data = ""
                     });
                 }
@@ -385,7 +385,7 @@ namespace T2207A_SEM3_API.Controllers
                 // phải đúng giáo viên dạy lớp đó thì mới chấm được 
                 var classes = await _context.Classes.FirstAsync(cl => cl.Id == student.ClassId);
 
-                if (user.Id != classes.TeacherId)
+                if (user.Role != "Super Admin" && user.Id != classes.TeacherId)
                 {
                     return BadRequest(new GeneralServiceResponse
                     {
@@ -434,7 +434,7 @@ namespace T2207A_SEM3_API.Controllers
 
                 var current_score = model.score;
 
-                if (grade.Score == 0)
+                if (grade.Score == null)
                 {
                     if (!(grade.FinishedAt >= test.StartDate && grade.FinishedAt <= test.EndDate))
                     {

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using T2207A_SEM3_API.DTOs;
@@ -23,6 +24,7 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpGet]
+        
         public async Task<IActionResult> Index()
         {
             try
