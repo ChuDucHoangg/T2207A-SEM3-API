@@ -257,7 +257,7 @@ namespace T2207A_SEM3_API.Controllers
                 }
 
                 // kiểm tra classCourseID
-                var classCourse = await _context.ClassCourses.FindAsync(courseId);
+                var classCourse = await _context.ClassCourses.FirstOrDefaultAsync(c => c.ClassId == user.ClassId && c.CourseId == courseId);
                 if (classCourse == null)
                 {
                     return NotFound();

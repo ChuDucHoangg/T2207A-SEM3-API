@@ -10,6 +10,6 @@ namespace T2207A_SEM3_API.Models.Question
 
         public List<AnswerContentResultResponse> Answers { get; set; }
 
-        public string answerForStudent { get; set; }
+        public string? answerForStudent { get; set; }
     }
 }

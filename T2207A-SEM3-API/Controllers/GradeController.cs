@@ -274,7 +274,7 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpPut]
-        [Authorize(Roles = "Teacher")]
+        [Authorize(Roles = "Super Admin, Teacher")]
         public async Task<IActionResult> Update(EditGrade model)
         {
             if (ModelState.IsValid)
@@ -328,7 +328,29 @@ namespace T2207A_SEM3_API.Controllers
                         else
                         {
                             var current_score = model.score;
-                            var test = await _context.Tests.SingleOrDefaultAsync(t => t.Id == existingGrade.TestId);
+                            var test = await _context.Tests.FirstOrDefaultAsync(t => t.Id == existingGrade.TestId);
+
+                            if (test == null)
+                            {
+                                return NotFound(new GeneralServiceResponse
+                                {
+                                    Success = false,
+                                    StatusCode = 404,
+                                    Message = "Not Found",
+                                    Data = ""
+                                });
+                            }
+
+                            if (test.Status == 1)
+                            {
+                                return BadRequest(new GeneralServiceResponse
+                                {
+                                    Success = false,
+                                    StatusCode = 400,
+                                    Message = "The exam has been locked",
+                                    Data = ""
+                                });
+                            }
 
                             // phải đúng giáo viên dạy lớp đó thì mới chấm được 
 

@@ -12,9 +12,6 @@ namespace T2207A_SEM3_API.Models.Test
         [MaxLength(255, ErrorMessage = "Enter up to 255 characters")]
         public string name { get; set; }
 
-        [Required(ErrorMessage = "Please enter exam")]
-        public int exam_id { get; set; }
-
         [Required(ErrorMessage = "Please enter StartDate")]
         [DataType(DataType.Date)]
         [DisplayFormat(DataFormatString = "{0:yyyy-MM-dd}", ApplyFormatInEditMode = true)]
@@ -28,13 +25,6 @@ namespace T2207A_SEM3_API.Models.Test
         [Required(ErrorMessage = "Please enter past marks")]
         [Range(0.0, 100.0, ErrorMessage = "Invalid value")]
         public double past_marks { get; set; }
-
-        [Required(ErrorMessage = "Please enter total marks")]
-        [Range(0.0, 100.0, ErrorMessage = "Invalid value")]
-        public double total_marks { get; set; }
-
-        [Required(ErrorMessage = "Please enter CreateBy")]
-        public int created_by { get; set; }
 
     }
 }

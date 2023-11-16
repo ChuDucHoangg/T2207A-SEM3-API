@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.IdentityModel.Tokens;
 using OfficeOpenXml;
+using OfficeOpenXml.FormulaParsing.Excel.Functions.Text;
 using System.Reflection.PortableExecutable;
 using System.Security.Claims;
 using System.Text;
@@ -2644,12 +2645,12 @@ namespace T2207A_SEM3_API.Controllers
                             Id = model.id,
                             Name = model.name,
                             Slug = model.name.ToLower().Replace(" ", "-"),
-                            ExamId = model.exam_id,
+                            ExamId = existingTest.ExamId,
                             StartDate = model.startDate,
                             EndDate = model.endDate,
                             PastMarks = model.past_marks,
-                            TotalMarks = model.total_marks,
-                            CreatedBy = model.created_by,
+                            TotalMarks = existingTest.TotalMarks,
+                            CreatedBy = existingTest.CreatedBy,
                             Status = existingTest.Status,
                             CreatedAt = existingTest.CreatedAt,
                             UpdatedAt = DateTime.Now,
@@ -2758,7 +2759,7 @@ namespace T2207A_SEM3_API.Controllers
                     return Unauthorized("Not Authorized");
                 }
 
-                var exam = await _context.Exams.Where(e => e.Slug == slug_exam).FirstOrDefaultAsync();
+                var exam = await _context.Exams.FirstOrDefaultAsync(e => e.Slug == slug_exam);
                 if (exam == null)
                 {
                     return NotFound("No tests found");
@@ -2814,6 +2815,191 @@ namespace T2207A_SEM3_API.Controllers
             catch (Exception e)
             {
                 return StatusCode(500, e.Message);
+            }
+        }
+
+        [HttpPut]
+        [Route("lock-test/{test_slug}")]
+        [Authorize("Super Admin, Staff")]
+        public async Task<IActionResult> LockTest(string test_slug)
+        {
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+
+            if (!identity.IsAuthenticated)
+            {
+                return Unauthorized(new GeneralServiceResponse
+                {
+                    Success = false,
+                    StatusCode = 401,
+                    Message = "Not Authorized",
+                    Data = ""
+                });
+            }
+
+            try
+            {
+                var userClaims = identity.Claims;
+                var userId = userClaims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+                var user = await _context.Staffs
+                    .FirstOrDefaultAsync(u => u.Id == Convert.ToInt32(userId));
+
+                if (user == null)
+                {
+                    return NotFound(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 401,
+                        Message = "Not Authorized",
+                        Data = ""
+                    });
+                }
+
+                var testExist = await _context.Tests.FirstOrDefaultAsync(t => t.Slug == test_slug);
+                if (testExist == null)
+                {
+                    return NotFound(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 404,
+                        Message = "Not Found",
+                        Data = ""
+                    });
+                }
+
+                // Kiểm tra thời gian bài thi
+                DateTime currentTime = DateTime.Now;
+                if (currentTime < testExist.EndDate)
+                {
+                    return BadRequest(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 404,
+                        Message = "The test has ended or has not started yet",
+                        Data = ""
+                    });
+                }
+
+                testExist.Status = 1;
+                _context.Tests.Update(testExist);
+                await _context.SaveChangesAsync();
+
+                // lấy điểm của học sinh chưa nộp bài 
+                List<Grade> grades = await _context.Grades.Where(g => g.TestId == testExist.Id && g.FinishedAt == null).ToListAsync();
+                if (grades.Count > 0)
+                {
+                    foreach (var item in grades)
+                    {
+                        item.FinishedAt = DateTime.Now;
+                        item.Score = 0;
+                    }
+                    _context.Grades.UpdateRange(grades);
+                    await _context.SaveChangesAsync();
+                }
+
+                // lấy danh sách thi học sinh
+                List<StudentTest> sttudentTests = await _context.StudentTests.Where(st => st.TestId == testExist.Id && st.Status == 0).ToListAsync();
+                if (sttudentTests.Count > 0)
+                {
+                    foreach (var item in sttudentTests)
+                    {
+                        item.Status = 2;
+                    }
+                    _context.StudentTests.UpdateRange(sttudentTests);
+                    await _context.SaveChangesAsync();
+                }
+
+
+                return Ok(new GeneralServiceResponse
+                {
+                    Success = true,
+                    StatusCode = 200,
+                    Message = "Exam locked",
+                    Data = ""
+                });
+            }
+            catch (Exception e)
+            {
+                return NotFound(new GeneralServiceResponse
+                {
+                    Success = false,
+                    StatusCode = 400,
+                    Message = e.Message,
+                    Data = ""
+                });
+            }
+        }
+
+        [HttpPut]
+        [Route("unlock-test/{test_slug}")]
+        [Authorize("Super Admin, Staff")]
+        public async Task<IActionResult> UnLockTest(string test_slug)
+        {
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+
+            if (!identity.IsAuthenticated)
+            {
+                return Unauthorized(new GeneralServiceResponse
+                {
+                    Success = false,
+                    StatusCode = 401,
+                    Message = "Not Authorized",
+                    Data = ""
+                });
+            }
+
+            try
+            {
+                var userClaims = identity.Claims;
+                var userId = userClaims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+                var user = await _context.Staffs
+                    .FirstOrDefaultAsync(u => u.Id == Convert.ToInt32(userId));
+
+                if (user == null)
+                {
+                    return NotFound(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 401,
+                        Message = "Not Authorized",
+                        Data = ""
+                    });
+                }
+
+                var testExist = await _context.Tests.FirstOrDefaultAsync(t => t.Slug == test_slug);
+                if (testExist == null)
+                {
+                    return NotFound(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 404,
+                        Message = "Not Found",
+                        Data = ""
+                    });
+                }
+
+                testExist.Status = 0;
+                _context.Tests.Update(testExist);
+                await _context.SaveChangesAsync();
+
+                return Ok(new GeneralServiceResponse
+                {
+                    Success = true,
+                    StatusCode = 200,
+                    Message = "Exam locked",
+                    Data = ""
+                });
+            }
+            catch (Exception e)
+            {
+                return NotFound(new GeneralServiceResponse
+                {
+                    Success = false,
+                    StatusCode = 400,
+                    Message = e.Message,
+                    Data = ""
+                });
             }
         }
     }

@@ -36,7 +36,7 @@ namespace T2207A_SEM3_API.Controllers
         {
             try
             {
-                List<Student> students = await _context.Students.ToListAsync();
+                List<Student> students = await _context.Students.OrderByDescending(s => s.Id).ToListAsync();
 
                 List<StudentDTO> data = new List<StudentDTO>();
                 foreach (Student st in students)

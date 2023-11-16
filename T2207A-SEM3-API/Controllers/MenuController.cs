@@ -52,14 +52,14 @@ namespace T2207A_SEM3_API.Controllers
                 {
                     var menu = new List<MenuItem>
                     {
-                        new MenuItem { Title = "Dashboard", Url = "/", Icon = "<i className=\"feather-grid\"></i>" },
-                        new MenuItem { Title = "Exam Management", Url = "/exam-list", Icon = "<i className=\"fas fa-clipboard-list\"></i>" },
-                        new MenuItem { Title = "Test Management", Url = "/test-list", Icon = "<i class=\"feather-calendar\"></i>"},
-                        new MenuItem { Title = "Class Management", Url = "/classes-list", Icon = "<i className=\"fas fa-building\"></i>"},
-                        new MenuItem { Title = "Course Management", Url = "/course-list", Icon = "<i className=\"fas fa-book-reader\"></i>"},
-                        new MenuItem { Title = "Student Management", Url = "/student-list", Icon = "<i className=\"fas fa-graduation-cap\"></i>"},
-                        new MenuItem { Title = "Staff Management", Url = "/teacher-list", Icon = "<i className=\"fas fa-chalkboard-teacher\"></i>"},
-                        new MenuItem { Title = "Profile Management", Url = "/profile", Icon = "<i className=\"fas fa-cog\"></i>"},
+                        new MenuItem { Title = "Dashboard", Url = "/", Icon = "<i class=\"feather-grid\"></i>" },
+                        new MenuItem { Title = "Exam", Url = "/exam-list", Icon = "<i class=\"fas fa-clipboard-list\"></i>" },
+                        new MenuItem { Title = "Test", Url = "/test-list", Icon = "<i class=\"feather-calendar\"></i>"},
+                        new MenuItem { Title = "Class", Url = "/classes-list", Icon = "<i class=\"fas fa-building\"></i>"},
+                        new MenuItem { Title = "Course", Url = "/course-list", Icon = "<i class=\"fas fa-book-reader\"></i>"},
+                        new MenuItem { Title = "Student", Url = "/student-list", Icon = "<i class=\"fas fa-graduation-cap\"></i>"},
+                        new MenuItem { Title = "Staff", Url = "/teacher-list", Icon = "<i class=\"fas fa-chalkboard-teacher\"></i>"},
+                        new MenuItem { Title = "Profile", Url = "/profile", Icon = "<i class=\"fas fa-cog\"></i>"},
                         // Thêm các mục menu khác cho Admin
                     };
                     return Ok(menu);
@@ -68,10 +68,10 @@ namespace T2207A_SEM3_API.Controllers
                 {
                     var menu = new List<MenuItem>
                     {
-                        new MenuItem { Title = "Dashboard", Url = "/", Icon = "<i className=\"feather-grid\"></i>" },
-                        new MenuItem { Title = "Exam Management", Url = "/exam-list", Icon = "<i className=\"fas fa-clipboard-list\"></i>" },
-                        new MenuItem { Title = "Test Management", Url = "/test-list", Icon = "<i class=\"feather-calendar\"></i>"},
-                        new MenuItem { Title = "Profile Management", Url = "/profile", Icon = "<i className=\"fas fa-cog\"></i>"},
+                        new MenuItem { Title = "Dashboard", Url = "/", Icon = "<i class=\"feather-grid\"></i>" },
+                        new MenuItem { Title = "Exam", Url = "/exam-list", Icon = "<i class=\"fas fa-clipboard-list\"></i>" },
+                        new MenuItem { Title = "Test", Url = "/test-list", Icon = "<i class=\"feather-calendar\"></i>"},
+                        new MenuItem { Title = "Profile", Url = "/profile", Icon = "<i class=\"fas fa-cog\"></i>"},
 
 
 
@@ -84,10 +84,10 @@ namespace T2207A_SEM3_API.Controllers
                 {
                     var menu = new List<MenuItem>
                     {
-                        new MenuItem { Title = "Dashboard", Url = "/", Icon = "<i className=\"feather-grid\"></i>" },
-                        new MenuItem { Title = "Test Management", Url = "/test-list", Icon = "<i class=\"feather-calendar\"></i>"},
-                        new MenuItem { Title = "Class Management", Url = "/classes-list", Icon = "<i className=\"fas fa-building\"></i>"},
-                        new MenuItem { Title = "Profile Management", Url = "/profile", Icon = "<i className=\"fas fa-cog\"></i>"},
+                        new MenuItem { Title = "Dashboard", Url = "/", Icon = "<i class=\"feather-grid\"></i>" },
+                        new MenuItem { Title = "Test", Url = "/test-list", Icon = "<i class=\"feather-calendar\"></i>"},
+                        new MenuItem { Title = "Class", Url = "/classes-list", Icon = "<i class=\"fas fa-building\"></i>"},
+                        new MenuItem { Title = "Profile", Url = "/profile", Icon = "<i class=\"fas fa-cog\"></i>"},
 
 
 
