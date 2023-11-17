@@ -1,11 +1,14 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using ExcelDataReader;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Drawing;
+using System.Text;
 using T2207A_SEM3_API.DTOs;
 using T2207A_SEM3_API.Entities;
 using T2207A_SEM3_API.Helper.Email;
 using T2207A_SEM3_API.Helper.Password;
+using T2207A_SEM3_API.Models.General;
 using T2207A_SEM3_API.Models.Student;
 using T2207A_SEM3_API.Service.Email;
 using T2207A_SEM3_API.Service.Students;
@@ -108,8 +111,17 @@ namespace T2207A_SEM3_API.Controllers
         {
             if (!ModelState.IsValid)
             {
-                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(v => v.ErrorMessage);
-                return BadRequest(string.Join(" | ", errors));
+                var validationErrors = ModelState.Values.SelectMany(v => v.Errors).Select(v => v.ErrorMessage);
+
+                var validationResponse = new GeneralServiceResponse
+                {
+                    Success = false,
+                    StatusCode = 400,
+                    Message = "Validation errors",
+                    Data = string.Join(" | ", validationErrors)
+                };
+
+                return BadRequest(validationResponse);
             }
 
             try
@@ -120,17 +132,23 @@ namespace T2207A_SEM3_API.Controllers
 
                 if (emailExists)
                 {
-                    return BadRequest("Student email already exists");
+                    return BadRequest(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 400,
+                        Message = "Student email already exists",
+                        Data = ""
+                    });
                 }
 
                 var imageUrl = await _imgService.UploadImageAsync(model.avatar);
 
                 // general password
-                //var password = AutoGeneratorPassword.passwordGenerator(7, 2, 2, 2);
-                
+                var password = AutoGeneratorPassword.passwordGenerator(7, 2, 2, 2);
+
                 // hash password
                 var salt = BCrypt.Net.BCrypt.GenerateSalt(10);
-                var hassPassword = BCrypt.Net.BCrypt.HashPassword(model.password, salt);
+                var hassPassword = BCrypt.Net.BCrypt.HashPassword(password, salt);
 
                 if (imageUrl != null) 
                 {
@@ -157,12 +175,12 @@ namespace T2207A_SEM3_API.Controllers
 
                     // start send mail
 
-                    /*Mailrequest mailrequest = new Mailrequest();
-                    mailrequest.ToEmail = "trungtvt.dev@gmail.com";
+                    Mailrequest mailrequest = new Mailrequest();
+                    mailrequest.ToEmail = data.Email;
                     mailrequest.Subject = "Welcome to Examonimy";
-                    mailrequest.Body = EmailContentRegister.GetHtmlcontent(data.Fullname, data.Email, password);
+                    mailrequest.Body = EmailContentRegister.GetHtmlcontentRegister(data.Fullname, data.Email, password);
 
-                    await _emailService.SendEmailAsync(mailrequest);*/
+                    await _emailService.SendEmailAsync(mailrequest);
 
                     // end send mail
 
@@ -187,13 +205,25 @@ namespace T2207A_SEM3_API.Controllers
                 }
                 else
                 {
-                    return BadRequest("Please provide an avatar.");
+                    return BadRequest(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 400,
+                        Message = "Please provide an avatar.",
+                        Data = ""
+                    });
                 }
                 
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest(new GeneralServiceResponse
+                {
+                    Success = false,
+                    StatusCode = 400,
+                    Message = ex.Message,
+                    Data = ""
+                });
             }
         }
 
@@ -214,7 +244,13 @@ namespace T2207A_SEM3_API.Controllers
 
                         if (emailExists)
                         {
-                            return BadRequest("Student email already exists");
+                            return BadRequest(new GeneralServiceResponse
+                            {
+                                Success = false,
+                                StatusCode = 400,
+                                Message = "Student email already exists",
+                                Data = ""
+                            });
                         }
 
                         Student student = new Student
@@ -241,7 +277,13 @@ namespace T2207A_SEM3_API.Controllers
 
                             if (imageUrl == null)
                             {
-                                return BadRequest("Failed to upload avatar.");
+                                return BadRequest(new GeneralServiceResponse
+                                {
+                                    Success = false,
+                                    StatusCode = 400,
+                                    Message = "Failed to upload avatar.",
+                                    Data = ""
+                                });
                             }
 
                             student.Avatar = imageUrl;
@@ -254,19 +296,47 @@ namespace T2207A_SEM3_API.Controllers
                         _context.Students.Update(student);
                         await _context.SaveChangesAsync();
 
-                        return NoContent();
+                        return Ok(new GeneralServiceResponse
+                        {
+                            Success = true,
+                            StatusCode = 200,
+                            Message = "Edit successfully",
+                            Data = ""
+                        });
                     }
                     else
                     {
-                        return NotFound(); // Không tìm thấy lớp để cập nhật
+                        return NotFound(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 404,
+                            Message = "Not Found",
+                            Data = ""
+                        }); // Không tìm thấy lớp để cập nhật
                     }
                 }
                 catch (Exception e)
                 {
-                    return BadRequest(e.Message);
+                    return BadRequest(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 400,
+                        Message = e.Message,
+                        Data = ""
+                    });
                 }
             }
-            return BadRequest();
+            var validationErrors = ModelState.Values.SelectMany(v => v.Errors).Select(v => v.ErrorMessage);
+
+            var validationResponse = new GeneralServiceResponse
+            {
+                Success = false,
+                StatusCode = 400,
+                Message = "Validation errors",
+                Data = string.Join(" | ", validationErrors)
+            };
+
+            return BadRequest(validationResponse);
         }
 
         [HttpDelete]

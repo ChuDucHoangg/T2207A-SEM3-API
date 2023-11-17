@@ -27,7 +27,7 @@ namespace T2207A_SEM3_API.Controllers
         {
             try
             {
-                List<Staff> staffs = await _context.Staffs.ToListAsync();
+                List<Staff> staffs = await _context.Staffs.OrderByDescending(s => s.Id).ToListAsync();
 
                 List<StaffDTO> data = new List<StaffDTO>();
 

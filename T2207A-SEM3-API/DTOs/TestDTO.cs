@@ -17,6 +17,10 @@
         public double past_marks { get; set; }
 
         public double total_marks { get; set; }
+
+        public  int? RetakeTestId { get; set; }
+
+        public int numberOfQuestion { get; set; }
         public int type_test { get; set; }
 
         public int created_by { get; set; }

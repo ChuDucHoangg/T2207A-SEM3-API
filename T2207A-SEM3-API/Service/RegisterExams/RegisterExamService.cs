@@ -17,7 +17,7 @@ namespace T2207A_SEM3_API.Service.RegisterExams
 
         public async Task<List<RegisterExamDTO>> GetAllRegisterExamAsync()
         {
-            List<RegisterExam> registerExam = await _context.RegisterExams.ToListAsync();
+            List<RegisterExam> registerExam = await _context.RegisterExams.OrderByDescending(s => s.Id).ToListAsync();
             List<RegisterExamDTO> data = new List<RegisterExamDTO>();
 
             foreach (RegisterExam re in registerExam)

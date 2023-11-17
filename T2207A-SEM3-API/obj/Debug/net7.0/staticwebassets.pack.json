@@ -21,6 +21,10 @@
       "PackagePath": "staticwebassets\\uploads\\2ad15e55-f740-47a9-9a4c-894e296c9ddf.png"
     },
     {
+      "Id": "D:\\SEM3\\project-examonimy\\SEM-Examonimy-API2\\T2207A-SEM3-API\\wwwroot\\uploads\\3dd0632f-0302-4b5b-874d-b4d58567a132.png",
+      "PackagePath": "staticwebassets\\uploads\\3dd0632f-0302-4b5b-874d-b4d58567a132.png"
+    },
+    {
       "Id": "D:\\SEM3\\project-examonimy\\SEM-Examonimy-API2\\T2207A-SEM3-API\\wwwroot\\uploads\\3f5524ed-7030-4da9-851e-1544d708cf86.png",
       "PackagePath": "staticwebassets\\uploads\\3f5524ed-7030-4da9-851e-1544d708cf86.png"
     },
@@ -59,10 +63,6 @@
     {
       "Id": "D:\\SEM3\\project-examonimy\\SEM-Examonimy-API2\\T2207A-SEM3-API\\wwwroot\\uploads\\e6262a50-2e2b-4ac9-9fdf-8e0a87fcc7d0.png",
       "PackagePath": "staticwebassets\\uploads\\e6262a50-2e2b-4ac9-9fdf-8e0a87fcc7d0.png"
-    },
-    {
-      "Id": "D:\\SEM3\\project-examonimy\\SEM-Examonimy-API2\\T2207A-SEM3-API\\wwwroot\\uploads\\ea97c736-5f7e-44eb-a8a9-c96c67e530a9.jpg",
-      "PackagePath": "staticwebassets\\uploads\\ea97c736-5f7e-44eb-a8a9-c96c67e530a9.jpg"
     },
     {
       "Id": "obj\\Debug\\net7.0\\staticwebassets\\msbuild.T2207A-SEM3-API.Microsoft.AspNetCore.StaticWebAssets.props",

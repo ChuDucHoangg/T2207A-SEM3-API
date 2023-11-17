@@ -27,7 +27,7 @@ namespace T2207A_SEM3_API.Controllers
         {
             try
             {
-                List<Exam> exams = await _context.Exams.ToListAsync();
+                List<Exam> exams = await _context.Exams.OrderByDescending(s => s.Id).ToListAsync();
 
                 List<ExamDTO> data = new List<ExamDTO>();
                 foreach (Exam e in exams)
@@ -92,7 +92,7 @@ namespace T2207A_SEM3_API.Controllers
                 try
                 {
                     List<Exam> exams = await _context.Exams.Where(p => p.CourseClassId == model.courseClass_id).ToListAsync();
-                    if (exams.Count >= 1)
+                    if (exams.Count >= 2)
                     {
                         // Nếu name đã tồn tại, trả về BadRequest hoặc thông báo lỗi tương tự
                         return BadRequest(new GeneralServiceResponse
@@ -267,13 +267,16 @@ namespace T2207A_SEM3_API.Controllers
                     return NotFound();
                 }
 
-                List<Exam> exams = await _context.Exams.Where(p => p.CourseClassId == courseId).ToListAsync();
+
+
+                List<Exam> exams = await _context.Exams.Include(p => p.CourseClass).ThenInclude(p => p.Course).Where(p => p.CourseClassId == courseId).ToListAsync();
                 if (exams != null)
                 {
-                    List<ExamDTO> data = exams.Select(c => new ExamDTO
+                    List<ExamResponse> data = exams.Select(c => new ExamResponse
                     {
                         id = c.Id,
                         name = c.Name,
+                        courseName = c.CourseClass.Course.Name,
                         slug = c.Slug,
                         courseClass_id = c.CourseClassId,
                         start_date = c.StartDate,

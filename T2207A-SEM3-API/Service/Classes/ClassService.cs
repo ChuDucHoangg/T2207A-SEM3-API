@@ -69,7 +69,7 @@ namespace T2207A_SEM3_API.Service.Classes
 
         public async Task<List<ClassDTO>> GetAllClassAsync()
         {
-            List<Class> classes = await _context.Classes.ToListAsync();
+            List<Class> classes = await _context.Classes.OrderByDescending(s => s.Id).ToListAsync();
             List<ClassDTO> data = new List<ClassDTO>();
 
             foreach (Class c in classes)

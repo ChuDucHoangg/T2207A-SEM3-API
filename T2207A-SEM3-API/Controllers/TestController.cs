@@ -43,7 +43,7 @@ namespace T2207A_SEM3_API.Controllers
         {
             try
             {
-                List<Test> tests = await _context.Tests.ToListAsync();
+                List<Test> tests = await _context.Tests.OrderByDescending(s => s.Id).ToListAsync();
 
                 List<TestDTO> data = new List<TestDTO>();
                 foreach (Test t in tests)
@@ -59,6 +59,8 @@ namespace T2207A_SEM3_API.Controllers
                         past_marks = t.PastMarks,
                         total_marks = t.TotalMarks,
                         type_test = t.TypeTest,
+                        RetakeTestId = t.RetakeTestId,
+                        numberOfQuestion = t.NumberOfQuestionsInExam,
                         created_by = t.CreatedBy,
                         status = t.Status,
                         createdAt = t.CreatedAt,
@@ -93,6 +95,9 @@ namespace T2207A_SEM3_API.Controllers
                         endDate = t.EndDate,
                         past_marks = t.PastMarks,
                         total_marks = t.TotalMarks,
+                        type_test = t.TypeTest,
+                        RetakeTestId = t.RetakeTestId,
+                        numberOfQuestion = t.NumberOfQuestionsInExam,
                         created_by = t.CreatedBy,
                         status = t.Status,
                         createdAt = t.CreatedAt,
@@ -132,7 +137,7 @@ namespace T2207A_SEM3_API.Controllers
                     }
 
                     // chỉ có 1 bài test chính còn lại là test thi lại
-                    var testExists = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null && t.TypeTest == 0);
+                    var testExists = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null);
                     if (testExists != null)
                     {
                         return BadRequest(new GeneralServiceResponse
@@ -157,7 +162,7 @@ namespace T2207A_SEM3_API.Controllers
                         var fileExtension = Path.GetExtension(file.FileName).ToLower(); // Lấy phần mở rộng của tên tệp và chuyển thành chữ thường
 
                         // Kiểm tra xem tệp có đúng định dạng Excel (ví dụ: .xlsx) hay không
-                        if (fileExtension == ".xlsx" || fileExtension == ".xlsx")
+                        if (fileExtension == ".xlsx" || fileExtension == ".xls")
                         {
                             var uploadDirectory = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "excels");
 
@@ -453,7 +458,7 @@ namespace T2207A_SEM3_API.Controllers
                     }
 
                     // chỉ có 1 bài test chính còn lại là test thi lại
-                    var testExists = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null && t.TypeTest == 0);
+                    var testExists = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null);
                     if (testExists == null)
                     {
                         return BadRequest(new GeneralServiceResponse
@@ -796,7 +801,7 @@ namespace T2207A_SEM3_API.Controllers
                     }
 
                     // chỉ có 1 bài test chính còn lại là test thi lại
-                    var testExists = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null && t.TypeTest == 0);
+                    var testExists = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null);
                     if (testExists != null)
                     {
                         return BadRequest(new GeneralServiceResponse
@@ -1061,7 +1066,7 @@ namespace T2207A_SEM3_API.Controllers
                     }
 
                     // chỉ có 1 bài test chính còn lại là test thi lại
-                    var testExists = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null && t.TypeTest == 0);
+                    var testExists = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null);
                     if (testExists == null)
                     {
                         return BadRequest(new GeneralServiceResponse
@@ -1567,7 +1572,7 @@ namespace T2207A_SEM3_API.Controllers
                         });
                     }
 
-                    var testMain = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null && t.TypeTest == 0);
+                    var testMain = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null);
                     if (testMain == null)
                     {
                         return NotFound(new GeneralServiceResponse
@@ -1819,7 +1824,7 @@ namespace T2207A_SEM3_API.Controllers
                         });
                     }
                     // chỉ có 1 bài test chính còn lại là test thi lại
-                    var testExists = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null && t.TypeTest == 1);
+                    var testExists = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null);
                     if (testExists != null)
                     {
                         return BadRequest(new GeneralServiceResponse
@@ -2053,7 +2058,7 @@ namespace T2207A_SEM3_API.Controllers
                         });
                     }
 
-                    var testMain = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null && t.TypeTest == 1);
+                    var testMain = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null);
                     if (testMain == null)
                     {
                         return NotFound(new GeneralServiceResponse
@@ -2245,7 +2250,7 @@ namespace T2207A_SEM3_API.Controllers
                     }
 
                     // chỉ có 1 bài test chính còn lại là test thi lại
-                    var testExists = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null && t.TypeTest == 1);
+                    var testExists = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null);
                     if (testExists != null)
                     {
                         return BadRequest(new GeneralServiceResponse
@@ -2430,7 +2435,7 @@ namespace T2207A_SEM3_API.Controllers
                         return BadRequest(new GeneralServiceResponse { Success = false, StatusCode = 400, Message = "Class name already exists", Data = "" });
                     }
 
-                    var testMain = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null && t.TypeTest == 1);
+                    var testMain = await _context.Tests.FirstOrDefaultAsync(t => t.ExamId == model.exam_id && t.RetakeTestId == null);
                     if (testMain == null)
                     {
                         return NotFound(new GeneralServiceResponse

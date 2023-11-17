@@ -15,7 +15,7 @@ namespace T2207A_SEM3_API.Service.Courses
         }
         public async Task<List<CourseDTO>> GetAllCoursesAsync()
         {
-            List<Course> courses = await _context.Courses.ToListAsync();
+            List<Course> courses = await _context.Courses.OrderByDescending(s => s.Id).ToListAsync();
             List<CourseDTO> data = new List<CourseDTO>();
 
             foreach (Course cr in courses)
