@@ -7,6 +7,7 @@ namespace T2207A_SEM3_API.Service.RegisterExams
     public interface IRegisterExamService
     {
         Task<List<RegisterExamDTO>> GetAllRegisterExamAsync();
+        Task<List<RegisterExamDTO>> GetRegisterByExamIdAsync(int id);
         Task<RegisterExamDTO> CreateRegisterExamAsync(int student_id, int exam_id);
         Task<bool> DeleteRegisterExamAsync(int id, int student_id);
         Task<bool> ApproveRegisterExamAsync(int id);

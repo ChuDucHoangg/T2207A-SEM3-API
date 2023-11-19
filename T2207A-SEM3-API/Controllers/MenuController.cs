@@ -64,7 +64,7 @@ namespace T2207A_SEM3_API.Controllers
                     };
                     return Ok(menu);
                 }
-                else if (user.Role.Contains("Exam Administrator"))
+                else if (user.Role.Contains("Staff"))
                 {
                     var menu = new List<MenuItem>
                     {

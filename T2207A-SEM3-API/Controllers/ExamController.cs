@@ -257,7 +257,7 @@ namespace T2207A_SEM3_API.Controllers
                 }
 
                 // kiểm tra classCourseID
-                var classCourse = await _context.ClassCourses.FirstOrDefaultAsync(c => c.ClassId == user.ClassId && c.CourseId == courseId);
+                var classCourse = await _context.ClassCourses.FirstOrDefaultAsync(c => c.Id == courseId);
                 if (classCourse == null)
                 {
                     return NotFound();
@@ -269,7 +269,7 @@ namespace T2207A_SEM3_API.Controllers
 
 
 
-                List<Exam> exams = await _context.Exams.Include(p => p.CourseClass).ThenInclude(p => p.Course).Where(p => p.CourseClassId == courseId).ToListAsync();
+                List<Exam> exams = await _context.Exams.Include(p => p.CourseClass).ThenInclude(p => p.Course).Where(p => p.CourseClassId == classCourse.Id).ToListAsync();
                 if (exams != null)
                 {
                     List<ExamResponse> data = exams.Select(c => new ExamResponse

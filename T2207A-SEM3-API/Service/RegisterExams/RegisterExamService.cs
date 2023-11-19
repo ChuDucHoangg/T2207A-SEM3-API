@@ -98,5 +98,27 @@ namespace T2207A_SEM3_API.Service.RegisterExams
 
             return true;
         }
+
+        public async Task<List<RegisterExamDTO>> GetRegisterByExamIdAsync(int id)
+        {
+            List<RegisterExam> registerExam = await _context.RegisterExams.Where(s => s.ExamId == id).OrderByDescending(s => s.Id).ToListAsync();
+            List<RegisterExamDTO> data = new List<RegisterExamDTO>();
+
+            foreach (RegisterExam re in registerExam)
+            {
+                data.Add(new RegisterExamDTO
+                {
+                    id = re.Id,
+                    student_id = re.StudentId,
+                    exam_id = re.ExamId,
+                    status = re.Status,
+                    createdAt = re.CreatedAt,
+                    updatedAt = re.UpdatedAt,
+                    deletedAt = re.DeletedAt
+                });
+            }
+
+            return data;
+        }
     }
 }

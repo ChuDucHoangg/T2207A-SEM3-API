@@ -52,6 +52,34 @@ namespace T2207A_SEM3_API.Controllers
             }
         }
 
+        [HttpGet("{exam_id}")]
+        public async Task<IActionResult> GetByExamId(int exam_id)
+        {
+            try
+            {
+                List<RegisterExamDTO> registerExams = await _registerExamService.GetRegisterByExamIdAsync(exam_id);
+                return Ok(new GeneralServiceResponse
+                {
+                    Success = true,
+                    StatusCode = 200,
+                    Message = "Success",
+                    Data = registerExams
+                });
+            }
+            catch (Exception ex)
+            {
+                var response = new GeneralServiceResponse
+                {
+                    Success = false,
+                    StatusCode = 400,
+                    Message = ex.Message,
+                    Data = ""
+                };
+
+                return BadRequest(response);
+            }
+        }
+
         [HttpPost("register-exam")]
         [Authorize]
         public async Task<IActionResult> RegisterExam(RegisterExamRequest model)
