@@ -26,6 +26,8 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Super Admin, Staff")]
+
         public async Task<IActionResult> GetAll()
         {
             try
@@ -230,7 +232,8 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpDelete]
-        [Authorize]
+        [Authorize(Roles = "Super Admin, Staff")]
+
         public async Task<IActionResult> Delete(int id)
         {
             var identity = HttpContext.User.Identity as ClaimsIdentity;

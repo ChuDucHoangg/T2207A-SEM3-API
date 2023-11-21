@@ -13,6 +13,8 @@ namespace T2207A_SEM3_API.Controllers
 {
     [Route("api/course")]
     [ApiController]
+    [Authorize(Roles = "Super Admin")]
+
     public class CourseController : Controller
     {
         private readonly ExamonimyContext _context;

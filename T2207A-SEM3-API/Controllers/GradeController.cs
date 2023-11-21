@@ -234,7 +234,7 @@ namespace T2207A_SEM3_API.Controllers
                 foreach (var studentTest in studentTests)
                 {
                     var grade = await _context.Grades.FirstOrDefaultAsync(g => g.TestId == studentTest.TestId && g.StudentId == user.Id);
-                    if(grade.FinishedAt == null)
+                    if (grade.FinishedAt == null)
                     {
                         var testGradeResponse = new TestGradeResponse();
                         testGradeResponse.studentTestId = studentTest.TestId;
@@ -348,6 +348,17 @@ namespace T2207A_SEM3_API.Controllers
                                     Success = false,
                                     StatusCode = 400,
                                     Message = "The exam has been locked",
+                                    Data = ""
+                                });
+                            }
+
+                            if (test.TypeTest == 0)
+                            {
+                                return BadRequest(new GeneralServiceResponse
+                                {
+                                    Success = false,
+                                    StatusCode = 400,
+                                    Message = "Only essay test scores can be corrected",
                                     Data = ""
                                 });
                             }
@@ -467,6 +478,76 @@ namespace T2207A_SEM3_API.Controllers
                 _context.Grades.Remove(grade);
                 await _context.SaveChangesAsync();
                 return NoContent();
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
+
+        [HttpGet("classcourse-scores/{classCourseId}/{student_id}")]
+        public async Task<ActionResult<object>> GetClassCourseScores(int classCourseId, int student_id)
+        {
+            try
+            {
+                // Lấy thông tin về ClassCourse, kèm theo danh sách các Exam và Tests liên quan
+                var classCourseInfo = await _context.ClassCourses
+                    .Include(cc => cc.Exams)
+                        .ThenInclude(e => e.Tests)
+                        .Include(e => e.Class).Include(e => e.Course)
+                    .FirstOrDefaultAsync(cc => cc.Id == classCourseId);
+
+                if (classCourseInfo == null)
+                {
+                    return NotFound("ClassCourse not found");
+                }
+
+                // Tạo một đối tượng để chứa thông tin về điểm thi của ClassCourse
+                var classCourseScores = new
+                {
+                    ClassCourseId = classCourseInfo.Id,
+                    ClassName = classCourseInfo.Class.Name,
+                    CourseName = classCourseInfo.Course.Name,
+                    ExamScores = new List<object>() // Danh sách điểm của các bài kiểm tra
+                };
+
+                if (classCourseInfo.Class != null && classCourseInfo.Course != null)
+                {
+                    // Duyệt qua từng kỳ thi trong ClassCourse
+                    foreach (var exam in classCourseInfo.Exams)
+                    {
+                        // Lấy điểm của bài thi essay (nếu có)
+                        var TestScore = await _context.Grades
+                            .Where(g => g.Test.ExamId == exam.Id && g.StudentId == student_id && g.Test.RetakeTestId == null && g.IsRetake == false) // Status = 1: Bài thi chính
+                            .Select(g => new
+                            {
+                                Score = g.Score
+                            })
+                            .FirstOrDefaultAsync();
+
+                        
+
+                        // Lấy điểm của bài thi lại (nếu có) multipchoice
+                        var retakeTestScore = await _context.Grades
+                            .Where(g => g.Test.ExamId == exam.Id && g.StudentId == student_id && g.IsRetake == true) // Status = 2: Bài thi lại
+                            .Select(g => new
+                            {
+                                Score = g.Score
+                            })
+                            .FirstOrDefaultAsync();
+
+                        // Thêm thông tin về điểm vào danh sách
+                        classCourseScores.ExamScores.Add(new
+                        {
+                            ExamName = exam.Name,
+                            Score = TestScore,
+                            RetakeScore = retakeTestScore
+                        });
+                    }
+
+                    return Ok(classCourseScores);
+                }
+                return Ok();
             }
             catch (Exception e)
             {

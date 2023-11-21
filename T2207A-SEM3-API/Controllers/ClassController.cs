@@ -24,7 +24,9 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpGet]
-        
+        [Authorize("Super Admin, Staff")]
+
+
         public async Task<IActionResult> Index()
         {
             try
@@ -85,6 +87,8 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpPost]
+        [Authorize("Super Admin, Staff")]
+
         public async Task<IActionResult> Create(CreateClass model)
         {
             if (ModelState.IsValid)
@@ -130,6 +134,8 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpPut]
+        [Authorize("Super Admin, Staff")]
+
         public async Task<IActionResult> Update(EditClass model)
         {
             if (ModelState.IsValid)
@@ -190,6 +196,8 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpDelete]
+        [Authorize("Super Admin, Staff")]
+
         public async Task<IActionResult> Delete(int id)
         {
             bool hasStudents = await _context.Students.AnyAsync(s => s.ClassId == id); 
@@ -234,6 +242,7 @@ namespace T2207A_SEM3_API.Controllers
 
         [HttpGet]
         [Route("get-by-teacherId")]
+        [Authorize("Super Admin, Staff")]
         public async Task<IActionResult> GetbyClass(int teacherId)
         {
             try

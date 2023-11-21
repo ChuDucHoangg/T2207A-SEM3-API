@@ -23,6 +23,8 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Super Admin, Staff")]
+
         public async Task<IActionResult> Index()
         {
             try
@@ -55,6 +57,8 @@ namespace T2207A_SEM3_API.Controllers
 
         [HttpGet]
         [Route("get-by-slug")]
+        [Authorize(Roles = "Super Admin, Staff")]
+
         public async Task<IActionResult> Get(string slug)
         {
             try
@@ -85,6 +89,8 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Super Admin, Staff")]
+
         public async Task<IActionResult> Create(CreateExam model)
         {
             if (ModelState.IsValid)
@@ -155,6 +161,8 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpPut]
+        [Authorize(Roles = "Super Admin, Staff")]
+
         public async Task<IActionResult> Update(EditExam model)
         {
             if (ModelState.IsValid)
@@ -208,6 +216,8 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpDelete]
+        [Authorize(Roles = "Super Admin, Staff")]
+
         public async Task<IActionResult> Delete(int id)
         {
             try

@@ -27,6 +27,8 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Super Admin, Staff")]
+
         public async Task<IActionResult> GetClassCourseAll()
         {
             try
@@ -55,7 +57,8 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpGet("by-classId")]
-        [Authorize]
+        [Authorize(Roles = "Super Admin, Staff")]
+
         public async Task<IActionResult> GetCourseByClassId()
         {
             var identity = HttpContext.User.Identity as ClaimsIdentity;
@@ -109,6 +112,7 @@ namespace T2207A_SEM3_API.Controllers
 
         //
         [HttpPost]
+        [Authorize(Roles = "Super Admin, Staff")]
         public async Task<IActionResult> Create(CreateClassCourse model)
         {
             if (ModelState.IsValid)

@@ -10,10 +10,5 @@ namespace T2207A_SEM3_API.Models.Grade
         [Required(ErrorMessage = "Please enter score")]
         [Range(0.0, 100.0, ErrorMessage = "Invalid value")]
         public double score { get; set; }
-
-        [Required(ErrorMessage = "Please enter status")]
-        [Range(0, 1, ErrorMessage = "Please select a valid status")]
-        public int status { get; set; }
-
     }
 }

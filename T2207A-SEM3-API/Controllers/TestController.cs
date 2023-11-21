@@ -39,6 +39,7 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Super Admin, Staff, Teacher")]
         public async Task<IActionResult> Index()
         {
             try
@@ -115,6 +116,8 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpPost("multiple-choice-by-excel-file")]
+        [Authorize(Roles = "Super Admin, Staff")]
+
         public async Task<IActionResult> CreateMultipleChoiceTestByExcelFile([FromForm]CreateMultipleChoiceTestByExcelFile model)
         {
             if (ModelState.IsValid)
@@ -436,6 +439,8 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpPost("multiple-choice-by-excel-file/retake")]
+        [Authorize(Roles = "Super Admin, Staff")]
+
         public async Task<IActionResult> CreateMultipleChoiceRetakeTestByExcelFile([FromForm] CreateMultipleChoiceRetakeTestByExcelFile model)
         {
             if (ModelState.IsValid)
@@ -779,6 +784,8 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpPost("multiple-choice-by-hand")]
+        [Authorize(Roles = "Super Admin, Staff")]
+
         public async Task<IActionResult> CreateMultipleChoiceTestByHand(CreateMultipleChoiceTestByHand model)
         {
             if (ModelState.IsValid)
@@ -1044,6 +1051,8 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpPost("multiple-choice-by-hand/retake")]
+        [Authorize(Roles = "Super Admin, Staff")]
+
         public async Task<IActionResult> CreateMultipleChoiceRetakeTestByHand(CreateMultipleChoiceRetakeTestByHand model)
         {
             if (ModelState.IsValid)
@@ -1297,6 +1306,8 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpPost("multiple-choice-by-auto")]
+        [Authorize(Roles = "Super Admin, Staff")]
+
         public async Task<IActionResult> CreateMultipleChoiceTestByAuto(CreateMultipleChoiceTestByAuto model)
         {
             if (ModelState.IsValid)
@@ -1551,6 +1562,8 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpPost("multiple-choice-by-auto/retake")]
+        [Authorize(Roles = "Super Admin, Staff")]
+
         public async Task<IActionResult> CreateMultipleChoiceRetakeTestByAuto(CreateMultipleChoiceRetakeTestByAuto model)
         {
             if (ModelState.IsValid)
@@ -1803,6 +1816,8 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpPost("essay-by-hand")]
+        [Authorize(Roles = "Super Admin, Staff")]
+
         public async Task<IActionResult> CreateEssayTestByHand(CreateEssayTestByHand model)
         { 
             if (ModelState.IsValid)
@@ -2024,6 +2039,8 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpPost("essay-by-hand/retake")]
+        [Authorize(Roles = "Super Admin, Staff")]
+
         public async Task<IActionResult> CreateEssayRetakeTestByHand(CreateEssayRetakeTestByHand model)
         {
             if (ModelState.IsValid)
@@ -2234,6 +2251,8 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpPost("essay-by-auto")]
+        [Authorize(Roles = "Super Admin, Staff")]
+
         public async Task<IActionResult> CreateEssayTestByAuto(CreateEssayTestByAuto model)
         {
             if (ModelState.IsValid)
@@ -2420,6 +2439,8 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpPost("essay-by-auto/retake")]
+        [Authorize(Roles = "Super Admin, Staff")]
+
         public async Task<IActionResult> CreateEssayRetakeTestByAuto(CreateEssayRetakeTestByAuto model)
         {
             if (ModelState.IsValid)
@@ -2825,7 +2846,7 @@ namespace T2207A_SEM3_API.Controllers
 
         [HttpPut]
         [Route("lock-test/{test_slug}")]
-        [Authorize("Super Admin, Staff")]
+        [Authorize(Roles = "Super Admin, Staff")]
         public async Task<IActionResult> LockTest(string test_slug)
         {
             var identity = HttpContext.User.Identity as ClaimsIdentity;
@@ -2937,7 +2958,7 @@ namespace T2207A_SEM3_API.Controllers
 
         [HttpPut]
         [Route("unlock-test/{test_slug}")]
-        [Authorize("Super Admin, Staff")]
+        [Authorize(Roles = "Super Admin, Staff")]
         public async Task<IActionResult> UnLockTest(string test_slug)
         {
             var identity = HttpContext.User.Identity as ClaimsIdentity;

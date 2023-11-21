@@ -329,7 +329,7 @@ namespace T2207A_SEM3_API.Controllers
 
         // for staff
         [HttpGet("result-test/{test_slug}/details/{student_code}")]
-        /*[Authorize]*/
+        [Authorize(Roles = "Super Admin, Staff")]
         public async Task<IActionResult> GetTestQuestionsAndAnswerStudent(string test_slug, string student_code)
         {
             try
