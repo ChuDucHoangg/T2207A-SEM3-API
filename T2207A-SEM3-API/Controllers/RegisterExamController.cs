@@ -232,8 +232,7 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpDelete]
-        [Authorize(Roles = "Super Admin, Staff")]
-
+        [Authorize]
         public async Task<IActionResult> Delete(int id)
         {
             var identity = HttpContext.User.Identity as ClaimsIdentity;
