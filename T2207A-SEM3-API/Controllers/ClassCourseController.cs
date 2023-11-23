@@ -57,8 +57,7 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpGet("by-classId")]
-        [Authorize(Roles = "Super Admin, Staff")]
-
+        [Authorize]
         public async Task<IActionResult> GetCourseByClassId()
         {
             var identity = HttpContext.User.Identity as ClaimsIdentity;

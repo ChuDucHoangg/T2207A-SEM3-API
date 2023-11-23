@@ -10,6 +10,7 @@ using OfficeOpenXml;
 using OfficeOpenXml.FormulaParsing.Excel.Functions.Text;
 using System.Reflection.PortableExecutable;
 using System.Security.Claims;
+using System.Security.Principal;
 using System.Text;
 using T2207A_SEM3_API.DTOs;
 using T2207A_SEM3_API.Entities;
@@ -117,7 +118,6 @@ namespace T2207A_SEM3_API.Controllers
 
         [HttpPost("multiple-choice-by-excel-file")]
         [Authorize(Roles = "Super Admin, Staff")]
-
         public async Task<IActionResult> CreateMultipleChoiceTestByExcelFile([FromForm]CreateMultipleChoiceTestByExcelFile model)
         {
             if (ModelState.IsValid)
@@ -2648,6 +2648,7 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpPut]
+        [Authorize(Roles = "Super Admin, Staff")]
         public async Task<IActionResult> Update(EditTest model)
         {
             if (ModelState.IsValid)
@@ -2694,9 +2695,6 @@ namespace T2207A_SEM3_API.Controllers
                     {
                         return NotFound(); // Không tìm thấy lớp để cập nhật
                     }
-
-
-
                 }
                 catch (Exception e)
                 {
@@ -2707,16 +2705,79 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpDelete]
+        [Authorize(Roles = "Super Admin, Staff")]
         public async Task<IActionResult> Delete(int id)
         {
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+
+            if (!identity.IsAuthenticated)
+            {
+                return Unauthorized(new GeneralServiceResponse
+                {
+                    Success = false,
+                    StatusCode = 401,
+                    Message = "Not Authorized",
+                    Data = ""
+                });
+            }
             try
             {
-                Test test = await _context.Tests.FindAsync(id);
-                if (test == null)
-                    return NotFound();
-                _context.Tests.Remove(test);
-                await _context.SaveChangesAsync();
-                return NoContent();
+                var userClaims = identity.Claims;
+                var userId = userClaims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+                var user = _context.Staffs.Find(Convert.ToInt32(userId));
+                if (user == null)
+                {
+                    return Unauthorized(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 401,
+                        Message = "Not Authorized",
+                        Data = ""
+                    });
+                }
+
+                Test existingTest = _context.Tests.AsNoTracking().FirstOrDefault(e => e.Id == id);
+                if (existingTest != null)
+                {
+                    DateTime currentTime = DateTime.Now;
+                    if (currentTime > existingTest.StartDate)
+                    {
+                        return BadRequest(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 400,
+                            Message = "This test cannot be deleted",
+                            Data = ""
+                        });
+                    }
+
+                    var grades = await _context.Grades.Where(g => g.TestId == existingTest.Id).ToListAsync();
+
+                    var student_tests = await _context.StudentTests.Where(g => g.TestId == existingTest.Id).ToListAsync();
+
+                    var question_tests = await _context.QuestionTests.Where(g => g.TestId == existingTest.Id).ToListAsync();
+
+                    _context.Grades.RemoveRange(grades);
+                    await _context.SaveChangesAsync();
+
+                    _context.StudentTests.RemoveRange(student_tests);
+                    await _context.SaveChangesAsync();
+
+                    _context.QuestionTests.RemoveRange(question_tests);
+                    await _context.SaveChangesAsync();
+
+                    _context.Tests.Remove(existingTest);
+                    await _context.SaveChangesAsync();
+
+                    return NoContent();
+                }
+                else
+                {
+                    return NotFound(); // Không tìm thấy lớp để cập nhật
+                }
+
+                
             }
             catch (Exception e)
             {
@@ -2743,6 +2804,9 @@ namespace T2207A_SEM3_API.Controllers
                         endDate = c.EndDate,
                         past_marks = c.PastMarks,
                         total_marks = c.TotalMarks,
+                        type_test = c.TypeTest,
+                        numberOfQuestion = c.NumberOfQuestionsInExam,
+                        RetakeTestId = c.RetakeTestId,
                         created_by = c.CreatedBy,
                         status = c.Status,
                         createdAt = c.CreatedAt,
@@ -3026,6 +3090,62 @@ namespace T2207A_SEM3_API.Controllers
                     Message = e.Message,
                     Data = ""
                 });
+            }
+        }
+
+        [HttpGet("get-by-teacher")]
+        [Authorize(Roles = "Super Admin, Staff, Teacher")]
+        public async Task<IActionResult> GetTestByTeacher()
+        {
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+
+            if (!identity.IsAuthenticated)
+            {
+                return Unauthorized(new GeneralServiceResponse { Success = false, StatusCode = 401, Message = "Not Authorized", Data = "" });
+            }
+            try
+            {
+                var userClaims = identity.Claims;
+                var userId = userClaims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+                var user = await _context.Staffs
+                    .FirstOrDefaultAsync(u => u.Id == Convert.ToInt32(userId));
+
+                if (user == null)
+                {
+                    return NotFound(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 404,
+                        Message = "Incorrect current password",
+                        Data = ""
+                    });
+                }
+
+                var recentEssayTests = await _context.Tests
+                .Include(t => t.Exam)
+                    .ThenInclude(e => e.CourseClass)
+                        .ThenInclude(cc => cc.Class)
+                .Where(t => t.Exam.CourseClass.Class.TeacherId == user.Id)
+                .OrderByDescending(t => t.CreatedAt)
+                .Select(t => new
+                {
+                    TestId = t.Id,
+                    TestName = t.Name,
+                    TestSlug = t.Slug,
+                    ClassId = t.Exam.CourseClass.Class.Id,
+                    ClassName = t.Exam.CourseClass.Class.Name,
+                    CreatedAt = t.CreatedAt,
+                    StartDate = t.StartDate,
+                    EndDate = t.EndDate
+                })
+                .ToListAsync();
+
+                return Ok(recentEssayTests);
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
             }
         }
     }

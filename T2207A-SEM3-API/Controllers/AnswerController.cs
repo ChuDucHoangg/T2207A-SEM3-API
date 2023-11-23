@@ -91,7 +91,7 @@ namespace T2207A_SEM3_API.Controllers
             return BadRequest();
         }*/
 
-        [HttpDelete]
+        /*[HttpDelete]
         public async Task<IActionResult> Delete(int id)
         {
             try
@@ -140,6 +140,6 @@ namespace T2207A_SEM3_API.Controllers
             {
                 return StatusCode(500, e.Message);
             }
-        }
+        }*/
     }
 }

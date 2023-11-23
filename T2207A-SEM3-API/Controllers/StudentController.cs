@@ -15,6 +15,7 @@ using T2207A_SEM3_API.Service.Email;
 using T2207A_SEM3_API.Service.Students;
 using T2207A_SEM3_API.Service.UploadFiles;
 using static System.Net.Mime.MediaTypeNames;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace T2207A_SEM3_API.Controllers
 {
@@ -227,6 +228,191 @@ namespace T2207A_SEM3_API.Controllers
                     Success = false,
                     StatusCode = 400,
                     Message = ex.Message,
+                    Data = ""
+                });
+            }
+        }
+
+        public async Task<IActionResult> CreateByExcel([FromForm] CreateStudentByExcel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                var validationErrors = ModelState.Values.SelectMany(v => v.Errors).Select(v => v.ErrorMessage);
+
+                var validationResponse = new GeneralServiceResponse
+                {
+                    Success = false,
+                    StatusCode = 400,
+                    Message = "Validation errors",
+                    Data = string.Join(" | ", validationErrors)
+                };
+
+                return BadRequest(validationResponse);
+            }
+
+            try
+            {
+
+                Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+                var file = model.excelFile;
+
+                if (file != null || file.Length > 0)
+                {
+                    var fileExtension = Path.GetExtension(file.FileName).ToLower();
+                    if (fileExtension == ".xlsx" || fileExtension == ".xls")
+                    {
+                        var uploadDirectory = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "excels", "student");
+
+                        if (!Directory.Exists(uploadDirectory))
+                        {
+                            Directory.CreateDirectory(uploadDirectory);
+                        }
+
+                        var filePath = Path.Combine(uploadDirectory, file.FileName);
+
+                        using (var stream = new FileStream(filePath, FileMode.Create))
+                        {
+                            await file.CopyToAsync(stream);
+                        }
+                        using (var stream = System.IO.File.Open(filePath, FileMode.Open, FileAccess.Read))
+                        {
+                            using (var reader = ExcelReaderFactory.CreateReader(stream))
+                            {
+                                int totalStudents = 0;
+                                do
+                                {
+                                    bool isHeaderSkipped = false;
+
+                                    while (reader.Read())
+                                    {
+                                        if (!isHeaderSkipped)
+                                        {
+                                            isHeaderSkipped = true;
+                                            continue;
+                                        }
+                                        totalStudents++;
+                                    }
+                                } while (reader.NextResult());
+                                reader.Close();
+
+                                if (totalStudents >= 1)
+                                {
+                                    using (var newStream = System.IO.File.Open(filePath, FileMode.Open, FileAccess.Read))
+                                    {
+                                        using (var newReader = ExcelReaderFactory.CreateReader(newStream))
+                                        {
+                                            do
+                                            {
+                                                bool isHeaderSkipped1 = false;
+
+                                                while (newReader.Read())
+                                                {
+                                                    if (!isHeaderSkipped1)
+                                                    {
+                                                        isHeaderSkipped1 = true;
+                                                        continue;
+                                                    }
+                                                    string fullName = newReader.GetValue(1).ToString();
+                                                    string email = newReader.GetValue(2).ToString();
+                                                    DateTime birthDay = DateTime.Parse(newReader.GetValue(3).ToString());
+                                                    string gender = newReader.GetValue(4).ToString();
+                                                    string phone = newReader.GetValue(5).ToString();
+                                                    string address = newReader.GetValue(6).ToString();
+                                                    // general password
+                                                    var password = AutoGeneratorPassword.passwordGenerator(7, 2, 2, 2);
+
+                                                    // hash password
+                                                    var salt = BCrypt.Net.BCrypt.GenerateSalt(10);
+                                                    var hassPassword = BCrypt.Net.BCrypt.HashPassword(password, salt);
+
+                                                    var existEmail = await _context.Students.FirstOrDefaultAsync(st => st.Email.Equals(email));
+                                                    if (existEmail == null)
+                                                    {
+                                                        var newStudent = new Student
+                                                        {
+                                                            StudentCode = await _studentService.GenerateStudentCode(),
+                                                            Fullname = fullName,
+                                                            Email = email,
+                                                            Avatar = "https://localhost:7218/uploads/3dd0632f-0302-4b5b-874d-b4d58567a132.png",
+                                                            Birthday = birthDay,
+                                                            Gender = gender,
+                                                            Phone = phone,
+                                                            Address = address,
+                                                            Status = 0,
+                                                            Password = hassPassword,
+                                                            ClassId = model.class_id,
+                                                            CreatedAt = DateTime.Now,
+                                                            UpdatedAt = DateTime.Now,
+                                                            DeletedAt = null
+                                                        };
+
+                                                        _context.Students.Add(newStudent);
+                                                        await _context.SaveChangesAsync();
+
+                                                        // start send mail
+
+                                                        Mailrequest mailrequest = new Mailrequest();
+                                                        mailrequest.ToEmail = newStudent.Email;
+                                                        mailrequest.Subject = "Welcome to Examonimy";
+                                                        mailrequest.Body = EmailContentRegister.GetHtmlcontentRegister(newStudent.Fullname, newStudent.Email, password);
+
+                                                        await _emailService.SendEmailAsync(mailrequest);
+
+                                                        // end send mail
+                                                    }
+                                                }
+                                            } while (newReader.NextResult());
+
+                                            return BadRequest(new GeneralServiceResponse
+                                            {
+                                                Success = false,
+                                                StatusCode = 200,
+                                                Message = "Created successfully",
+                                                Data = ""
+                                            });
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    return BadRequest(new GeneralServiceResponse
+                                    {
+                                        Success = false,
+                                        StatusCode = 400,
+                                        Message = "The number of student is missing",
+                                        Data = ""
+                                    });
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        return BadRequest(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 400,
+                            Message = "bad format",
+                            Data = ""
+                        });
+                    }
+                }
+
+                return BadRequest(new GeneralServiceResponse
+                {
+                    Success = false,
+                    StatusCode = 400,
+                    Message = "bad format",
+                    Data = ""
+                });
+            } 
+            catch (Exception ex)
+            {
+                return BadRequest(new GeneralServiceResponse
+                {
+                    Success = false,
+                    StatusCode = 400,
+                    Message = "bad format",
                     Data = ""
                 });
             }

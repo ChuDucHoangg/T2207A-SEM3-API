@@ -32,11 +32,6 @@ namespace T2207A_SEM3_API.Models.Staff
         [MaxLength(12, ErrorMessage = "Enter up to 12 characters")]
         public string phone { get; set; }
 
-        [Required(ErrorMessage = "Please enter password")]
-        [MinLength(6, ErrorMessage = "Enter at least 6 characters")]
-        [MaxLength(50, ErrorMessage = "Enter up to 255 characters")]
-        public string password { get; set; }
-
         [Required(ErrorMessage = "Please enter role")]
         public string role { get; set; }
     }

@@ -117,22 +117,20 @@ namespace T2207A_SEM3_API.Controllers
 
                 foreach (var answer in answersForStudents)
                 {
-                    AnswersForStudent answersForStudent = new AnswersForStudent
-                    {
-                        StudentId = user.Id,
-                        Content = answer.content,
-                        QuestionId = answer.question_id,
-                        TestId = test.Id,
-                        CreatedAt = DateTime.Now,
-                        UpdatedAt = DateTime.Now,
-                        DeletedAt = null,
-                    };
+                        AnswersForStudent answersForStudent = new AnswersForStudent
+                        {
+                            StudentId = user.Id,
+                            Content = answer.content,
+                            QuestionId = answer.question_id,
+                            TestId = test.Id,
+                            CreatedAt = DateTime.Now,
+                            UpdatedAt = DateTime.Now,
+                            DeletedAt = null,
+                        };
+                        _context.AnswersForStudents.Add(answersForStudent);
+                        await _context.SaveChangesAsync();
 
-                    _context.AnswersForStudents.Add(answersForStudent);
-                    await _context.SaveChangesAsync();
-
-                    answersForStudents1.Add(answersForStudent);
-
+                        answersForStudents1.Add(answersForStudent);
                 }
 
                 // kiểm tra kiểu câu hỏi
@@ -161,7 +159,7 @@ namespace T2207A_SEM3_API.Controllers
 
 
                     // kiểm tra thời gian và trừ điểm
-                    if (!(finish_at >= test.StartDate && finish_at <= test.EndDate))
+                    /*if (!(finish_at >= test.StartDate && finish_at <= test.EndDate))
                     {
                         // finish_at không nằm trong khoảng startDate và andDate
                         TimeSpan timeDifference = (finish_at > test.EndDate) ? finish_at - test.EndDate : test.EndDate - finish_at;
@@ -181,12 +179,12 @@ namespace T2207A_SEM3_API.Controllers
                             // Khoảng thời gian không lớn hơn 15 phút
                             score = score - 25;
                         }
-                    }
+                    }*/
 
-                    if (score < 0)
+                    /*if (score < 0)
                     {
                         score = 0;
-                    }
+                    }*/
                     // kiểm tra đã có điểm chưa
 
                     var gradeCurrent = await _context.Grades.FirstOrDefaultAsync(g => g.TestId == test.Id && g.StudentId == user.Id);

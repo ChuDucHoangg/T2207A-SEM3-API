@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 using T2207A_SEM3_API.DTOs;
 using T2207A_SEM3_API.Entities;
 
@@ -8,6 +9,17 @@ namespace T2207A_SEM3_API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    public class YearlyGenderData
+    {
+        public int Year { get; set; }
+        public IEnumerable<GenderCount> GenderDistribution { get; set; }
+    }
+
+    public class GenderCount
+    {
+        public string Gender { get; set; }
+        public int StudentCount { get; set; }
+    }
     public class DashboardController : ControllerBase
     {
         private readonly ExamonimyContext _context;
@@ -289,7 +301,7 @@ namespace T2207A_SEM3_API.Controllers
                 .Include(t => t.Exam)
                     .ThenInclude(e => e.CourseClass)
                         .ThenInclude(cc => cc.Class)
-                .Where(t => t.CreatedBy == teacherId &&
+                .Where(t => t.Exam.CourseClass.Class.TeacherId == teacherId &&
                             t.TypeTest == 1 &&
                             t.CreatedAt >= oneMonthAgo)
                 .OrderByDescending(t => t.CreatedAt)
@@ -298,6 +310,7 @@ namespace T2207A_SEM3_API.Controllers
                 {
                     TestId = t.Id,
                     TestName = t.Name,
+                    TestSlug = t.Slug,
                     ClassId = t.Exam.CourseClass.Class.Id,
                     ClassName = t.Exam.CourseClass.Class.Name,
                     CreatedAt = t.CreatedAt,

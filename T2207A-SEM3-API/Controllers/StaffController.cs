@@ -3,8 +3,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using T2207A_SEM3_API.DTOs;
 using T2207A_SEM3_API.Entities;
+using T2207A_SEM3_API.Helper.Email;
+using T2207A_SEM3_API.Helper.Password;
 using T2207A_SEM3_API.Models.Staff;
 using T2207A_SEM3_API.Models.Student;
+using T2207A_SEM3_API.Service.Email;
 using T2207A_SEM3_API.Service.UploadFiles;
 
 namespace T2207A_SEM3_API.Controllers
@@ -15,12 +18,13 @@ namespace T2207A_SEM3_API.Controllers
     {
         private readonly ExamonimyContext _context;
         private readonly IImgService _imgService;
+        private readonly IEmailService _emailService;
 
-
-        public StaffController(ExamonimyContext context, IImgService imgService)
+        public StaffController(ExamonimyContext context, IImgService imgService, IEmailService emailService)
         {
             _context = context;
             _imgService = imgService;
+            _emailService = emailService;
         }
         [HttpGet]
         public async Task<IActionResult> Index()
@@ -145,9 +149,12 @@ namespace T2207A_SEM3_API.Controllers
 
                     string imageUrl = await _imgService.UploadImageAsync(model.avatar);
 
+                    // general password
+                    //var password = AutoGeneratorPassword.passwordGenerator(7, 2, 2, 2);
+                    var password = "12345678";
                     // hash password
                     var salt = BCrypt.Net.BCrypt.GenerateSalt(10);
-                    var hassPassword = BCrypt.Net.BCrypt.HashPassword(model.password, salt);
+                    var hassPassword = BCrypt.Net.BCrypt.HashPassword(password, salt);
 
                     if (imageUrl != null)
                     {
@@ -169,6 +176,18 @@ namespace T2207A_SEM3_API.Controllers
                         };
                         _context.Staffs.Add(data);
                         await _context.SaveChangesAsync();
+
+                        // start send mail
+
+                        /*Mailrequest mailrequest = new Mailrequest();
+                        mailrequest.ToEmail = data.Email;
+                        mailrequest.Subject = "Welcome to Examonimy";
+                        mailrequest.Body = EmailContentRegister.GetHtmlcontentRegister(data.Fullname, data.Email, password);
+
+                        await _emailService.SendEmailAsync(mailrequest);*/
+
+                        // end send mail    
+
                         return Created($"get-by-id?id={data.Id}", new StaffDTO
                         {
                             id = data.Id,
