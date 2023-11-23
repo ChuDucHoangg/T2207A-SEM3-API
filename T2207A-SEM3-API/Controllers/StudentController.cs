@@ -184,7 +184,7 @@ namespace T2207A_SEM3_API.Controllers
                     Mailrequest mailrequest = new Mailrequest();
                     mailrequest.ToEmail = data.Email;
                     mailrequest.Subject = "Welcome to Examonimy";
-                    mailrequest.Body = EmailContentRegister.GetHtmlcontentRegister(data.Fullname, data.Email, password);
+                    mailrequest.Body = EmailContentRegister.GetHtmlcontentRegisterStudent(data.Fullname, data.Email, password);
 
                     await _emailService.SendEmailAsync(mailrequest);
 
@@ -233,6 +233,8 @@ namespace T2207A_SEM3_API.Controllers
             }
         }
 
+        [HttpPost("by-excel")]
+        [Authorize(Roles = "Super Admin, Staff")]
         public async Task<IActionResult> CreateByExcel([FromForm] CreateStudentByExcel model)
         {
             if (!ModelState.IsValid)
@@ -354,7 +356,7 @@ namespace T2207A_SEM3_API.Controllers
                                                         Mailrequest mailrequest = new Mailrequest();
                                                         mailrequest.ToEmail = newStudent.Email;
                                                         mailrequest.Subject = "Welcome to Examonimy";
-                                                        mailrequest.Body = EmailContentRegister.GetHtmlcontentRegister(newStudent.Fullname, newStudent.Email, password);
+                                                        mailrequest.Body = EmailContentRegister.GetHtmlcontentRegisterStudent(newStudent.Fullname, newStudent.Email, password);
 
                                                         await _emailService.SendEmailAsync(mailrequest);
 

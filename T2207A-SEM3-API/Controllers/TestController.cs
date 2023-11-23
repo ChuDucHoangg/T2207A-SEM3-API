@@ -152,6 +152,30 @@ namespace T2207A_SEM3_API.Controllers
                         });
                     }
 
+                    var exam = await _context.Exams.FirstOrDefaultAsync(e => e.Id == model.exam_id);
+                    if (exam == null)
+                    {
+                        return NotFound(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 404,
+                            Message = "Not Found",
+                            Data = ""
+                        });
+                    }
+                    var courseClass = await _context.ClassCourses.FirstOrDefaultAsync(e => e.Id == exam.CourseClassId);
+
+                    if (courseClass == null)
+                    {
+                        return NotFound(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 404,
+                            Message = "Not Found",
+                            Data = ""
+                        });
+                    }
+
                     // kiểm tra số câu hỏi 
 
 
@@ -369,6 +393,35 @@ namespace T2207A_SEM3_API.Controllers
                                             }
                                         }
 
+                                        var course = await _context.Courses.FindAsync(courseClass.CourseId);
+
+                                        List<StudentListOfEmail> students = new List<StudentListOfEmail>();
+
+                                        var studentlist = await _context.Students
+                                            .Where(s => model.studentIds.Contains(s.Id))
+                                            .ToListAsync();
+
+                                        foreach (var student in studentlist)
+                                        {
+                                            var st = new StudentListOfEmail
+                                            {
+                                                id = student.Id,
+                                                student_code = student.StudentCode,
+                                                fullname = student.Fullname,
+                                            };
+                                            students.Add(st);
+                                        }
+
+                                        foreach (var student in studentlist)
+                                        {
+                                            Mailrequest mailrequest = new Mailrequest();
+                                            mailrequest.ToEmail = student.Email;
+                                            mailrequest.Subject = "Welcome to Examonimy";
+                                            mailrequest.Body = EmailContentRegister.GetHtmlcontentTestMultipleChoice(course.Name, data.Name, data.StartDate, data.EndDate, data.PastMarks, students);
+
+                                            await _emailService.SendEmailAsync(mailrequest);
+                                        }
+
                                         return Created($"get-by-id?id={data.Id}", new TestDTO
                                         {
                                             id = data.Id,
@@ -471,6 +524,30 @@ namespace T2207A_SEM3_API.Controllers
                             Success = false,
                             StatusCode = 400,
                             Message = "There is no official test yet",
+                            Data = ""
+                        });
+                    }
+
+                    var exam = await _context.Exams.FirstOrDefaultAsync(e => e.Id == model.exam_id);
+                    if (exam == null)
+                    {
+                        return NotFound(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 404,
+                            Message = "Not Found",
+                            Data = ""
+                        });
+                    }
+                    var courseClass = await _context.ClassCourses.FirstOrDefaultAsync(e => e.Id == exam.CourseClassId);
+
+                    if (courseClass == null)
+                    {
+                        return NotFound(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 404,
+                            Message = "Not Found",
                             Data = ""
                         });
                     }
@@ -714,6 +791,35 @@ namespace T2207A_SEM3_API.Controllers
                                             }
                                         }
 
+                                        var course = await _context.Courses.FindAsync(courseClass.CourseId);
+
+                                        List<StudentListOfEmail> students = new List<StudentListOfEmail>();
+
+                                        var studentlist = await _context.Students
+                                            .Where(s => studentIds.Contains(s.Id))
+                                            .ToListAsync();
+
+                                        foreach (var student in studentlist)
+                                        {
+                                            var st = new StudentListOfEmail
+                                            {
+                                                id = student.Id,
+                                                student_code = student.StudentCode,
+                                                fullname = student.Fullname,
+                                            };
+                                            students.Add(st);
+                                        }
+
+                                        foreach (var student in studentlist)
+                                        {
+                                            Mailrequest mailrequest = new Mailrequest();
+                                            mailrequest.ToEmail = student.Email;
+                                            mailrequest.Subject = "Welcome to Examonimy";
+                                            mailrequest.Body = EmailContentRegister.GetHtmlcontentTestMultipleChoice(course.Name, data.Name, data.StartDate, data.EndDate, data.PastMarks, students);
+
+                                            await _emailService.SendEmailAsync(mailrequest);
+                                        }
+
                                         return Created($"get-by-id?id={data.Id}", new TestDTO
                                         {
                                             id = data.Id,
@@ -816,6 +922,30 @@ namespace T2207A_SEM3_API.Controllers
                             Success = false,
                             StatusCode = 400,
                             Message = "Test already exists",
+                            Data = ""
+                        });
+                    }
+
+                    var exam = await _context.Exams.FirstOrDefaultAsync(e => e.Id == model.exam_id);
+                    if (exam == null)
+                    {
+                        return NotFound(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 404,
+                            Message = "Not Found",
+                            Data = ""
+                        });
+                    }
+                    var courseClass = await _context.ClassCourses.FirstOrDefaultAsync(e => e.Id == exam.CourseClassId);
+
+                    if (courseClass == null)
+                    {
+                        return NotFound(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 404,
+                            Message = "Not Found",
                             Data = ""
                         });
                     }
@@ -987,16 +1117,7 @@ namespace T2207A_SEM3_API.Controllers
                     await _context.SaveChangesAsync();
 
 
-                    /*var exam = await _context.Exams.FindAsync(model.exam_id);
-                    
-                    var classCourse = await _context.ClassCourses.FindAsync(exam.CourseClassId);
-
-                    var course = await _context.Courses.FindAsync(classCourse.CourseId);
-
-                    if (classCourse == null)
-                    {
-                        return NotFound("ClassCourse not found for the specified exam.");
-                    }
+                    var course = await _context.Courses.FindAsync(courseClass.CourseId);
 
                     List<StudentListOfEmail> students = new List<StudentListOfEmail>();
 
@@ -1004,7 +1125,7 @@ namespace T2207A_SEM3_API.Controllers
                         .Where(s => model.studentIds.Contains(s.Id))
                         .ToListAsync();
 
-                    foreach(var student in studentlist)
+                    foreach (var student in studentlist)
                     {
                         var st = new StudentListOfEmail
                         {
@@ -1015,12 +1136,16 @@ namespace T2207A_SEM3_API.Controllers
                         students.Add(st);
                     }
 
-                    Mailrequest mailrequest = new Mailrequest();
-                    mailrequest.ToEmail = "trungtvt.dev@gmail.com";
-                    mailrequest.Subject = "Welcome to Examonimy";
-                    mailrequest.Body = EmailContentRegister.GetHtmlcontentTestMultipleChoice(course.Name, data.Name, data.StartDate, data.EndDate, data.PastMarks, students);
+                    foreach (var student in studentlist)
+                    {
+                        Mailrequest mailrequest = new Mailrequest();
+                        mailrequest.ToEmail = student.Email;
+                        mailrequest.Subject = "Welcome to Examonimy";
+                        mailrequest.Body = EmailContentRegister.GetHtmlcontentTestMultipleChoice(course.Name, data.Name, data.StartDate, data.EndDate, data.PastMarks, students);
 
-                    await _emailService.SendEmailAsync(mailrequest);*/
+                        await _emailService.SendEmailAsync(mailrequest);
+                    }
+
 
 
                     return Created($"get-by-id?id={data.Id}", new TestDTO
@@ -1083,6 +1208,30 @@ namespace T2207A_SEM3_API.Controllers
                             Success = false,
                             StatusCode = 400,
                             Message = "There is no official test yet",
+                            Data = ""
+                        });
+                    }
+
+                    var exam = await _context.Exams.FirstOrDefaultAsync(e => e.Id == model.exam_id);
+                    if (exam == null)
+                    {
+                        return NotFound(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 404,
+                            Message = "Not Found",
+                            Data = ""
+                        });
+                    }
+                    var courseClass = await _context.ClassCourses.FirstOrDefaultAsync(e => e.Id == exam.CourseClassId);
+
+                    if (courseClass == null)
+                    {
+                        return NotFound(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 404,
+                            Message = "Not Found",
                             Data = ""
                         });
                     }
@@ -1276,6 +1425,36 @@ namespace T2207A_SEM3_API.Controllers
                     }
 
                     await _context.SaveChangesAsync();
+
+                    var course = await _context.Courses.FindAsync(courseClass.CourseId);
+
+                    List<StudentListOfEmail> students = new List<StudentListOfEmail>();
+
+                    var studentlist = await _context.Students
+                        .Where(s => studentIds.Contains(s.Id))
+                        .ToListAsync();
+
+                    foreach (var student in studentlist)
+                    {
+                        var st = new StudentListOfEmail
+                        {
+                            id = student.Id,
+                            student_code = student.StudentCode,
+                            fullname = student.Fullname,
+                        };
+                        students.Add(st);
+                    }
+
+                    foreach (var student in studentlist)
+                    {
+                        Mailrequest mailrequest = new Mailrequest();
+                        mailrequest.ToEmail = student.Email;
+                        mailrequest.Subject = "Welcome to Examonimy";
+                        mailrequest.Body = EmailContentRegister.GetHtmlcontentTestMultipleChoice(course.Name, data.Name, data.StartDate, data.EndDate, data.PastMarks, students);
+
+                        await _emailService.SendEmailAsync(mailrequest);
+                    }
+
 
 
                     return Created($"get-by-id?id={data.Id}", new TestDTO
@@ -1500,14 +1679,7 @@ namespace T2207A_SEM3_API.Controllers
                         order++;
                     }
 
-                    var classCourse = await _context.ClassCourses.FindAsync(exam.CourseClassId);
-
-                    var course = await _context.Courses.FindAsync(classCourse.CourseId);
-
-                    if (classCourse == null)
-                    {
-                        return NotFound("ClassCourse not found for the specified exam.");
-                    }
+                    var course = await _context.Courses.FindAsync(courseClass.CourseId);
 
                     List<StudentListOfEmail> students = new List<StudentListOfEmail>();
 
@@ -1526,12 +1698,15 @@ namespace T2207A_SEM3_API.Controllers
                         students.Add(st);
                     }
 
-                    Mailrequest mailrequest = new Mailrequest();
-                    mailrequest.ToEmail = "trungtvt.dev@gmail.com";
-                    mailrequest.Subject = "Welcome to Examonimy";
-                    mailrequest.Body = EmailContentRegister.GetHtmlcontentTestMultipleChoice(course.Name, data.Name, data.StartDate, data.EndDate, data.PastMarks, students);
+                    foreach (var student in studentlist)
+                    {
+                        Mailrequest mailrequest = new Mailrequest();
+                        mailrequest.ToEmail = student.Email;
+                        mailrequest.Subject = "Welcome to Examonimy";
+                        mailrequest.Body = EmailContentRegister.GetHtmlcontentTestMultipleChoice(course.Name, data.Name, data.StartDate, data.EndDate, data.PastMarks, students);
 
-                    await _emailService.SendEmailAsync(mailrequest);
+                        await _emailService.SendEmailAsync(mailrequest);
+                    }
 
 
                     return Created($"get-by-id?id={data.Id}", new TestDTO
@@ -1781,6 +1956,35 @@ namespace T2207A_SEM3_API.Controllers
                         order++;
                     }
 
+                    var course = await _context.Courses.FindAsync(courseClass.CourseId);
+
+                    List<StudentListOfEmail> students = new List<StudentListOfEmail>();
+
+                    var studentlist = await _context.Students
+                        .Where(s => studentIds.Contains(s.Id))
+                        .ToListAsync();
+
+                    foreach (var student in studentlist)
+                    {
+                        var st = new StudentListOfEmail
+                        {
+                            id = student.Id,
+                            student_code = student.StudentCode,
+                            fullname = student.Fullname,
+                        };
+                        students.Add(st);
+                    }
+
+                    foreach (var student in studentlist)
+                    {
+                        Mailrequest mailrequest = new Mailrequest();
+                        mailrequest.ToEmail = student.Email;
+                        mailrequest.Subject = "Welcome to Examonimy";
+                        mailrequest.Body = EmailContentRegister.GetHtmlcontentTestMultipleChoice(course.Name, data.Name, data.StartDate, data.EndDate, data.PastMarks, students);
+
+                        await _emailService.SendEmailAsync(mailrequest);
+                    }
+
 
                     return Created($"get-by-id?id={data.Id}", new TestDTO
                     {
@@ -1847,6 +2051,30 @@ namespace T2207A_SEM3_API.Controllers
                             Success = false,
                             StatusCode = 400,
                             Message = "Test already exists",
+                            Data = ""
+                        });
+                    }
+
+                    var exam = await _context.Exams.FirstOrDefaultAsync(e => e.Id == model.exam_id);
+                    if (exam == null)
+                    {
+                        return NotFound(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 404,
+                            Message = "Not Found",
+                            Data = ""
+                        });
+                    }
+                    var courseClass = await _context.ClassCourses.FirstOrDefaultAsync(e => e.Id == exam.CourseClassId);
+
+                    if (courseClass == null)
+                    {
+                        return NotFound(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 404,
+                            Message = "Not Found",
                             Data = ""
                         });
                     }
@@ -1959,16 +2187,7 @@ namespace T2207A_SEM3_API.Controllers
                         await _context.SaveChangesAsync();
                     }
 
-                    var exam = await _context.Exams.FindAsync(model.exam_id);
-
-                    var classCourse = await _context.ClassCourses.FindAsync(exam.CourseClassId);
-
-                    var course = await _context.Courses.FindAsync(classCourse.CourseId);
-
-                    if (classCourse == null)
-                    {
-                        return NotFound("ClassCourse not found for the specified exam.");
-                    }
+                    var course = await _context.Courses.FindAsync(courseClass.CourseId);
 
                     List<StudentListOfEmail> students = new List<StudentListOfEmail>();
 
@@ -1987,12 +2206,15 @@ namespace T2207A_SEM3_API.Controllers
                         students.Add(st);
                     }
 
-                    Mailrequest mailrequest = new Mailrequest();
-                    mailrequest.ToEmail = "trungtvt.dev@gmail.com";
-                    mailrequest.Subject = "Welcome to Examonimy";
-                    mailrequest.Body = EmailContentRegister.GetHtmlcontentTestMultipleChoice(course.Name, data.Name, data.StartDate, data.EndDate, data.PastMarks, students);
+                    foreach (var student in studentlist)
+                    {
+                        Mailrequest mailrequest = new Mailrequest();
+                        mailrequest.ToEmail = student.Email;
+                        mailrequest.Subject = "Welcome to Examonimy";
+                        mailrequest.Body = EmailContentRegister.GetHtmlcontentTestMultipleChoice(course.Name, data.Name, data.StartDate, data.EndDate, data.PastMarks, students);
 
-                    await _emailService.SendEmailAsync(mailrequest);
+                        await _emailService.SendEmailAsync(mailrequest);
+                    }
 
                     return Created($"get-by-id?id={data.Id}", new TestDTO
                     {
@@ -2083,6 +2305,30 @@ namespace T2207A_SEM3_API.Controllers
                             Success = false,
                             StatusCode = 404,
                             Message = "There is no official test yet",
+                            Data = ""
+                        });
+                    }
+
+                    var exam = await _context.Exams.FirstOrDefaultAsync(e => e.Id == model.exam_id);
+                    if (exam == null)
+                    {
+                        return NotFound(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 404,
+                            Message = "Not Found",
+                            Data = ""
+                        });
+                    }
+                    var courseClass = await _context.ClassCourses.FirstOrDefaultAsync(e => e.Id == exam.CourseClassId);
+
+                    if (courseClass == null)
+                    {
+                        return NotFound(new GeneralServiceResponse
+                        {
+                            Success = false,
+                            StatusCode = 404,
+                            Message = "Not Found",
                             Data = ""
                         });
                     }
@@ -2204,6 +2450,35 @@ namespace T2207A_SEM3_API.Controllers
 
                         _context.QuestionTests.Add(question_test);
                         await _context.SaveChangesAsync();
+                    }
+
+                    var course = await _context.Courses.FindAsync(courseClass.CourseId);
+
+                    List<StudentListOfEmail> students = new List<StudentListOfEmail>();
+
+                    var studentlist = await _context.Students
+                        .Where(s => studentIds.Contains(s.Id))
+                        .ToListAsync();
+
+                    foreach (var student in studentlist)
+                    {
+                        var st = new StudentListOfEmail
+                        {
+                            id = student.Id,
+                            student_code = student.StudentCode,
+                            fullname = student.Fullname,
+                        };
+                        students.Add(st);
+                    }
+
+                    foreach (var student in studentlist)
+                    {
+                        Mailrequest mailrequest = new Mailrequest();
+                        mailrequest.ToEmail = student.Email;
+                        mailrequest.Subject = "Welcome to Examonimy";
+                        mailrequest.Body = EmailContentRegister.GetHtmlcontentTestMultipleChoice(course.Name, data.Name, data.StartDate, data.EndDate, data.PastMarks, students);
+
+                        await _emailService.SendEmailAsync(mailrequest);
                     }
 
                     return Created($"get-by-id?id={data.Id}", new TestDTO
@@ -2399,6 +2674,35 @@ namespace T2207A_SEM3_API.Controllers
                         _context.QuestionTests.Add(questionTest);
                         await _context.SaveChangesAsync();
 
+                    }
+
+                    var course = await _context.Courses.FindAsync(courseClass.CourseId);
+
+                    List<StudentListOfEmail> students = new List<StudentListOfEmail>();
+
+                    var studentlist = await _context.Students
+                        .Where(s => model.studentIds.Contains(s.Id))
+                        .ToListAsync();
+
+                    foreach (var student in studentlist)
+                    {
+                        var st = new StudentListOfEmail
+                        {
+                            id = student.Id,
+                            student_code = student.StudentCode,
+                            fullname = student.Fullname,
+                        };
+                        students.Add(st);
+                    }
+
+                    foreach (var student in studentlist)
+                    {
+                        Mailrequest mailrequest = new Mailrequest();
+                        mailrequest.ToEmail = student.Email;
+                        mailrequest.Subject = "Welcome to Examonimy";
+                        mailrequest.Body = EmailContentRegister.GetHtmlcontentTestMultipleChoice(course.Name, data.Name, data.StartDate, data.EndDate, data.PastMarks, students);
+
+                        await _emailService.SendEmailAsync(mailrequest);
                     }
 
 
@@ -2610,6 +2914,34 @@ namespace T2207A_SEM3_API.Controllers
 
                     }
 
+                    var course = await _context.Courses.FindAsync(courseClass.CourseId);
+
+                    List<StudentListOfEmail> students = new List<StudentListOfEmail>();
+
+                    var studentlist = await _context.Students
+                        .Where(s => studentIds.Contains(s.Id))
+                        .ToListAsync();
+
+                    foreach (var student in studentlist)
+                    {
+                        var st = new StudentListOfEmail
+                        {
+                            id = student.Id,
+                            student_code = student.StudentCode,
+                            fullname = student.Fullname,
+                        };
+                        students.Add(st);
+                    }
+
+                    foreach (var student in studentlist)
+                    {
+                        Mailrequest mailrequest = new Mailrequest();
+                        mailrequest.ToEmail = student.Email;
+                        mailrequest.Subject = "Welcome to Examonimy";
+                        mailrequest.Body = EmailContentRegister.GetHtmlcontentTestMultipleChoice(course.Name, data.Name, data.StartDate, data.EndDate, data.PastMarks, students);
+
+                        await _emailService.SendEmailAsync(mailrequest);
+                    }
 
                     return Created($"get-by-id?id={data.Id}", new TestDTO
                     {

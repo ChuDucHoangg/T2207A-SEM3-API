@@ -48,7 +48,6 @@ namespace T2207A_SEM3_API.Controllers
                         phone = sa.Phone,
                         gender = sa.Gender,
                         address = sa.Address,
-                        password = sa.Password,
                         role = sa.Role,
                         createdAt = sa.CreatedAt,
                         updateAt = sa.UpdatedAt,
@@ -84,7 +83,6 @@ namespace T2207A_SEM3_API.Controllers
                         phone = sa.Phone,
                         gender = sa.Gender,
                         address = sa.Address,
-                        password = sa.Password,
                         role = sa.Role,
                         createdAt = sa.CreatedAt,
                         updateAt = sa.UpdatedAt,
@@ -150,8 +148,7 @@ namespace T2207A_SEM3_API.Controllers
                     string imageUrl = await _imgService.UploadImageAsync(model.avatar);
 
                     // general password
-                    //var password = AutoGeneratorPassword.passwordGenerator(7, 2, 2, 2);
-                    var password = "12345678";
+                    var password = AutoGeneratorPassword.passwordGenerator(7, 2, 2, 2);
                     // hash password
                     var salt = BCrypt.Net.BCrypt.GenerateSalt(10);
                     var hassPassword = BCrypt.Net.BCrypt.HashPassword(password, salt);
@@ -179,12 +176,12 @@ namespace T2207A_SEM3_API.Controllers
 
                         // start send mail
 
-                        /*Mailrequest mailrequest = new Mailrequest();
+                        Mailrequest mailrequest = new Mailrequest();
                         mailrequest.ToEmail = data.Email;
                         mailrequest.Subject = "Welcome to Examonimy";
-                        mailrequest.Body = EmailContentRegister.GetHtmlcontentRegister(data.Fullname, data.Email, password);
+                        mailrequest.Body = EmailContentRegister.GetHtmlcontentRegisterStaff(data.Fullname, data.Email, password);
 
-                        await _emailService.SendEmailAsync(mailrequest);*/
+                        await _emailService.SendEmailAsync(mailrequest);
 
                         // end send mail    
 
@@ -199,7 +196,6 @@ namespace T2207A_SEM3_API.Controllers
                             phone = data.Phone,
                             gender = data.Gender,
                             address = data.Address,
-                            password = data.Password,
                             role = data.Role,
                             createdAt = data.CreatedAt,
                             updateAt = data.UpdatedAt,
@@ -302,6 +298,10 @@ namespace T2207A_SEM3_API.Controllers
                 Staff staff = await _context.Staffs.FindAsync(id);
                 if (staff == null)
                     return NotFound();
+                if (staff.Role == "Super Admin")
+                {
+                    return NotFound();
+                }
                 _context.Staffs.Remove(staff);
                 await _context.SaveChangesAsync();
                 return NoContent();
@@ -332,7 +332,6 @@ namespace T2207A_SEM3_API.Controllers
                         phone = c.Phone,
                         gender = c.Gender,
                         address = c.Address,
-                        password = c.Password,
                         role = c.Role,
                         createdAt = c.CreatedAt,
                         updateAt = c.UpdatedAt,
