@@ -191,7 +191,7 @@ namespace T2207A_SEM3_API.Controllers
                         // Kiểm tra xem tệp có đúng định dạng Excel (ví dụ: .xlsx) hay không
                         if (fileExtension == ".xlsx" || fileExtension == ".xls")
                         {
-                            var uploadDirectory = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "excels");
+                            var uploadDirectory = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "excels", "tests");
 
                             if (!Directory.Exists(uploadDirectory))
                             {
@@ -582,7 +582,7 @@ namespace T2207A_SEM3_API.Controllers
                         // Kiểm tra xem tệp có đúng định dạng Excel (ví dụ: .xlsx) hay không
                         if (fileExtension == ".xlsx" || fileExtension == ".xlsx")
                         {
-                            var uploadDirectory = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "excels");
+                            var uploadDirectory = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "excels", "tests");
 
                             if (!Directory.Exists(uploadDirectory))
                             {
@@ -3465,6 +3465,7 @@ namespace T2207A_SEM3_API.Controllers
                     TestId = t.Id,
                     TestName = t.Name,
                     TestSlug = t.Slug,
+                    TypeTest = t.TypeTest,
                     ClassId = t.Exam.CourseClass.Class.Id,
                     ClassName = t.Exam.CourseClass.Class.Name,
                     CreatedAt = t.CreatedAt,

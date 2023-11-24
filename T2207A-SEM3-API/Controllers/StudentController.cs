@@ -414,7 +414,7 @@ namespace T2207A_SEM3_API.Controllers
                 {
                     Success = false,
                     StatusCode = 400,
-                    Message = "bad format",
+                    Message = ex.Message,
                     Data = ""
                 });
             }

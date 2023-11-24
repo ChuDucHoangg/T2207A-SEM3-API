@@ -55,7 +55,7 @@ namespace T2207A_SEM3_API.Controllers
                     _config["JWT:Issuer"],
                     _config["JWT:Audience"],
                     payload,
-                    expires: DateTime.Now.AddMinutes(60),
+                    expires: DateTime.Now.AddHours(2),
                     signingCredentials: signatureKey
                 );
             return new JwtSecurityTokenHandler().WriteToken(token);
@@ -79,7 +79,7 @@ namespace T2207A_SEM3_API.Controllers
                     _config["JWT:Issuer"],
                     _config["JWT:Audience"],
                     payload,
-                    expires: DateTime.Now.AddMinutes(60),
+                    expires: DateTime.Now.AddHours(2),
                     signingCredentials: signatureKey
                 );
             return new JwtSecurityTokenHandler().WriteToken(token);
