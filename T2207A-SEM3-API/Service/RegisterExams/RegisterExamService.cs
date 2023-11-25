@@ -73,7 +73,7 @@ namespace T2207A_SEM3_API.Service.RegisterExams
         public async Task<bool> DeleteRegisterExamAsync(int id, int student_id)
         {
             RegisterExam registerExam = await _context.RegisterExams.Where(r => r.Status == 0 && r.StudentId == student_id && r.Id == id).FirstOrDefaultAsync();
-            if (registerExam == null)
+            if (registerExam == null || registerExam.Status == 1 || registerExam.Status == 2)
             {
                 return false;
             }

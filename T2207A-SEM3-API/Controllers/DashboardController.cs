@@ -138,7 +138,7 @@ namespace T2207A_SEM3_API.Controllers
         public async Task<IActionResult> GetRecentTests()
         {
             var recentTests = await _context.Tests
-                .OrderByDescending(t => t.StartDate) 
+                .OrderByDescending(t => t.CreatedAt) 
                 .Take(10)
                 .ToListAsync();
 
@@ -277,7 +277,34 @@ namespace T2207A_SEM3_API.Controllers
                 })
                 .ToListAsync();
 
-            return Ok(averageScores);
+            // Điền giá trị 0 cho các năm không có dữ liệu
+            var result = FillMissingYears(averageScores, fiveYearsAgo.Year, DateTime.Now.Year);
+
+            return Ok(result);
+        }
+
+        private List<object> FillMissingYears(IEnumerable<object> data, int startYear, int endYear)
+        {
+            var result = new List<object>();
+
+            for (int year = startYear; year <= endYear; year++)
+            {
+                var yearData = data.FirstOrDefault(d => (int)d.GetType().GetProperty("Year").GetValue(d) == year);
+                if (yearData == null)
+                {
+                    result.Add(new
+                    {
+                        Year = year,
+                        AverageScore = 0.0
+                    });
+                }
+                else
+                {
+                    result.Add(yearData);
+                }
+            }
+
+            return result;
         }
 
         [HttpGet("recent-tests-for-teacher/{teacherId}")]
@@ -311,16 +338,46 @@ namespace T2207A_SEM3_API.Controllers
 
             return Ok(recentEssayTests);
         }
-    }
-    public class YearlyGenderData
-    {
-        public int Year { get; set; }
-        public IEnumerable<GenderCount> GenderDistribution { get; set; }
-    }
 
-    public class GenderCount
-    {
-        public string Gender { get; set; }
-        public int StudentCount { get; set; }
+        [HttpGet("test-type-essay-noscore/{teacherId}")]
+        public async Task<IActionResult> GetTotalTestTypeEssay(int teacherId)
+        {
+            var totalEssayTests = await _context.Tests
+                .Include(t => t.Exam)
+                    .ThenInclude(e => e.CourseClass)
+                        .ThenInclude(cc => cc.Class)
+                .Where(t => t.Exam.CourseClass.Class.TeacherId == teacherId &&
+                            t.TypeTest == 1)
+                .CountAsync();
+            var essayNoScore = await _context.Tests
+                .Include(t => t.Exam)
+                    .ThenInclude(e => e.CourseClass)
+                        .ThenInclude(cc => cc.Class)
+                .Where(t => t.Exam.CourseClass.Class.TeacherId == teacherId &&
+                            t.TypeTest == 1 && t.Status == 0)
+                .CountAsync();
+
+            var testEssayStats = new
+            {
+                TotalEssayTest = totalEssayTests,
+                EssayNoScoreTest = essayNoScore,
+                // Add more stats as needed
+            };
+
+            return Ok(testEssayStats);
+        }
+
+        [HttpGet("total-class/{teacherId}")]
+        public async Task<IActionResult> GetTotalClass(int teacherId)
+        {
+            
+
+            var testEssayStats = new
+            {
+                TotalClass = await _context.Classes.Where(c => c.TeacherId == teacherId).CountAsync(),
+            };
+
+            return Ok(testEssayStats);
+        }
     }
 }
