@@ -1,16 +1,20 @@
 {
   "Files": [
     {
-      "Id": "D:\\SEM3\\project-examonimy\\SEM-Examonimy-API2\\T2207A-SEM3-API\\wwwroot\\excels\\Book1.xlsx",
-      "PackagePath": "staticwebassets\\excels\\Book1.xlsx"
+      "Id": "D:\\SEM3\\project-examonimy\\SEM-Examonimy-API2\\T2207A-SEM3-API\\wwwroot\\excels\\student\\Student1.xlsx",
+      "PackagePath": "staticwebassets\\excels\\student\\Student1.xlsx"
     },
     {
-      "Id": "D:\\SEM3\\project-examonimy\\SEM-Examonimy-API2\\T2207A-SEM3-API\\wwwroot\\excels\\Book2.xlsx",
-      "PackagePath": "staticwebassets\\excels\\Book2.xlsx"
+      "Id": "D:\\SEM3\\project-examonimy\\SEM-Examonimy-API2\\T2207A-SEM3-API\\wwwroot\\excels\\tests\\Book1.xlsx",
+      "PackagePath": "staticwebassets\\excels\\tests\\Book1.xlsx"
     },
     {
-      "Id": "D:\\SEM3\\project-examonimy\\SEM-Examonimy-API2\\T2207A-SEM3-API\\wwwroot\\excels\\exeltest.xlsx",
-      "PackagePath": "staticwebassets\\excels\\exeltest.xlsx"
+      "Id": "D:\\SEM3\\project-examonimy\\SEM-Examonimy-API2\\T2207A-SEM3-API\\wwwroot\\excels\\tests\\Book2.xlsx",
+      "PackagePath": "staticwebassets\\excels\\tests\\Book2.xlsx"
+    },
+    {
+      "Id": "D:\\SEM3\\project-examonimy\\SEM-Examonimy-API2\\T2207A-SEM3-API\\wwwroot\\excels\\tests\\exeltest.xlsx",
+      "PackagePath": "staticwebassets\\excels\\tests\\exeltest.xlsx"
     },
     {
       "Id": "D:\\SEM3\\project-examonimy\\SEM-Examonimy-API2\\T2207A-SEM3-API\\wwwroot\\uploads\\0c811be8-b59a-4ad8-a9b9-c2fa6915660f.png",

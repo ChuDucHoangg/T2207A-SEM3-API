@@ -9,17 +9,7 @@ namespace T2207A_SEM3_API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class YearlyGenderData
-    {
-        public int Year { get; set; }
-        public IEnumerable<GenderCount> GenderDistribution { get; set; }
-    }
-
-    public class GenderCount
-    {
-        public string Gender { get; set; }
-        public int StudentCount { get; set; }
-    }
+    
     public class DashboardController : ControllerBase
     {
         private readonly ExamonimyContext _context;
@@ -321,5 +311,16 @@ namespace T2207A_SEM3_API.Controllers
 
             return Ok(recentEssayTests);
         }
+    }
+    public class YearlyGenderData
+    {
+        public int Year { get; set; }
+        public IEnumerable<GenderCount> GenderDistribution { get; set; }
+    }
+
+    public class GenderCount
+    {
+        public string Gender { get; set; }
+        public int StudentCount { get; set; }
     }
 }

@@ -1,6 +1,6 @@
 {
   "Version": 1,
-  "Hash": "+tePgzUOsJ+9l77OErMJILui4Nr0E6GLeiGHvVrNVZI=",
+  "Hash": "Xqyx6wx+b4Jv6Qg7hMfFgzV2GPQ4VnOiy1lMR57+1TY=",
   "Source": "T2207A-SEM3-API",
   "BasePath": "_content/T2207A-SEM3-API",
   "Mode": "Default",
@@ -17,12 +17,12 @@
   ],
   "Assets": [
     {
-      "Identity": "D:\\SEM3\\project-examonimy\\SEM-Examonimy-API2\\T2207A-SEM3-API\\wwwroot\\excels\\Book1.xlsx",
+      "Identity": "D:\\SEM3\\project-examonimy\\SEM-Examonimy-API2\\T2207A-SEM3-API\\wwwroot\\excels\\student\\Student1.xlsx",
       "SourceId": "T2207A-SEM3-API",
       "SourceType": "Discovered",
       "ContentRoot": "D:\\SEM3\\project-examonimy\\SEM-Examonimy-API2\\T2207A-SEM3-API\\wwwroot\\",
       "BasePath": "_content/T2207A-SEM3-API",
-      "RelativePath": "excels/Book1.xlsx",
+      "RelativePath": "excels/student/Student1.xlsx",
       "AssetKind": "All",
       "AssetMode": "All",
       "AssetRole": "Primary",
@@ -31,15 +31,15 @@
       "AssetTraitValue": "",
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
-      "OriginalItemSpec": "wwwroot\\excels\\Book1.xlsx"
+      "OriginalItemSpec": "wwwroot\\excels\\student\\Student1.xlsx"
     },
     {
-      "Identity": "D:\\SEM3\\project-examonimy\\SEM-Examonimy-API2\\T2207A-SEM3-API\\wwwroot\\excels\\Book2.xlsx",
+      "Identity": "D:\\SEM3\\project-examonimy\\SEM-Examonimy-API2\\T2207A-SEM3-API\\wwwroot\\excels\\tests\\Book1.xlsx",
       "SourceId": "T2207A-SEM3-API",
       "SourceType": "Discovered",
       "ContentRoot": "D:\\SEM3\\project-examonimy\\SEM-Examonimy-API2\\T2207A-SEM3-API\\wwwroot\\",
       "BasePath": "_content/T2207A-SEM3-API",
-      "RelativePath": "excels/Book2.xlsx",
+      "RelativePath": "excels/tests/Book1.xlsx",
       "AssetKind": "All",
       "AssetMode": "All",
       "AssetRole": "Primary",
@@ -48,15 +48,15 @@
       "AssetTraitValue": "",
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
-      "OriginalItemSpec": "wwwroot\\excels\\Book2.xlsx"
+      "OriginalItemSpec": "wwwroot\\excels\\tests\\Book1.xlsx"
     },
     {
-      "Identity": "D:\\SEM3\\project-examonimy\\SEM-Examonimy-API2\\T2207A-SEM3-API\\wwwroot\\excels\\exeltest.xlsx",
+      "Identity": "D:\\SEM3\\project-examonimy\\SEM-Examonimy-API2\\T2207A-SEM3-API\\wwwroot\\excels\\tests\\Book2.xlsx",
       "SourceId": "T2207A-SEM3-API",
       "SourceType": "Discovered",
       "ContentRoot": "D:\\SEM3\\project-examonimy\\SEM-Examonimy-API2\\T2207A-SEM3-API\\wwwroot\\",
       "BasePath": "_content/T2207A-SEM3-API",
-      "RelativePath": "excels/exeltest.xlsx",
+      "RelativePath": "excels/tests/Book2.xlsx",
       "AssetKind": "All",
       "AssetMode": "All",
       "AssetRole": "Primary",
@@ -65,7 +65,24 @@
       "AssetTraitValue": "",
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
-      "OriginalItemSpec": "wwwroot\\excels\\exeltest.xlsx"
+      "OriginalItemSpec": "wwwroot\\excels\\tests\\Book2.xlsx"
+    },
+    {
+      "Identity": "D:\\SEM3\\project-examonimy\\SEM-Examonimy-API2\\T2207A-SEM3-API\\wwwroot\\excels\\tests\\exeltest.xlsx",
+      "SourceId": "T2207A-SEM3-API",
+      "SourceType": "Discovered",
+      "ContentRoot": "D:\\SEM3\\project-examonimy\\SEM-Examonimy-API2\\T2207A-SEM3-API\\wwwroot\\",
+      "BasePath": "_content/T2207A-SEM3-API",
+      "RelativePath": "excels/tests/exeltest.xlsx",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\excels\\tests\\exeltest.xlsx"
     },
     {
       "Identity": "D:\\SEM3\\project-examonimy\\SEM-Examonimy-API2\\T2207A-SEM3-API\\wwwroot\\uploads\\0c811be8-b59a-4ad8-a9b9-c2fa6915660f.png",

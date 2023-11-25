@@ -116,6 +116,75 @@ namespace T2207A_SEM3_API.Controllers
             return NotFound();
         }
 
+        [HttpGet]
+        [Route("get-by-slug-teacher")]
+        public async Task<IActionResult> GetTestByTeacher(string slug)
+        {
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+
+            if (!identity.IsAuthenticated)
+            {
+                return Unauthorized(new GeneralServiceResponse { Success = false, StatusCode = 401, Message = "Not Authorized", Data = "" });
+            }
+            try
+            {
+                var userClaims = identity.Claims;
+                var userId = userClaims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+                var user = await _context.Staffs
+                    .FirstOrDefaultAsync(u => u.Id == Convert.ToInt32(userId));
+
+                if (user == null)
+                {
+                    return NotFound(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 404,
+                        Message = "Incorrect current password",
+                        Data = ""
+                    });
+                }
+
+                Test t = await _context.Tests
+                    .Include(t => t.Exam)
+                    .ThenInclude(e => e.CourseClass)
+                        .ThenInclude(cc => cc.Class)
+                        .FirstOrDefaultAsync(t => t.Slug == slug && t.Exam.CourseClass.Class.TeacherId == user.Id);
+                if (t != null)
+                {
+                    return Ok(new TestDTO
+                    {
+                        id = t.Id,
+                        name = t.Name,
+                        slug = t.Slug,
+                        exam_id = t.ExamId,
+                        startDate = t.StartDate,
+                        endDate = t.EndDate,
+                        past_marks = t.PastMarks,
+                        total_marks = t.TotalMarks,
+                        type_test = t.TypeTest,
+                        RetakeTestId = t.RetakeTestId,
+                        numberOfQuestion = t.NumberOfQuestionsInExam,
+                        created_by = t.CreatedBy,
+                        status = t.Status,
+                        createdAt = t.CreatedAt,
+                        updatedAt = t.UpdatedAt,
+                        deletedAt = t.DeletedAt
+
+                    });
+                }
+                else
+                {
+                    return NotFound();
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            return NotFound();
+        }
+
         [HttpPost("multiple-choice-by-excel-file")]
         [Authorize(Roles = "Super Admin, Staff")]
         public async Task<IActionResult> CreateMultipleChoiceTestByExcelFile([FromForm]CreateMultipleChoiceTestByExcelFile model)

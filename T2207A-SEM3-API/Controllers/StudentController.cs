@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Drawing;
+using System.Security.Claims;
 using System.Text;
 using T2207A_SEM3_API.DTOs;
 using T2207A_SEM3_API.Entities;
@@ -365,9 +366,9 @@ namespace T2207A_SEM3_API.Controllers
                                                 }
                                             } while (newReader.NextResult());
 
-                                            return BadRequest(new GeneralServiceResponse
+                                            return Ok(new GeneralServiceResponse
                                             {
-                                                Success = false,
+                                                Success = true,
                                                 StatusCode = 200,
                                                 Message = "Created successfully",
                                                 Data = ""
@@ -625,6 +626,82 @@ namespace T2207A_SEM3_API.Controllers
                     }).ToList();
 
                     return Ok(data);
+                }
+                else
+                {
+                    return NotFound("No student found in this class.");
+                }
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, e.Message);
+            }
+        }
+
+        [HttpGet]
+        [Route("get-by-classId-teacher")]
+        public async Task<IActionResult> GetbyClassByTeacher(string slug)
+        {
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+
+            if (!identity.IsAuthenticated)
+            {
+                return Unauthorized(new GeneralServiceResponse { Success = false, StatusCode = 401, Message = "Not Authorized", Data = "" });
+            }
+            try
+            {
+                var userClaims = identity.Claims;
+                var userId = userClaims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+                var user = await _context.Staffs
+                    .FirstOrDefaultAsync(u => u.Id == Convert.ToInt32(userId));
+
+                if (user == null)
+                {
+                    return Unauthorized(new GeneralServiceResponse
+                    {
+                        Success = false,
+                        StatusCode = 401,
+                        Message = "Incorrect current password",
+                        Data = ""
+                    });
+                }
+
+                var classes = await _context.Classes.FirstOrDefaultAsync(c => c.Slug.Equals(slug));
+
+                if (classes == null)
+                {
+                    return NotFound("No student found in this class.");
+                }
+
+                List<Student> students = await _context.Students.Where(p => p.ClassId == classes.Id && p.Class.TeacherId == user.Id).ToListAsync();
+                if (students != null)
+                {
+                    List<StudentDTO> data = students.Select(c => new StudentDTO
+                    {
+                        id = c.Id,
+                        student_code = c.StudentCode,
+                        fullname = c.Fullname,
+                        avatar = c.Avatar,
+                        birthday = c.Birthday,
+                        email = c.Email,
+                        phone = c.Phone,
+                        gender = c.Gender,
+                        address = c.Address,
+                        class_id = c.ClassId,
+                        status = c.Status,
+                        createdAt = c.CreatedAt,
+                        updateAt = c.UpdatedAt,
+                        deleteAt = c.DeletedAt
+                    }).ToList();
+
+                    if (data.Count() >= 1)
+                    {
+                        return Ok(data);
+                    }
+                    else
+                    {
+                        return NotFound("No student found in this class.");
+                    }
                 }
                 else
                 {

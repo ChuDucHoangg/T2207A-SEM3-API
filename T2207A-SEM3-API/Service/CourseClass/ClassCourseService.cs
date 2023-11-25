@@ -51,9 +51,23 @@ namespace T2207A_SEM3_API.Service.CourseClass
             };
         }
 
+        public async Task<bool> DeleteClassAsync(int id)
+        {
+            ClassCourse classes = await _context.ClassCourses.Include(c => c.Exams).FirstOrDefaultAsync(c => c.Id == id);
+            if (classes == null || classes.Exams.Count() >=1)
+            {
+                return false;
+            }
+
+            _context.ClassCourses.Remove(classes);
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+
         public async Task<List<ClassCourseDTO>> GetClassCourseListAsync()
         {
-            List<ClassCourse> classCourses = await _context.ClassCourses.Include(c => c.Class).Include(c => c.Course).Include(c => c.CreatedByNavigation).ToListAsync();
+            List<ClassCourse> classCourses = await _context.ClassCourses.Include(c => c.Class).Include(c => c.Course).Include(c => c.CreatedByNavigation).OrderByDescending(s => s.Id).ToListAsync();
             List<ClassCourseDTO> data = new List<ClassCourseDTO>();
 
             foreach (ClassCourse cr in classCourses)
@@ -105,6 +119,40 @@ namespace T2207A_SEM3_API.Service.CourseClass
             }
 
             return data;
+        }
+
+        public async Task<bool> UpdateClassAsync(EditClassCourse model)
+        {
+            ClassCourse existingClass = await _context.ClassCourses.AsNoTracking().FirstOrDefaultAsync(e => e.Id == model.Id);
+
+            if (existingClass != null)
+            {
+                ClassCourse classes = new ClassCourse
+                {
+                    Id = model.Id,
+                    ClassId = existingClass.ClassId,
+                    CourseId = existingClass.CourseId,
+                    Status = existingClass.Status,
+                    StartDate = model.start_date,
+                    EndDate = model.end_date,
+                    CreatedBy = existingClass.CreatedBy,
+                    CreatedAt = existingClass.CreatedAt,
+                    UpdatedAt = DateTime.Now,
+                    DeletedAt = null,
+                };
+
+                if (classes != null)
+                {
+                    _context.ClassCourses.Update(classes);
+                    await _context.SaveChangesAsync();
+                    return true;
+                }
+                return false;
+            }
+            else
+            {
+                return false; // Không tìm thấy lớp để cập nhật
+            }
         }
     }
 }
