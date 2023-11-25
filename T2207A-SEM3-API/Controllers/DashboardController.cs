@@ -109,7 +109,7 @@ namespace T2207A_SEM3_API.Controllers
             try
             {
                 var examScores = await _context.Grades
-                    .Include(g => g.Test)
+                    .Include(g => g.Test).Where(g=> g.Test.Status == 1)
                     .ToListAsync();
 
                 if (examScores == null)
@@ -378,6 +378,74 @@ namespace T2207A_SEM3_API.Controllers
             };
 
             return Ok(testEssayStats);
+        }
+
+        [HttpGet("test-grade-stats/{teacherId}")]
+        public async Task<IActionResult> GetTestGradeStatsByTeacher(int teacherId)
+        {
+            try
+            {
+                var examScores = await _context.Grades
+                    .Include(g => g.Test)
+                    .Include(g => g.Student).ThenInclude(st => st.Class).Where(g => g.Student.Class.TeacherId == teacherId && g.Test.Status == 1)
+                    .ToListAsync();
+
+                if (examScores == null)
+                {
+                    return BadRequest("List of exams is null.");
+                }
+                // Tạo danh sách thống kê
+                var resultStats = examScores
+                    .GroupBy((g => new
+                    {
+                        Test = g.Test,
+                        ClassName = g.Student.Class.Name,
+                    }))
+                    .Select(group => new
+                    {
+                        TestName = group.Key.Test.Name,
+                        ClassName = group.Key.ClassName,
+                        TestSlug = group.Key.Test.Slug,
+                        StartDate = group.Key.Test.StartDate,
+                        EndDate = group.Key.Test.EndDate,
+                        PastMark = group.Key.Test.PastMarks,
+                        TotalMark = group.Key.Test.TotalMarks,
+                        TypeTest = group.Key.Test.TypeTest,
+                        Retake_test_id = group.Key.Test.RetakeTestId,
+                        CreatedAt = group.Key.Test.CreatedAt,
+                        UpdatedAt = group.Key.Test.UpdatedAt,
+                        
+                        AverageScore = group.Average(g => g.Score ?? 0)
+                    })
+                    .ToList();
+
+                return Ok(resultStats);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("test-stats/{teacherId}")]
+        public async Task<IActionResult> GetExamStats(int teacherId)
+        {
+            var examStats = new
+            {
+                TotalTests = await _context.Tests
+                .Include(t => t.Exam)
+                    .ThenInclude(e => e.CourseClass)
+                        .ThenInclude(cc => cc.Class)
+                .Where(g => g.Exam.CourseClass.Class.TeacherId == teacherId).CountAsync(),
+                ExamsInProgress = await _context.Tests.Include(t => t.Exam)
+                        .ThenInclude(e => e.CourseClass)
+                        .ThenInclude(cc => cc.Class)
+                        .Where(g => g.Exam.CourseClass.Class.TeacherId == teacherId)
+                        .CountAsync(e => e.StartDate <= DateTime.Now && e.EndDate >= DateTime.Now),
+                // Add more stats as needed
+            };
+
+            return Ok(examStats);
         }
     }
 }

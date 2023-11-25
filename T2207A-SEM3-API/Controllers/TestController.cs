@@ -2,6 +2,7 @@
 using ExcelDataReader;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -32,7 +33,7 @@ namespace T2207A_SEM3_API.Controllers
     {
         private readonly ExamonimyContext _context;
         private readonly IEmailService _emailService;
-
+        public static int PAGE_SIZE { get; set; } = 5;
         public TestController(ExamonimyContext context, IEmailService emailService)
         {
             _context = context;
@@ -40,17 +41,51 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Super Admin, Staff, Teacher")]
-        public async Task<IActionResult> Index()
+        //[Authorize(Roles = "Super Admin, Staff, Teacher")]
+        public async Task<IActionResult> Index(string? search, DateTime? from, DateTime? to, string? sortBy, int page = 1)
         {
             try
             {
-                List<Test> tests = await _context.Tests.OrderByDescending(s => s.Id).ToListAsync();
+                var tests = _context.Tests.AsQueryable();
 
-                List<TestDTO> data = new List<TestDTO>();
-                foreach (Test t in tests)
+                #region Filtering
+                if (!string.IsNullOrEmpty(search))
                 {
-                    data.Add(new TestDTO
+                    tests = tests.Where(hh => hh.Name.Contains(search));
+                }
+                if (from.HasValue)
+                {
+                    tests = tests.Where(hh => hh.CreatedAt >= from);
+                }
+                if (to.HasValue)
+                {
+                    tests = tests.Where(hh => hh.CreatedAt <= to);
+                }
+                #endregion
+
+                #region Sorting
+                //Default sort by Name (TenHh)
+                tests = tests.OrderBy(hh => hh.Name);
+
+                if (!string.IsNullOrEmpty(sortBy))
+                {
+                    switch (sortBy)
+                    {
+                        case "name_desc": tests = tests.OrderByDescending(hh => hh.Name); break;
+                        case "createAt_asc": tests = tests.OrderBy(hh => hh.CreatedAt); break;
+                        case "createAt_desc": tests = tests.OrderByDescending(hh => hh.CreatedAt); break;
+                    }
+                }
+                #endregion
+
+                int totalItems = await tests.CountAsync();
+
+                var data = PaginatedList<Test>.Create(tests, page, PAGE_SIZE);
+
+                List<TestDTO> datas = new List<TestDTO>();
+                foreach (Test t in data)
+                {
+                    datas.Add(new TestDTO
                     {
                         id = t.Id,
                         name = t.Name,
@@ -70,7 +105,9 @@ namespace T2207A_SEM3_API.Controllers
                         deletedAt = t.DeletedAt
                     });
                 }
-                return Ok(data);
+                //return Ok(datas);
+                return Ok(new { Data = datas, Page = page, PageSize = PAGE_SIZE, TotalItems = totalItems, TotalPages = data.TotalPage });
+
             } catch (Exception e)
             {
                 return BadRequest($"An error occurred: {e.Message}");
@@ -3549,6 +3586,26 @@ namespace T2207A_SEM3_API.Controllers
             {
                 return BadRequest(e.Message);
             }
+        }
+    }
+    public class PaginatedList<T> : List<T>
+    {
+        public int PageIndex { get; set; }
+        public int TotalPage { get; set; }
+
+        public PaginatedList(List<T> items, int count, int pageIndex, int pageSize)
+        {
+            PageIndex = pageIndex;
+            TotalPage = (int)Math.Ceiling(count / (double)pageSize);
+            AddRange(items);
+        }
+
+        public static PaginatedList<T> Create(IQueryable<T> source, int pageIndex, int pageSize)
+        {
+            var count = source.Count();
+            var items = source.Skip((pageIndex - 1) * pageSize).Take(pageSize).ToList();
+
+            return new PaginatedList<T>(items, count, pageIndex, pageSize);
         }
     }
 }
