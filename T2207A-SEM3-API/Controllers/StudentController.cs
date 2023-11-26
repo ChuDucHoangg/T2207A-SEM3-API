@@ -640,7 +640,7 @@ namespace T2207A_SEM3_API.Controllers
 
         [HttpGet]
         [Route("get-by-classId-teacher")]
-        public async Task<IActionResult> GetbyClassByTeacher(string slug)
+        public async Task<IActionResult> GetbyClassByTeacher(int classId)
         {
             var identity = HttpContext.User.Identity as ClaimsIdentity;
 
@@ -666,7 +666,7 @@ namespace T2207A_SEM3_API.Controllers
                     });
                 }
 
-                var classes = await _context.Classes.FirstOrDefaultAsync(c => c.Slug.Equals(slug));
+                var classes = await _context.Classes.FirstOrDefaultAsync(c => c.Id.Equals(classId));
 
                 if (classes == null)
                 {
