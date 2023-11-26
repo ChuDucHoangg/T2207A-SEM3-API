@@ -33,7 +33,7 @@ namespace T2207A_SEM3_API.Controllers
     {
         private readonly ExamonimyContext _context;
         private readonly IEmailService _emailService;
-        public static int PAGE_SIZE { get; set; } = 5;
+        public static int PAGE_SIZE { get; set; } = 10;
         public TestController(ExamonimyContext context, IEmailService emailService)
         {
             _context = context;
@@ -3533,7 +3533,7 @@ namespace T2207A_SEM3_API.Controllers
 
         [HttpGet("get-by-teacher")]
         [Authorize(Roles = "Super Admin, Staff, Teacher")]
-        public async Task<IActionResult> GetTestByTeacher()
+        public async Task<IActionResult> GetTestByTeacher(string? search, DateTime? from, DateTime? to, string? sortBy, int page = 1)
         {
             var identity = HttpContext.User.Identity as ClaimsIdentity;
 
@@ -3560,12 +3560,12 @@ namespace T2207A_SEM3_API.Controllers
                     });
                 }
 
-                var recentEssayTests = await _context.Tests
+                var tests = _context.Tests
                 .Include(t => t.Exam)
                     .ThenInclude(e => e.CourseClass)
                         .ThenInclude(cc => cc.Class)
-                .Where(t => t.Exam.CourseClass.Class.TeacherId == user.Id)
-                .OrderByDescending(t => t.CreatedAt)
+                .Where(t => t.Exam.CourseClass.Class.TeacherId == user.Id).AsQueryable();
+                /*.OrderByDescending(t => t.CreatedAt)
                 .Select(t => new
                 {
                     TestId = t.Id,
@@ -3578,9 +3578,82 @@ namespace T2207A_SEM3_API.Controllers
                     StartDate = t.StartDate,
                     EndDate = t.EndDate
                 })
-                .ToListAsync();
+                .ToListAsync();*/
+                #region Filtering
+                if (!string.IsNullOrEmpty(search))
+                {
+                    tests = tests.Where(hh => hh.Name.Contains(search));
+                }
+                if (from.HasValue)
+                {
+                    tests = tests.Where(hh => hh.CreatedAt >= from);
+                }
+                if (to.HasValue)
+                {
+                    tests = tests.Where(hh => hh.CreatedAt <= to);
+                }
+                #endregion
 
-                return Ok(recentEssayTests);
+                #region Sorting
+                //Default sort by Name (TenHh)
+                tests = tests.OrderBy(hh => hh.Name);
+
+                if (!string.IsNullOrEmpty(sortBy))
+                {
+                    switch (sortBy)
+                    {
+                        case "name_desc": tests = tests.OrderByDescending(hh => hh.Name); break;
+                        case "createAt_asc": tests = tests.OrderBy(hh => hh.CreatedAt); break;
+                        case "createAt_desc": tests = tests.OrderByDescending(hh => hh.CreatedAt); break;
+                    }
+                }
+                #endregion
+
+                int totalItems = await tests.CountAsync();
+
+                var data = PaginatedList<Test>.Create(tests, page, PAGE_SIZE);
+
+                var datas =  data.Select(t => new
+                {
+                    TestId = t.Id,
+                    TestName = t.Name,
+                    TestSlug = t.Slug,
+                    TypeTest = t.TypeTest,
+                    ClassId = t.Exam.CourseClass.Class.Id,
+                    ClassName = t.Exam.CourseClass.Class.Name,
+                    CreatedAt = t.CreatedAt,
+                    StartDate = t.StartDate,
+                    EndDate = t.EndDate
+                })
+                .ToList();
+
+                /*List<TestDTO> datas = new List<TestDTO>();
+                foreach (Test t in data)
+                {
+                    datas.Add(new TestDTO
+                    {
+                        id = t.Id,
+                        name = t.Name,
+                        slug = t.Slug,
+                        exam_id = t.ExamId,
+                        startDate = t.StartDate,
+                        endDate = t.EndDate,
+                        past_marks = t.PastMarks,
+                        total_marks = t.TotalMarks,
+                        type_test = t.TypeTest,
+                        RetakeTestId = t.RetakeTestId,
+                        numberOfQuestion = t.NumberOfQuestionsInExam,
+                        created_by = t.CreatedBy,
+                        status = t.Status,
+                        createdAt = t.CreatedAt,
+                        updatedAt = t.UpdatedAt,
+                        deletedAt = t.DeletedAt
+                    });
+                }*/
+                //return Ok(datas);
+                return Ok(new { Data = datas, Page = page, PageSize = PAGE_SIZE, TotalItems = totalItems, TotalPages = data.TotalPage });
+
+                //return Ok(recentEssayTests);
             }
             catch (Exception e)
             {
