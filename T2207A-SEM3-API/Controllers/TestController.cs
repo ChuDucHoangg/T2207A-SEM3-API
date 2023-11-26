@@ -41,7 +41,7 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpGet]
-        //[Authorize(Roles = "Super Admin, Staff, Teacher")]
+        [Authorize(Roles = "Super Admin, Staff, Teacher")]
         public async Task<IActionResult> Index(string? search, DateTime? from, DateTime? to, string? sortBy, int page = 1)
         {
             try
