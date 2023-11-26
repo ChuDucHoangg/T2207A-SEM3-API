@@ -189,12 +189,12 @@ namespace T2207A_SEM3_API.Controllers
                         .FirstOrDefaultAsync(t => t.Slug == slug && t.Exam.CourseClass.Class.TeacherId == user.Id);
                 if (t != null)
                 {
-                    return Ok(new TestDTO
+                    return Ok(new 
                     {
                         id = t.Id,
                         name = t.Name,
                         slug = t.Slug,
-                        exam_id = t.ExamId,
+                        exam_id = t.Exam.Name,
                         startDate = t.StartDate,
                         endDate = t.EndDate,
                         past_marks = t.PastMarks,
