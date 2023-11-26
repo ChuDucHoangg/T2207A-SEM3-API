@@ -346,17 +346,17 @@ namespace T2207A_SEM3_API.Controllers
 
                 var resetToken = GenerateResetToken();
                 student.ResetToken = resetToken;
-                student.ResetTokenExpiry = DateTime.UtcNow.AddHours(1); // Thời gian hết hiệu lực của token: 1 giờ
+                student.ResetTokenExpiry = DateTime.Now.AddHours(1); // Thời gian hết hiệu lực của token: 1 giờ
                 await _context.SaveChangesAsync();
 
-                var resetLink = "https://localhost:7218/api/Auth/student/reset-password/"+resetToken;
+                var resetLink = "http://localhost:3000/reset-password/" + resetToken;
 
-                /*Mailrequest mailrequest = new Mailrequest();
-                mailrequest.ToEmail = "trungtvt.dev@gmail.com";
+                Mailrequest mailrequest = new Mailrequest();
+                mailrequest.ToEmail = student.Email;
                 mailrequest.Subject = "Password Reset";
                 mailrequest.Body = $"Click the link to reset your password: {resetLink}";
 
-                await _emailService.SendEmailAsync(mailrequest);*/
+                await _emailService.SendEmailAsync(mailrequest);
 
 
                 return Ok(new GeneralServiceResponse
@@ -437,17 +437,17 @@ namespace T2207A_SEM3_API.Controllers
 
                 var resetToken = GenerateResetToken();
                 staff.ResetToken = resetToken;
-                staff.ResetTokenExpiry = DateTime.UtcNow.AddHours(1); // Thời gian hết hiệu lực của token: 1 giờ
+                staff.ResetTokenExpiry = DateTime.Now.AddHours(1); // Thời gian hết hiệu lực của token: 1 giờ
                 await _context.SaveChangesAsync();
 
-                var resetLink = "https://localhost:7218/api/Auth/staff/reset-password/" + resetToken;
+                var resetLink = "http://localhost:3001/reset-password/" + resetToken;
 
-                /*Mailrequest mailrequest = new Mailrequest();
-                mailrequest.ToEmail = "trungtvt.dev@gmail.com";
+                Mailrequest mailrequest = new Mailrequest();
+                mailrequest.ToEmail = staff.Email;
                 mailrequest.Subject = "Password Reset";
                 mailrequest.Body = $"Click the link to reset your password: {resetLink}";
 
-                await _emailService.SendEmailAsync(mailrequest);*/
+                await _emailService.SendEmailAsync(mailrequest);
 
 
                 return Ok(new GeneralServiceResponse

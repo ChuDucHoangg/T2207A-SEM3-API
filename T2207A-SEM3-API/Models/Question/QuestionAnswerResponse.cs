@@ -8,6 +8,8 @@ namespace T2207A_SEM3_API.Models.Question
 
         public string title { get; set; }
 
+        public int? type { get; set; }
+
         public List<AnswerContentResponse> Answers { get; set; }
 
     }

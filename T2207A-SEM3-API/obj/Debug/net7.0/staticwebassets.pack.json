@@ -5,6 +5,10 @@
       "PackagePath": "staticwebassets\\excels\\student\\Student1.xlsx"
     },
     {
+      "Id": "D:\\SEM3\\project-examonimy\\SEM-Examonimy-API2\\T2207A-SEM3-API\\wwwroot\\excels\\student\\Student2.xlsx",
+      "PackagePath": "staticwebassets\\excels\\student\\Student2.xlsx"
+    },
+    {
       "Id": "D:\\SEM3\\project-examonimy\\SEM-Examonimy-API2\\T2207A-SEM3-API\\wwwroot\\excels\\tests\\Book1.xlsx",
       "PackagePath": "staticwebassets\\excels\\tests\\Book1.xlsx"
     },

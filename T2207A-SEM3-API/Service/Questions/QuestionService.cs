@@ -110,6 +110,7 @@ namespace T2207A_SEM3_API.Service.Questions
                 {
                     id = question.Id,
                     title = question.Title,
+                    type = question.QuestionType,
                     Answers = answerContentResponses
                 };
 
