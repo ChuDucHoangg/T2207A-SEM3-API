@@ -57,7 +57,7 @@ namespace T2207A_SEM3_API.Controllers
                         new MenuItem { Title = "Test", Url = "/test-list", Icon = "<i class=\"feather-calendar\"></i>"},
                         new MenuItem { Title = "Class", Url = "/classes-list", Icon = "<i class=\"fas fa-building\"></i>"},
                         new MenuItem { Title = "Course", Url = "/course-list", Icon = "<i class=\"fas fa-book-reader\"></i>"},
-                        new MenuItem { Title = "Class Course", Url = "/courseclass-list", Icon = "<i class=\"fas fa-book-reader\"></i>"},
+                        new MenuItem { Title = "Class Course", Url = "/courseclass-list", Icon = "<i class=\"feather-server\"></i>"},
 
                         new MenuItem { Title = "Student", Url = "/student-list", Icon = "<i class=\"fas fa-graduation-cap\"></i>"},
                         new MenuItem { Title = "Staff", Url = "/teacher-list", Icon = "<i class=\"fas fa-chalkboard-teacher\"></i>"},
@@ -74,7 +74,8 @@ namespace T2207A_SEM3_API.Controllers
                         new MenuItem { Title = "Exam", Url = "/exam-list", Icon = "<i class=\"fas fa-clipboard-list\"></i>" },
                         new MenuItem { Title = "Test", Url = "/test-list", Icon = "<i class=\"feather-calendar\"></i>"},
                         new MenuItem { Title = "Class", Url = "/classes-list", Icon = "<i class=\"fas fa-building\"></i>"},
-                        new MenuItem { Title = "Class Course", Url = "/courseclass-list", Icon = "<i class=\"fas fa-book-reader\"></i>"},
+                        new MenuItem { Title = "Course", Url = "/course-list", Icon = "<i class=\"fas fa-book-reader\"></i>"},
+                        new MenuItem { Title = "Class Course", Url = "/courseclass-list", Icon = "<i class=\"feather-server\"></i>"},
                         new MenuItem { Title = "Student", Url = "/student-list", Icon = "<i class=\"fas fa-graduation-cap\"></i>"},
 
                         new MenuItem { Title = "Profile", Url = "/profile", Icon = "<i class=\"fas fa-cog\"></i>"},

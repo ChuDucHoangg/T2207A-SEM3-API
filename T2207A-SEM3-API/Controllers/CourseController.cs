@@ -13,7 +13,6 @@ namespace T2207A_SEM3_API.Controllers
 {
     [Route("api/course")]
     [ApiController]
-    [Authorize(Roles = "Super Admin")]
 
     public class CourseController : Controller
     {
@@ -28,6 +27,7 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Super Admin, Staff")]
         public async Task<IActionResult> Index()
         {
             try
@@ -57,6 +57,7 @@ namespace T2207A_SEM3_API.Controllers
 
         [HttpGet]
         [Route("get-by-codeCourse")]
+        [Authorize(Roles = "Super Admin, Staff")]
         public async Task<IActionResult> Get(int id)
         {
             try
@@ -89,6 +90,7 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Super Admin")]
         public async Task<IActionResult> Create(CreateCourse model)
         {
             if (ModelState.IsValid)
@@ -134,6 +136,7 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpPut]
+        [Authorize(Roles = "Super Admin")]
         public async Task<IActionResult> Update(EditCourse model)
         {
             if (ModelState.IsValid)
@@ -195,6 +198,7 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpDelete]
+        [Authorize(Roles = "Super Admin")]
         public async Task<IActionResult> Delete(int id)
         {
             try

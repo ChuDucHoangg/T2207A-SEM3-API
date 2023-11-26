@@ -3326,6 +3326,8 @@ namespace T2207A_SEM3_API.Controllers
                         past_marks = c.PastMarks,
                         total_marks = c.TotalMarks,
                         type_test = c.TypeTest,
+                        numberOfQuestion = c.NumberOfQuestionsInExam,
+                        RetakeTestId = c.RetakeTestId,
                         created_by = c.CreatedBy,
                         status = c.Status,
                         createdAt = c.CreatedAt,
