@@ -28,18 +28,37 @@ namespace T2207A_SEM3_API.Controllers
         }
 
         [HttpGet]
-        [Authorize]
+        //[Authorize]
         public async Task<IActionResult> Index()
         {
             try
             {
-                List<Question> questions = await _context.Questions.Include(q => q.Answers).ToListAsync();
+                List<Question> questions = await _context.Questions.Include(q => q.Answers).OrderByDescending(s => s.Id).Where(q => q.DeletedAt == null).ToListAsync();
 
                 var questionAnswers = await _questionService.GetTestQuestionsAnswers(questions);
 
                 return Ok(questionAnswers);
                 
             } 
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("list-delete")]
+        //[Authorize]
+        public async Task<IActionResult> IndexDelete()
+        {
+            try
+            {
+                List<Question> questions = await _context.Questions.Include(q => q.Answers).OrderByDescending(s => s.Id).Where(q => q.DeletedAt != null).ToListAsync();
+
+                var questionAnswers = await _questionService.GetTestQuestionsAnswers(questions);
+
+                return Ok(questionAnswers);
+
+            }
             catch (Exception ex)
             {
                 return BadRequest(ex.Message);
@@ -252,7 +271,7 @@ namespace T2207A_SEM3_API.Controllers
             return BadRequest();
         }
 
-        [HttpDelete]
+        [HttpPut("delete/{id}")]
         public async Task<IActionResult> Delete(int id)
         {
             try
@@ -260,7 +279,52 @@ namespace T2207A_SEM3_API.Controllers
                 Question question = await _context.Questions.FindAsync(id);
                 if (question == null)
                     return NotFound();
-                _context.Questions.Remove(question);
+
+                question.DeletedAt = DateTime.Now;
+
+                _context.Questions.Update(question);
+                await _context.SaveChangesAsync();
+                return NoContent();
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
+
+        [HttpPut("restore/{id}")]
+        public async Task<IActionResult> Restore(int id)
+        {
+            try
+            {
+                Question question = await _context.Questions.FindAsync(id);
+                if (question == null)
+                    return NotFound();
+
+                question.DeletedAt = null;
+
+                _context.Questions.Update(question);
+                await _context.SaveChangesAsync();
+                return NoContent();
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
+
+        [HttpDelete]
+        [Route("permanently-delete/{id}")]
+        public async Task<IActionResult> PermanentlyDelete(int id)
+        {
+            try
+            {
+                Question question = await _context.Questions.FindAsync(id);
+                if (question == null)
+                    return NotFound();
+
+                _context.Questions.Remove(question); // Xóa bản ghi sinh viên hoàn toàn khỏi cơ sở dữ liệu
+
                 await _context.SaveChangesAsync();
                 return NoContent();
             }
