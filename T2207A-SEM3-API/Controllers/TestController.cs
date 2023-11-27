@@ -115,6 +115,46 @@ namespace T2207A_SEM3_API.Controllers
             
         }
 
+        [HttpGet("test-list")]
+        //[Authorize(Roles = "Super Admin, Staff, Teacher")]
+        public async Task<IActionResult> Index()
+        {
+            try
+            {
+                List<Test> tests = await _context.Tests.OrderByDescending(s => s.Id).ToListAsync();
+
+                List<TestDTO> data = new List<TestDTO>();
+                foreach (Test t in tests)
+                {
+                    data.Add(new TestDTO
+                    {
+                        id = t.Id,
+                        name = t.Name,
+                        slug = t.Slug,
+                        exam_id = t.ExamId,
+                        startDate = t.StartDate,
+                        endDate = t.EndDate,
+                        past_marks = t.PastMarks,
+                        total_marks = t.TotalMarks,
+                        type_test = t.TypeTest,
+                        RetakeTestId = t.RetakeTestId,
+                        numberOfQuestion = t.NumberOfQuestionsInExam,
+                        created_by = t.CreatedBy,
+                        status = t.Status,
+                        createdAt = t.CreatedAt,
+                        updatedAt = t.UpdatedAt,
+                        deletedAt = t.DeletedAt
+                    });
+                }
+                return Ok(data);
+            }
+            catch (Exception e)
+            {
+                return BadRequest($"An error occurred: {e.Message}");
+            }
+
+        }
+
         [HttpGet]
         [Route("get-by-slug")]
         public async Task<IActionResult> Get(string slug)
